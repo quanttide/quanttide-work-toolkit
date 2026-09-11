@@ -7,7 +7,7 @@ use serde_json::{Value, json};
 use std::fs;
 
 fn vectors() -> Vec<(String, Value)> {
-    let dir = std::path::Path::new("../../contract");
+    let dir = std::path::Path::new("../../tests/contract");
     let mut found: Vec<(String, Value)> = fs::read_dir(dir)
         .expect("找不到 contract 目录")
         .flatten()

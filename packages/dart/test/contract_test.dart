@@ -10,7 +10,7 @@ import 'package:quanttide_work/quanttide_work.dart';
 import 'package:test/test.dart';
 
 List<(String, Map<String, Object?>)> vectors() {
-  final dir = Directory('../../contract');
+  final dir = Directory('../../tests/contract');
   expect(dir.existsSync(), isTrue, reason: '找不到 contract 目录');
   final found = dir
       .listSync()
