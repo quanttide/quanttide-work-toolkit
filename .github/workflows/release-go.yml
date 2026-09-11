@@ -1,0 +1,75 @@
+name: release-go
+
+on:
+  push:
+    tags:
+      - 'go/*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Go release tag to process, for example go/v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/go
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: packages/go/go.mod
+
+      - name: validate release metadata
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          case "$RELEASE_TAG" in
+            go/v*) ;;
+            *) echo "expected a go/vX.Y.Z tag, got $RELEASE_TAG" >&2; exit 1 ;;
+          esac
+
+          VERSION="${RELEASE_TAG#go/}"
+          grep -Fq "## [v$VERSION]" CHANGELOG.md || grep -Fq "## [$VERSION]" CHANGELOG.md
+
+      - run: go build ./...
+      - run: go vet ./...
+      - run: go test ./... -count=1
+
+  create-module-alias:
+    needs: quality-gates
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/go/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: create Go module alias tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          VERSION="${RELEASE_TAG#go/}"
+          ALIAS_TAG="packages/go/$VERSION"
+          TARGET_SHA="$(git rev-parse "$RELEASE_TAG^{commit}")"
+          EXISTING_SHA="$(git ls-remote --quiet --refs origin "refs/tags/$ALIAS_TAG" | awk '{print $1}')"
+
+          if [ -n "$EXISTING_SHA" ]; then
+            test "$EXISTING_SHA" = "$TARGET_SHA"
+            exit 0
+          fi
+
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git tag "$ALIAS_TAG" "$TARGET_SHA"
+          git push origin "refs/tags/$ALIAS_TAG"

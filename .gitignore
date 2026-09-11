@@ -9,3 +9,6 @@ build/
 .coverage
 uv.lock.bak
 target/
+node_modules/
+.dart_tool/
+.packages
