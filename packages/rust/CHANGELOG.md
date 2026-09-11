@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2] - 2026-09-12
+
+### Fixed
+
+- Rust 侧按 `cargo fmt` 格式化（alpha.1 的发布工作流卡在这一步）
+
+
 ## [0.1.0-alpha.1] - 2026-09-12
 
 ### Added

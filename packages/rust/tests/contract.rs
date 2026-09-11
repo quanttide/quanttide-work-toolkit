@@ -16,7 +16,10 @@ fn vectors() -> Vec<(String, Value)> {
         .map(|path| {
             let name = path.file_name().unwrap().to_string_lossy().to_string();
             let text = fs::read_to_string(&path).expect("向量读不了");
-            (name, serde_json::from_str(&text).expect("向量不是合法 JSON"))
+            (
+                name,
+                serde_json::from_str(&text).expect("向量不是合法 JSON"),
+            )
         })
         .collect();
     found.sort_by(|a, b| a.0.cmp(&b.0));
@@ -56,7 +59,11 @@ fn contract() {
                         })
                     })
                     .collect();
-                assert_eq!(Value::Array(got), vector["expect"], "{name}：判据翻出来的不一样");
+                assert_eq!(
+                    Value::Array(got),
+                    vector["expect"],
+                    "{name}：判据翻出来的不一样"
+                );
             }
             "done" => {
                 let steps: Vec<String> = vector["steps"]
@@ -100,7 +107,11 @@ fn contract() {
                         .collect(),
                     payload: None,
                 };
-                assert_eq!(outcome.to_json(), vector["expect"], "{name}：信封的 JSON 不一样");
+                assert_eq!(
+                    outcome.to_json(),
+                    vector["expect"],
+                    "{name}：信封的 JSON 不一样"
+                );
             }
             other => panic!("{name}：不认得的向量类型 {other}"),
         }
