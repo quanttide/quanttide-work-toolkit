@@ -65,7 +65,8 @@ jobs:
 
       - name: publish to pub.dev
         env:
-          PUB_DEV_TOKEN: ${{ secrets.PUB_DEV_TOKEN }}
+          # token 认几个常见名字：仓库或组织里叫哪个都行
+          PUB_DEV_TOKEN: ${{ secrets.PUB_DEV_TOKEN || secrets.PUB_TOKEN || secrets.PUB_CREDENTIALS || secrets.PUB_AUTH_TOKEN }}
         run: |
           test -n "$PUB_DEV_TOKEN" || { echo "PUB_DEV_TOKEN secret is required" >&2; exit 1; }
           dart pub token add https://pub.dev --env-var PUB_DEV_TOKEN

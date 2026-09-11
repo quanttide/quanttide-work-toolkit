@@ -7,6 +7,6 @@ void main() {
   });
 
   test('包版本与 pubspec 一致', () {
-    expect(version, '0.1.0-alpha.3');
+    expect(version, '0.1.0-alpha.4');
   });
 }

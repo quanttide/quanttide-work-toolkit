@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.1.0-alpha.4] - 2026-09-12
+
+### Fixed
+
+- pub.dev 的 token 认几个常见名字（alpha.3 的 Dart 发布卡在 `PUB_DEV_TOKEN` 取不到）
+
+
 ## [0.1.0-alpha.3] - 2026-09-12
 
 ### Fixed
