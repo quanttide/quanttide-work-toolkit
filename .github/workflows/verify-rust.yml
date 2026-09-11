@@ -1,0 +1,24 @@
+name: verify-rust
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/rust/**'
+      - '.github/workflows/verify-rust.yml'
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --check
+      - run: cargo clippy --locked -- -D warnings
+      - run: cargo test --locked

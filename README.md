@@ -9,6 +9,7 @@
 | 包 | 语言 | 说明 |
 |---|---|---|
 | [`packages/python`](packages/python) | Python | 知识工作 Python 包（`quanttide-work`） |
+| [`packages/rust`](packages/rust) | Rust | 知识工作 Rust 库（`quanttide-work`） |
 
 新增语言包时在 `packages/{语言}/` 下独立发布，互不依赖。
 
