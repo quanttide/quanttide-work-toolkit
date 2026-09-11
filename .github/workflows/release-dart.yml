@@ -51,43 +51,17 @@ jobs:
     needs: quality-gates
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/dart/')
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/dart
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.tag || github.ref }}
 
-      - uses: dart-lang/setup-dart@v1
+      # 与 quanttide-data-toolkit / quanttide-execute-toolkit 用同一个发布 action：
+      # 凭证该落到哪儿（新版 pub 读 pub-tokens.json，不是那份 credentials.json）交给它，
+      # 不要手写——手写那一版就是卡在认证上的原因。
+      - uses: k-paxian/dart-package-publisher@master
         with:
-          sdk: stable
-
-      - name: publish to pub.dev
-        env:
-          # 凭证两种形状都认：整份 credentials.json（取里面的 accessToken），或者就是一个 token
-          PUBDEV_CREDENTIAL_JSON: ${{ secrets.PUBDEV_CREDENTIAL_JSON }}
-        run: |
-          test -n "$PUBDEV_CREDENTIAL_JSON" || { echo "PUBDEV_CREDENTIAL_JSON secret is required" >&2; exit 1; }
-
-          # 用 pub 自己的 token 仓（新版 pub 读的是 pub-tokens.json，不是那份 credentials.json——
-          # 这一步以前挂在认证上，就是因为它把整份 JSON 写进了 credentials.json，pub 根本没看）
-          TOKEN=$(python3 - <<'INNER'
-          import json, os
-          raw = os.environ["PUBDEV_CREDENTIAL_JSON"].strip()
-          try:
-              data = json.loads(raw)
-              print(data.get("accessToken") or data.get("token") or "")
-          except Exception:
-              print(raw)
-          INNER
-          )
-          if [ -z "$TOKEN" ]; then
-            echo "从 PUBDEV_CREDENTIAL_JSON 里取不到 accessToken，也不是一个裸 token" >&2
-            exit 1
-          fi
-          printf '%s' "$TOKEN" > /tmp/pub-token
-          dart pub token add https://pub.dev --env-var PUB_TOKEN < /dev/null <<< "PUB_TOKEN=$(cat /tmp/pub-token)"
-          rm -f /tmp/pub-token
-
-          timeout 300 dart pub publish --force < /dev/null
+          credentialJson: ${{ secrets.PUBDEV_CREDENTIAL_JSON }}
+          relativePath: packages/dart
+          force: true
+          flutter: false

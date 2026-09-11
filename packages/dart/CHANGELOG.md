@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.1.0-alpha.10] - 2026-09-12
+
+### Fixed
+
+- 发布改用与 quanttide-data-toolkit 同一个 action（k-paxian/dart-package-publisher），不再手写凭证落点
+
+
 ## [0.1.0-alpha.8] - 2026-09-12
 
 ### Fixed
