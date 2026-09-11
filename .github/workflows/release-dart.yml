@@ -65,14 +65,29 @@ jobs:
 
       - name: publish to pub.dev
         env:
-          # 凭证是 pub 的 credentials.json 全文，落在 pub 缓存里
+          # 凭证两种形状都认：整份 credentials.json（取里面的 accessToken），或者就是一个 token
           PUBDEV_CREDENTIAL_JSON: ${{ secrets.PUBDEV_CREDENTIAL_JSON }}
         run: |
           test -n "$PUBDEV_CREDENTIAL_JSON" || { echo "PUBDEV_CREDENTIAL_JSON secret is required" >&2; exit 1; }
-          mkdir -p "$HOME/.pub-cache"
-          printf '%s' "$PUBDEV_CREDENTIAL_JSON" > "$HOME/.pub-cache/credentials.json"
-          # 凭证是 JSON：先验一下形状，别让它悄悄挂在那儿等交互
-          python3 -c "import json,sys; json.load(open('$HOME/.pub-cache/credentials.json'))" \
-            || { echo "PUBDEV_CREDENTIAL_JSON 不是合法的 credentials.json" >&2; exit 1; }
-          # stdin 关掉、加上限：pub 一旦要交互就当场失败，不许挂
+
+          # 用 pub 自己的 token 仓（新版 pub 读的是 pub-tokens.json，不是那份 credentials.json——
+          # 这一步以前挂在认证上，就是因为它把整份 JSON 写进了 credentials.json，pub 根本没看）
+          TOKEN=$(python3 - <<'INNER'
+          import json, os
+          raw = os.environ["PUBDEV_CREDENTIAL_JSON"].strip()
+          try:
+              data = json.loads(raw)
+              print(data.get("accessToken") or data.get("token") or "")
+          except Exception:
+              print(raw)
+          INNER
+          )
+          if [ -z "$TOKEN" ]; then
+            echo "从 PUBDEV_CREDENTIAL_JSON 里取不到 accessToken，也不是一个裸 token" >&2
+            exit 1
+          fi
+          printf '%s' "$TOKEN" > /tmp/pub-token
+          dart pub token add https://pub.dev --env-var PUB_TOKEN < /dev/null <<< "PUB_TOKEN=$(cat /tmp/pub-token)"
+          rm -f /tmp/pub-token
+
           timeout 300 dart pub publish --force < /dev/null

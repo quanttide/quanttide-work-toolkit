@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.1.0-alpha.8] - 2026-09-12
+
+### Fixed
+
+- 凭证改走 pub 自己的 token 仓（以前把整份 credentials.json 写进 pub-cache，新版 pub 不读它）
+
+
 ## [0.1.0-alpha.7] - 2026-09-12
 
 ### Fixed
