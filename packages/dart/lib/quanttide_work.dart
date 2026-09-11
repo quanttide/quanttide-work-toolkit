@@ -18,4 +18,4 @@ export 'src/tasklog.dart' hide textOf;
 const String domain = 'knowledge-work';
 
 /// 包版本（与 pubspec.yaml 保持一致）。
-const String version = '0.1.0-alpha.5';
+const String version = '0.1.0-alpha.6';

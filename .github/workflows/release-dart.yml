@@ -71,4 +71,8 @@ jobs:
           test -n "$PUBDEV_CREDENTIAL_JSON" || { echo "PUBDEV_CREDENTIAL_JSON secret is required" >&2; exit 1; }
           mkdir -p "$HOME/.pub-cache"
           printf '%s' "$PUBDEV_CREDENTIAL_JSON" > "$HOME/.pub-cache/credentials.json"
-          dart pub publish --force
+          # 凭证是 JSON：先验一下形状，别让它悄悄挂在那儿等交互
+          python3 -c "import json,sys; json.load(open('$HOME/.pub-cache/credentials.json'))" \
+            || { echo "PUBDEV_CREDENTIAL_JSON 不是合法的 credentials.json" >&2; exit 1; }
+          # stdin 关掉、加上限：pub 一旦要交互就当场失败，不许挂
+          timeout 300 dart pub publish --force < /dev/null
