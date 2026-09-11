@@ -1,0 +1,21 @@
+{
+  "kind": "validate",
+  "file": "demo.yaml",
+  "input": {
+    "name": "x",
+    "steps": [
+      {
+        "name": "甲",
+        "criteria": [
+          {
+            "executor": "human",
+            "run": "true"
+          }
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "error": "demo.yaml 第 1 个步骤第 1 条判据是 human，必须写 description（判准 / 要人拍板的事）"
+  }
+}

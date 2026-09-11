@@ -1,0 +1,16 @@
+{
+  "kind": "validate",
+  "file": "demo.yaml",
+  "input": {
+    "name": "x",
+    "version": 2,
+    "steps": [
+      {
+        "name": "甲"
+      }
+    ]
+  },
+  "expect": {
+    "error": "demo.yaml 顶层有不认识的字段：version（只认 name、description、steps）"
+  }
+}

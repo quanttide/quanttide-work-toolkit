@@ -1,0 +1,62 @@
+{
+  "kind": "items",
+  "input": [
+    {
+      "executor": "rule",
+      "path": "docs/index.md"
+    },
+    {
+      "executor": "rule",
+      "absent": "docs/gone.md"
+    },
+    {
+      "executor": "rule",
+      "file": "docs/index.md",
+      "contains": "第二大脑"
+    },
+    {
+      "executor": "rule",
+      "run": "test -f docs/index.md"
+    },
+    {
+      "executor": "agent",
+      "description": "写干净了"
+    }
+  ],
+  "expect": [
+    {
+      "description": "存在：docs/index.md",
+      "kind": "path",
+      "args": [
+        "docs/index.md"
+      ]
+    },
+    {
+      "description": "不存在：docs/gone.md",
+      "kind": "absent",
+      "args": [
+        "docs/gone.md"
+      ]
+    },
+    {
+      "description": "含「第二大脑」：docs/index.md",
+      "kind": "contains",
+      "args": [
+        "docs/index.md",
+        "第二大脑"
+      ]
+    },
+    {
+      "description": "跑通：test -f docs/index.md",
+      "kind": "run",
+      "args": [
+        "test -f docs/index.md"
+      ]
+    },
+    {
+      "description": "写干净了",
+      "kind": null,
+      "args": []
+    }
+  ]
+}

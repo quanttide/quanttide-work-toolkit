@@ -1,0 +1,14 @@
+{
+  "kind": "validate",
+  "file": "demo.yaml",
+  "input": {
+    "steps": [
+      {
+        "name": "甲"
+      }
+    ]
+  },
+  "expect": {
+    "error": "demo.yaml 少了 name"
+  }
+}

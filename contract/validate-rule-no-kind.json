@@ -1,0 +1,20 @@
+{
+  "kind": "validate",
+  "file": "demo.yaml",
+  "input": {
+    "name": "x",
+    "steps": [
+      {
+        "name": "甲",
+        "criteria": [
+          {
+            "executor": "rule"
+          }
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "error": "demo.yaml 第 1 个步骤第 1 条判据是 rule，得写一条判法（path / absent / file+contains / run）"
+  }
+}

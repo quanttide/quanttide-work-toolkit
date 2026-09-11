@@ -1,0 +1,34 @@
+{
+  "kind": "validate",
+  "file": "demo.yaml",
+  "input": {
+    "name": "demo",
+    "description": "走一遍给我看",
+    "steps": [
+      {
+        "name": "甲",
+        "description": "做甲",
+        "executor": "agent",
+        "criteria": [
+          {
+            "executor": "rule",
+            "path": "data/journal/README.md"
+          }
+        ]
+      },
+      {
+        "name": "乙",
+        "executor": "human",
+        "criteria": [
+          {
+            "executor": "human",
+            "description": "人拍板"
+          }
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "ok": true
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "kind": "done",
+  "steps": [
+    "甲",
+    "乙",
+    "丙"
+  ],
+  "events": [
+    {
+      "at": "t1",
+      "step": "甲",
+      "detail": "走了一遍",
+      "ok": true
+    },
+    {
+      "at": "t2",
+      "step": "甲·审",
+      "detail": "审查没过",
+      "ok": false
+    },
+    {
+      "at": "t3",
+      "step": "乙",
+      "detail": "第一次",
+      "ok": false
+    },
+    {
+      "at": "t4",
+      "step": "乙",
+      "detail": "重走一遍",
+      "ok": true
+    },
+    {
+      "at": "t5",
+      "step": "丙",
+      "detail": "走了一遍",
+      "ok": true
+    },
+    {
+      "at": "t6",
+      "step": "丙·判",
+      "detail": "机器判据没过",
+      "ok": false
+    },
+    {
+      "at": "t7",
+      "step": "丁",
+      "detail": "工作流上没有这一步",
+      "ok": true
+    }
+  ],
+  "expect": [
+    "乙"
+  ]
+}

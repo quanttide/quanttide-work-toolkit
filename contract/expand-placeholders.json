@@ -1,0 +1,22 @@
+{
+  "kind": "expand",
+  "data": "/d",
+  "cases": [
+    {
+      "input": "{{report}}/x.md",
+      "expect": "/d/artifacts/report/x.md"
+    },
+    {
+      "input": "{{journal}}",
+      "expect": "/d/artifacts/journal"
+    },
+    {
+      "input": "{{log}}",
+      "expect": "/d/tasks"
+    },
+    {
+      "input": "{{artifacts}}/y",
+      "expect": "/d/artifacts/y"
+    }
+  ]
+}

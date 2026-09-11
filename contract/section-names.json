@@ -1,0 +1,21 @@
+{
+  "kind": "section",
+  "cases": [
+    {
+      "input": "收尾",
+      "expect": true
+    },
+    {
+      "input": "[X.Y.Z-pre.1]",
+      "expect": false
+    },
+    {
+      "input": "{{report}}",
+      "expect": false
+    },
+    {
+      "input": "data/report/x.md",
+      "expect": false
+    }
+  ]
+}
