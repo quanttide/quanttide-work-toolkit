@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.1.0-alpha.3] - 2026-09-12
+
+### Fixed
+
+- 版本改动与 `Cargo.lock` 同步（alpha.2 的发布工作流卡在 `--locked`）
+
+
 ## [0.1.0-alpha.2] - 2026-09-12
 
 ### Fixed
