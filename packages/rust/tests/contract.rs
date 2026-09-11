@@ -6,6 +6,11 @@ use quanttide_work::{criteria, definition, envelope, tasklog};
 use serde_json::{Value, json};
 use std::fs;
 
+/// 向量文件是 JSON（夹具），工具箱的模型吃 YAML 值——JSON 本来就是合法的 YAML。
+fn as_yaml(value: &Value) -> serde_yaml::Value {
+    serde_yaml::to_value(value).unwrap_or(serde_yaml::Value::Null)
+}
+
 fn vectors() -> Vec<(String, Value)> {
     let dir = std::path::Path::new("../../tests/contract");
     let mut found: Vec<(String, Value)> = fs::read_dir(dir)
@@ -34,7 +39,7 @@ fn contract() {
         match kind {
             "validate" => {
                 let file = vector["file"].as_str().unwrap_or("");
-                let got = definition::validate(&vector["input"], file);
+                let got = definition::validate(&as_yaml(&vector["input"]), file);
                 match vector["expect"].get("error") {
                     Some(Value::String(wanted)) => match got {
                         Ok(()) => panic!("{name}：期望报错，却通过了"),
@@ -49,6 +54,7 @@ fn contract() {
             }
             "items" => {
                 let criteria: Vec<Value> = vector["input"].as_array().cloned().unwrap_or_default();
+                let criteria: Vec<serde_yaml::Value> = criteria.iter().map(as_yaml).collect();
                 let got: Vec<Value> = criteria::items_of(&criteria)
                     .into_iter()
                     .map(|item| {
@@ -74,6 +80,7 @@ fn contract() {
                     .filter_map(|v| v.as_str().map(|s| s.to_string()))
                     .collect();
                 let events: Vec<Value> = vector["events"].as_array().cloned().unwrap_or_default();
+                let events: Vec<serde_yaml::Value> = events.iter().map(as_yaml).collect();
                 let got = json!(tasklog::done(&steps, &events));
                 assert_eq!(got, vector["expect"], "{name}：走过哪几步不一样");
             }

@@ -3,7 +3,7 @@
 //! 这两段话是产品的一部分——说什么、不说什么是定死的，所以抽出来两侧共用。
 
 /// 这一步的判据清单：每条一行「谁判：说明」。
-pub fn criteria_text(criteria: &[Json]) -> String {
+pub fn criteria_text(criteria: &[Yaml]) -> String {
     let lines: Vec<String> = criteria
         .iter()
         .map(|criterion| {
@@ -24,7 +24,7 @@ pub fn criteria_text(criteria: &[Json]) -> String {
     }
 }
 
-use serde_json::Value as Json;
+use serde_yaml::Value as Yaml;
 
 /// 走一步那件事的现场：任务与这一步的已知事实（路径由各自包算好递进来）。
 pub struct Facts {
@@ -44,7 +44,7 @@ pub struct Facts {
 }
 
 /// 交给 AI 的那一段话。
-pub fn prompt_for(facts: &Facts, criteria: &[Json]) -> String {
+pub fn prompt_for(facts: &Facts, criteria: &[Yaml]) -> String {
     format!(
         "你在按一条工作流走一步。只做这一步，做完就停。\n\n\
          工作区：{root}\n\
@@ -78,7 +78,7 @@ pub fn prompt_for(facts: &Facts, criteria: &[Json]) -> String {
 }
 
 /// 交给智能体审的那一段话：产物 + 判准，逐条回答。
-pub fn judge_prompt(facts: &Facts, criteria: &[Json]) -> String {
+pub fn judge_prompt(facts: &Facts, criteria: &[Yaml]) -> String {
     let listed = criteria
         .iter()
         .enumerate()

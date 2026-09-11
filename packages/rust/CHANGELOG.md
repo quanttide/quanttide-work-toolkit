@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [0.1.0-alpha.6] - 2026-09-12
+
+### Changed
+
+- 定义这一类模型（工作流定义、步骤、判据、流水、给 AI 的两段话）改吃 YAML 值——工作流定义本来就是 YAML，不该在工具箱里被挤成 JSON；信封仍是 JSON（那是给窗口与命令行的输出格式）
+
+### Note
+
+- 对消费者是破坏性改动：`quanttide-work = "0.1.0-alpha.6"` 起，定义类的入参是 `serde_yaml::Value`
+
+
 ## [0.1.0-alpha.5] - 2026-09-12
 
 ### Fixed

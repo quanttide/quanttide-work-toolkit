@@ -4,7 +4,7 @@
 //! `file` + `contains` 含这段文字、`run` 这条命令退出码为零。
 //! 工具箱只把判据翻成「要跑什么」——真去跑（文件系统、起进程）是各自包的事。
 
-use serde_json::Value as Json;
+use serde_yaml::Value as Yaml;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RuleKind {
@@ -28,7 +28,7 @@ impl RuleItem {
     }
 }
 
-fn text(criterion: &Json, key: &str) -> Option<String> {
+fn text(criterion: &Yaml, key: &str) -> Option<String> {
     criterion
         .get(key)
         .and_then(|v| v.as_str())
@@ -36,7 +36,7 @@ fn text(criterion: &Json, key: &str) -> Option<String> {
 }
 
 /// 说明：写了就用写的，没写按字段拼一句。
-pub fn description_of(criterion: &Json) -> String {
+pub fn description_of(criterion: &Yaml) -> String {
     if let Some(written) = text(criterion, "description")
         && !written.trim().is_empty()
     {
@@ -59,7 +59,7 @@ pub fn description_of(criterion: &Json) -> String {
 }
 
 /// 把定义里的判据翻成要跑的东西：rule 的跑，agent / human 的不跑。
-pub fn items_of(criteria: &[Json]) -> Vec<RuleItem> {
+pub fn items_of(criteria: &[Yaml]) -> Vec<RuleItem> {
     let mut items = Vec::new();
     for criterion in criteria {
         let description = description_of(criterion);

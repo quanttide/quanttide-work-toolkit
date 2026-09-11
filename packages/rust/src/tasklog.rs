@@ -3,9 +3,9 @@
 //! 一条流水＝时间、步骤名、一句话、过没过。步骤名带后缀的（`·审` 审查、`·判` 机器判据）
 //! **给这一步的结论投票**；不带后缀的（重新执行一次）**把结论从头算**。
 
-use serde_json::Value as Json;
+use serde_yaml::Value as Yaml;
 
-pub fn text_of(value: &Json, key: &str) -> String {
+pub fn text_of(value: &Yaml, key: &str) -> String {
     value
         .get(key)
         .and_then(|v| v.as_str())
@@ -15,7 +15,7 @@ pub fn text_of(value: &Json, key: &str) -> String {
 }
 
 /// 哪些步骤走过了。`steps` 是工作流上的步骤名，按定义顺序。
-pub fn done(steps: &[String], events: &[Json]) -> Vec<String> {
+pub fn done(steps: &[String], events: &[Yaml]) -> Vec<String> {
     let mut verdict: Vec<(String, bool)> = Vec::new();
     for event in events {
         let ok = event.get("ok").and_then(|v| v.as_bool()).unwrap_or(false);
@@ -46,13 +46,13 @@ pub fn done(steps: &[String], events: &[Json]) -> Vec<String> {
 }
 
 /// 第一个没走到的步骤。
-pub fn next_step(steps: &[String], events: &[Json]) -> Option<String> {
+pub fn next_step(steps: &[String], events: &[Yaml]) -> Option<String> {
     let finished = done(steps, events);
     steps.iter().find(|name| !finished.contains(name)).cloned()
 }
 
 /// 状态行：下一步是谁，或者都走过了。
-pub fn state_line(steps: &[String], events: &[Json], workflow_name: &str) -> String {
+pub fn state_line(steps: &[String], events: &[Yaml], workflow_name: &str) -> String {
     if steps.is_empty() {
         return format!("这条工作流没有步骤——在 workflows/{workflow_name}.yaml 的 steps 里写步骤");
     }

@@ -3,7 +3,7 @@
 //! 定义要有固定的意义，所以字段名、取值、判据种类都由 schema 定死，不认识的字段直接报错。
 //! 这一层只管**已经解析好的 JSON 值**；YAML 怎么读进来，各语言各自的库去管。
 
-use serde_json::Value as Json;
+use serde_yaml::{Mapping, Value as Yaml};
 
 pub const AGENT: &str = "agent";
 pub const HUMAN: &str = "human";
@@ -33,7 +33,7 @@ impl std::fmt::Display for DefinitionError {
 
 impl std::error::Error for DefinitionError {}
 
-pub fn text_of(value: &Json, key: &str) -> String {
+pub fn text_of(value: &Yaml, key: &str) -> String {
     value
         .get(key)
         .and_then(|v| v.as_str())
@@ -42,25 +42,26 @@ pub fn text_of(value: &Json, key: &str) -> String {
         .to_string()
 }
 
-fn unknown_fields(mapping: &serde_json::Map<String, Json>, allowed: &[&str]) -> Vec<String> {
+fn unknown_fields(mapping: &Mapping, allowed: &[&str]) -> Vec<String> {
     mapping
         .keys()
-        .filter(|key| !allowed.contains(&key.as_str()))
+        .filter_map(|key| key.as_str())
+        .filter(|key| !allowed.contains(key))
         .map(|key| key.to_string())
         .collect()
 }
 
 /// 读一份定义：不是映射、缺字段、取值不对，当场报错。`file` 只用来说话。
-pub fn validate(payload: &Json, file: &str) -> Result<(), DefinitionError> {
+pub fn validate(payload: &Yaml, file: &str) -> Result<(), DefinitionError> {
     let top = payload
-        .as_object()
+        .as_mapping()
         .ok_or_else(|| DefinitionError(format!("{file} 的顶层不是映射（name / steps）")))?;
     if text_of(payload, "name").is_empty() {
         return Err(DefinitionError(format!("{file} 少了 name")));
     }
     let steps = payload
         .get("steps")
-        .and_then(|v| v.as_array())
+        .and_then(|v| v.as_sequence())
         .filter(|items| !items.is_empty())
         .ok_or_else(|| DefinitionError(format!("{file} 少了 steps（至少一个步骤）")))?;
     let unknown = unknown_fields(top, &TOP_FIELDS);
@@ -74,7 +75,7 @@ pub fn validate(payload: &Json, file: &str) -> Result<(), DefinitionError> {
     for (index, step) in steps.iter().enumerate() {
         let position = index + 1;
         let step_map = step
-            .as_object()
+            .as_mapping()
             .ok_or_else(|| DefinitionError(format!("{file} 第 {position} 个步骤少了 name")))?;
         if text_of(step, "name").is_empty() {
             return Err(DefinitionError(format!(
@@ -99,9 +100,9 @@ pub fn validate(payload: &Json, file: &str) -> Result<(), DefinitionError> {
                 EXECUTORS.join(" 或 ")
             )));
         }
-        let criteria: &[Json] = match step.get("criteria") {
-            None | Some(Json::Null) => &[],
-            Some(Json::Array(items)) => items.as_slice(),
+        let criteria: &[Yaml] = match step.get("criteria") {
+            None | Some(Yaml::Null) => &[],
+            Some(Yaml::Sequence(items)) => items.as_slice(),
             Some(_) => {
                 return Err(DefinitionError(format!(
                     "{file} 第 {position} 个步骤的 criteria 应当是列表"
@@ -118,7 +119,7 @@ pub fn validate(payload: &Json, file: &str) -> Result<(), DefinitionError> {
                 )));
             }
             let criterion_map = criterion
-                .as_object()
+                .as_mapping()
                 .ok_or_else(|| DefinitionError(format!("{file} {place}不是映射")))?;
             let odd = unknown_fields(criterion_map, &CRITERION_FIELDS);
             if !odd.is_empty() {
@@ -179,11 +180,11 @@ pub fn validate(payload: &Json, file: &str) -> Result<(), DefinitionError> {
 /// 一个工作步骤：叫什么、做什么、谁执行、怎么算完。
 #[derive(Clone)]
 pub struct Step {
-    payload: Json,
+    payload: Yaml,
 }
 
 impl Step {
-    pub fn of(payload: Json) -> Self {
+    pub fn of(payload: Yaml) -> Self {
         Step { payload }
     }
 
@@ -208,28 +209,28 @@ impl Step {
         self.executor() == HUMAN
     }
 
-    pub fn criteria(&self) -> Vec<Json> {
+    pub fn criteria(&self) -> Vec<Yaml> {
         self.payload
             .get("criteria")
-            .and_then(|v| v.as_array())
+            .and_then(|v| v.as_sequence())
             .cloned()
             .unwrap_or_default()
     }
 
-    pub fn of_kind(&self, kind: &str) -> Vec<Json> {
+    pub fn of_kind(&self, kind: &str) -> Vec<Yaml> {
         self.criteria()
             .into_iter()
             .filter(|item| text_of(item, "executor") == kind)
             .collect()
     }
 
-    pub fn rules(&self) -> Vec<Json> {
+    pub fn rules(&self) -> Vec<Yaml> {
         self.of_kind(RULE)
     }
-    pub fn agents(&self) -> Vec<Json> {
+    pub fn agents(&self) -> Vec<Yaml> {
         self.of_kind(AGENT)
     }
-    pub fn gates(&self) -> Vec<Json> {
+    pub fn gates(&self) -> Vec<Yaml> {
         self.of_kind(HUMAN)
     }
 }
@@ -238,11 +239,11 @@ impl Step {
 #[derive(Clone)]
 pub struct Workflow {
     pub name: String,
-    pub payload: Json,
+    pub payload: Yaml,
 }
 
 impl Workflow {
-    pub fn new(name: &str, payload: Json) -> Self {
+    pub fn new(name: &str, payload: Yaml) -> Self {
         Workflow {
             name: name.to_string(),
             payload,
@@ -257,7 +258,7 @@ impl Workflow {
     pub fn steps(&self) -> Vec<Step> {
         self.payload
             .get("steps")
-            .and_then(|v| v.as_array())
+            .and_then(|v| v.as_sequence())
             .map(|items| items.iter().cloned().map(Step::of).collect())
             .unwrap_or_default()
     }
@@ -310,7 +311,7 @@ where
     for step in flow.steps() {
         for criterion in step.rules() {
             let literal = match criterion.get("path").or_else(|| criterion.get("file")) {
-                Some(Json::String(text)) => text.clone(),
+                Some(Yaml::String(text)) => text.clone(),
                 _ => continue,
             };
             if literal.contains("{{report}}")
