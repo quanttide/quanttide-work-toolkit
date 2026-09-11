@@ -65,9 +65,10 @@ jobs:
 
       - name: publish to pub.dev
         env:
-          # token 认几个常见名字：仓库或组织里叫哪个都行
-          PUB_DEV_TOKEN: ${{ secrets.PUB_DEV_TOKEN || secrets.PUB_TOKEN || secrets.PUB_CREDENTIALS || secrets.PUB_AUTH_TOKEN }}
+          # 凭证是 pub 的 credentials.json 全文，落在 pub 缓存里
+          PUBDEV_CREDENTIAL_JSON: ${{ secrets.PUBDEV_CREDENTIAL_JSON }}
         run: |
-          test -n "$PUB_DEV_TOKEN" || { echo "PUB_DEV_TOKEN secret is required" >&2; exit 1; }
-          dart pub token add https://pub.dev --env-var PUB_DEV_TOKEN
+          test -n "$PUBDEV_CREDENTIAL_JSON" || { echo "PUBDEV_CREDENTIAL_JSON secret is required" >&2; exit 1; }
+          mkdir -p "$HOME/.pub-cache"
+          printf '%s' "$PUBDEV_CREDENTIAL_JSON" > "$HOME/.pub-cache/credentials.json"
           dart pub publish --force

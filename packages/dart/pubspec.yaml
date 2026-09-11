@@ -1,6 +1,6 @@
 name: quanttide_work
 description: 量潮知识工作（quanttide-work）工具箱 Dart 包：封装知识工作领域的共享能力与领域模型，供量潮各应用与工具复用。
-version: 0.1.0-alpha.4
+version: 0.1.0-alpha.5
 homepage: https://github.com/quanttide/quanttide-work-toolkit
 repository: https://github.com/quanttide/quanttide-work-toolkit
 

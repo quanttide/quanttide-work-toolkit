@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.1.0-alpha.5] - 2026-09-12
+
+### Fixed
+
+- Dart 发布改用 `PUBDEV_CREDENTIAL_JSON` 落到 pub 缓存的 `credentials.json`（alpha.4 那一步取不到 token）
+
+
 ## [0.1.0-alpha.4] - 2026-09-12
 
 ### Fixed
