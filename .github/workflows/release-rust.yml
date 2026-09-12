@@ -30,7 +30,7 @@ jobs:
 
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          components: rustfmt, clippy
+          components: rustfmt, clippy, llvm-tools-preview
 
       - name: validate release metadata
         env:
@@ -53,8 +53,14 @@ jobs:
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
+      - run: dart pub global activate coverage
       - name: contract（两侧向量一致）
         run: sh ../../scripts/contract.sh
+
+      # 覆盖率（两侧行覆盖 ≥90%）与文档示例（每条示例都要有测试兜）
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - run: sh ../../scripts/coverage.sh
+      - run: sh ../../scripts/doc-tests.sh
 
       - run: cargo publish --dry-run --locked --registry crates-io
 
