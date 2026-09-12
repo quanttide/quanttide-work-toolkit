@@ -115,6 +115,7 @@ fn contract() {
                         .iter()
                         .map(string_list)
                         .collect(),
+                    payload: None,
                 };
                 assert_eq!(
                     outcome.to_json(),

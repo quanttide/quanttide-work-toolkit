@@ -99,6 +99,23 @@ impl Step {
         self.executor == HUMAN
     }
 
+    // 旧访问器：字段与同名方法并存，消费方不用改。
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn description(&self) -> String {
+        self.description.clone()
+    }
+
+    pub fn executor(&self) -> String {
+        self.executor.clone()
+    }
+
+    pub fn criteria(&self) -> Vec<Criterion> {
+        self.criteria.clone()
+    }
+
     pub fn rules(&self) -> Vec<Criterion> {
         self.of_kind(RULE)
     }
@@ -197,8 +214,21 @@ impl Workflow {
         })
     }
 
-    pub fn step(&self, name: &str) -> Option<&Step> {
-        self.steps.iter().find(|step| step.name == name)
+    /// 读已校验的定义（旧访问器）。`name` 由调用方给（比如文件名）。
+    pub fn new(name: &str, payload: Yaml) -> Workflow {
+        Workflow::of(name, &payload)
+    }
+
+    pub fn description(&self) -> String {
+        self.description.clone()
+    }
+
+    pub fn steps(&self) -> Vec<Step> {
+        self.steps.clone()
+    }
+
+    pub fn step(&self, name: &str) -> Option<Step> {
+        self.steps.iter().find(|step| step.name == name).cloned()
     }
 
     /// 写回定义里的字段形状。

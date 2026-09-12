@@ -8,6 +8,7 @@ pub struct Outcome {
     pub lines: Vec<String>,
     pub columns: Vec<String>,
     pub rows: Vec<Vec<String>>,
+    pub payload: Option<Json>,
 }
 
 impl Outcome {
@@ -32,6 +33,9 @@ impl Outcome {
     }
 
     pub fn to_json(&self) -> Json {
+        if let Some(payload) = &self.payload {
+            return payload.clone();
+        }
         json!({
             "ok": self.ok,
             "lines": self.lines,
