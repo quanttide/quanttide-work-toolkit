@@ -468,13 +468,13 @@ fn outcome_with_data_keeps_the_payload_and_hands_it_back_raw() {
     let payload = json!({"payload": {"name": "x"}});
     let outcome = Outcome::new(true).with_data(payload.clone());
     assert_eq!(outcome.data, Some(payload.clone()));
-    assert_eq!(outcome.data_json(), payload, "托了原文就交原文");
+    assert_eq!(outcome.to_output_json(), payload, "托了原文就交原文");
 }
 
 #[test]
 fn outcome_without_data_hands_back_the_envelope() {
     let outcome = Outcome::lines(true, vec!["走过 2 步".into()]);
-    assert_eq!(outcome.data_json(), outcome.to_json());
+    assert_eq!(outcome.to_output_json(), outcome.to_json());
     assert_eq!(
         outcome.to_json(),
         json!({"ok": true, "lines": ["走过 2 步"], "columns": [], "rows": []})
@@ -530,6 +530,20 @@ fn outcome_from_json_stringifies_row_cells() {
         outcome.rows,
         vec![vec!["1", "b", "null", "true", "{\"k\":1}"]]
     );
+}
+
+#[test]
+fn outcome_failed_and_from_stdout() {
+    let failed = Outcome::failed(vec!["未找到".into()]);
+    assert!(!failed.ok);
+    assert_eq!(failed.lines, vec!["未找到"]);
+    assert!(failed.data.is_none());
+
+    let parsed =
+        Outcome::from_stdout(r#"{"ok":false,"lines":["给一条命令"],"columns":[],"rows":[]}"#)
+            .expect("合法 JSON");
+    assert!(!parsed.ok);
+    assert_eq!(parsed.lines, vec!["给一条命令"]);
 }
 
 #[test]

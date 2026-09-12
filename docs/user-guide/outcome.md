@@ -17,7 +17,7 @@ import 'package:quanttide_work/quanttide_work.dart';   // Outcome
 - `ok`——这次成没成（**退出码怎么定是端侧的事**）
 - `lines`——给人看的那几行
 - `columns` + `rows`——同一份表格：表头与行，命令行与窗口共用
-- `data`——给窗口与脚本的那一栏（要交原文就托在这里）
+- `data`——给窗口与脚本的那一栏（要交原文就托在这里；任意 JSON，对象、数组、字符串都托得住）
 
 ## 端侧接哪一步
 
@@ -42,9 +42,9 @@ let result = Outcome::from_json(&value);      // to_json() 是它的反操作
 final result = Outcome.fromStdout(stdout);    // 命令行吐的 JSON 直接装回来
 ```
 
-## 一处语言差异（不是分歧）
+## 值语义（两端一致）
 
-Rust 的 `with_first` / `with_data` 是**拿新值**（`mut self` → `Self`），Dart 的 `withFirst` / `withData` 是**原地改**——两种语言在这件事上的写法就不同。**意思一样**：端侧组装信封，工具箱不管落盘。
+`with_first` / `with_data`（Dart `withFirst` / `withData`）都**拿新值**，不改原来那份：原信封保持不动，端侧组装信封、工具箱不管落盘。两端同一套值语义，不再有「一边原地改、一边拿新值」的差异。`to_json`（Dart `toJson`）出信封；`to_output_json`（Dart `toOutputJson`）出「要写出去的那一份」——托了原文给原文，没托给信封。两端各有 `from_stdout` / `fromStdout` 把命令行吐的 JSON 装回来。
 
 ## 端侧不做什么
 

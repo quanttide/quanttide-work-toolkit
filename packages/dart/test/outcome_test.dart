@@ -1,6 +1,6 @@
 /// 结果信封：四样与编解码。
 ///
-/// 断言对着形状与往返：缺样按空算、`data` 有才写、`dataJson` 有托给原文没托给信封。
+/// 断言对着形状与往返：缺样按空算、`data` 有才写、`toOutputJson` 有托给原文没托给信封。
 library;
 
 import 'package:quanttide_work/quanttide_work.dart';
@@ -37,21 +37,34 @@ void main() {
     });
   });
 
-  test('withFirst 添在开头、withData 托上那一栏，都返回自己', () {
+  test('withFirst 添在开头、withData 托上那一栏，都拿新值', () {
     final result = Outcome(true)
-      ..withFirst('第二句')
-      ..withFirst('第一句')
-      ..withData({'payload': 7});
+        .withFirst('第二句')
+        .withFirst('第一句')
+        .withData({'payload': 7});
 
     expect(result.lines, ['第一句', '第二句']);
     expect(result.data, {'payload': 7});
     expect(result.toJson()['data'], {'payload': 7});
-    expect(result.dataJson(), {'payload': 7});
+    expect(result.toOutputJson(), {'payload': 7});
+
+    final origin = Outcome(true);
+    expect(origin.lines, isEmpty, reason: '原信封不变（值语义）');
   });
 
-  test('dataJson：没托东西就给信封', () {
+  test('withData 收任意 JSON：数组、字符串也托得住', () {
+    final result = Outcome(true).withData(['a', 1]);
+    expect(result.data, ['a', 1]);
+    expect(result.toJson()['data'], ['a', 1]);
+
+    final text = Outcome.fromJson({'ok': true, 'data': '原文'});
+    expect(text.data, '原文');
+    expect(text.toOutputJson(), '原文');
+  });
+
+  test('toOutputJson：没托东西就给信封', () {
     final result = Outcome(false, lines: ['没成']);
-    expect(result.dataJson(), result.toJson());
+    expect(result.toOutputJson(), result.toJson());
   });
 
   test('fromJson：缺样按空算，元素照原样写成文字', () {

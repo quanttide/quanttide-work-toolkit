@@ -122,7 +122,11 @@ fn contract() {
                         })
                     })
                     .collect();
-                assert_eq!(Value::Array(got), vector["expect"], "{name}：核对回执不一样");
+                assert_eq!(
+                    Value::Array(got),
+                    vector["expect"],
+                    "{name}：核对回执不一样"
+                );
             }
             "items" => {
                 let criteria: Vec<Value> = vector["input"].as_array().cloned().unwrap_or_default();

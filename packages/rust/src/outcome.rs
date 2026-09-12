@@ -37,6 +37,15 @@ impl Outcome {
         }
     }
 
+    /// 不成：只带话。
+    pub fn failed(lines: Vec<String>) -> Self {
+        Outcome {
+            ok: false,
+            lines,
+            ..Default::default()
+        }
+    }
+
     /// 往话的开头添一句。
     pub fn with_first(mut self, line: String) -> Self {
         self.lines.insert(0, line);
@@ -63,7 +72,7 @@ impl Outcome {
     }
 
     /// 原文那一栏（`--out` 落的就是它）；没托东西就给信封。
-    pub fn data_json(&self) -> Json {
+    pub fn to_output_json(&self) -> Json {
         match &self.data {
             Some(data) => data.clone(),
             None => self.to_json(),
@@ -83,6 +92,11 @@ impl Outcome {
                 .unwrap_or_default(),
             data: value.get("data").cloned(),
         }
+    }
+
+    /// 命令行吐的 JSON 直接装回来（反操作是 [`Outcome::to_json`]）。
+    pub fn from_stdout(stdout: &str) -> serde_json::Result<Outcome> {
+        Ok(Outcome::from_json(&serde_json::from_str(stdout)?))
     }
 }
 

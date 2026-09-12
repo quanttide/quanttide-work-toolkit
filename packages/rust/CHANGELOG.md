@@ -2,6 +2,7 @@
 
 ### Changed
 
+- **破坏性**：`Outcome::data_json` 改名 `to_output_json`（行为不变：托了原文给原文，没托给信封）；补 `Outcome::failed` 与 `Outcome::from_stdout`，与 Dart 侧构造器对齐
 - **破坏性**：`Workflow::check` 不再静默跳过含运行时占位的判据：`{{report}}` / `{{journal}}` / `{{log}}` / `{{artifacts}}` 四个都跳过，并各出一条 `Finding`，其 `ok` 为 `None`（未核）；`Finding.ok` 由 `bool` 改成 `Option<bool>`。契约向量补 `check-skip`（第 12 份）
 - **破坏性**：`Workflow::of` / `Task::of` 不再收名字，改从定义 / 任务文件的 `name` 字段读（与 `from_value` 同源）；`Workflow::check` 第一参数由裸 `&str` 换成 `&RunContext`
 - `RunContext` 搬到中立件 `quanttide_work::context`（`task::RunContext` 仍可引，是再出口）：免得 `workflow` 与 `task` 互相依赖

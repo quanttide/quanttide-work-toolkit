@@ -49,6 +49,16 @@
       "note": "缺样按空算：只有 ok 也算一份结果",
       "input": { "ok": true },
       "expect": { "ok": true, "lines": [], "columns": [], "rows": [] }
+    },
+    {
+      "note": "data 是数组也托得住",
+      "input": { "ok": true, "lines": [], "columns": [], "rows": [], "data": [1, "a"] },
+      "expect": { "ok": true, "lines": [], "columns": [], "rows": [], "data": [1, "a"] }
+    },
+    {
+      "note": "data 是字符串也托得住",
+      "input": { "ok": true, "lines": [], "columns": [], "rows": [], "data": "原文" },
+      "expect": { "ok": true, "lines": [], "columns": [], "rows": [], "data": "原文" }
     }
   ]
 }
