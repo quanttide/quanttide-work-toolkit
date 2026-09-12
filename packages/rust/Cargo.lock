@@ -47,7 +47,7 @@ dependencies = [
 
 [[package]]
 name = "quanttide-work"
-version = "0.1.0-beta.1"
+version = "0.1.0-beta.2"
 dependencies = [
  "serde_json",
  "serde_yaml",
