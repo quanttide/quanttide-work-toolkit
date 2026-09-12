@@ -2,11 +2,7 @@
 ///
 /// 一条流水＝时间、步骤名、一句话、过没过。步骤名带后缀的（`·审` 审查、`·判` 机器判据）
 /// **给这一步的结论投票**；不带后缀的（重新执行一次）**把结论从头算**。
-String textOf(Object? value, String key) {
-  if (value is! Map) return '';
-  final item = value[key];
-  return item is String ? item.trim() : '';
-}
+library;
 
 /// 哪些步骤走过了。[steps] 是工作流上的步骤名，按定义顺序。
 List<String> done(List<String> steps, List<Map> events) {

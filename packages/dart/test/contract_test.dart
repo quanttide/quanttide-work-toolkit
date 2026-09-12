@@ -51,7 +51,9 @@ void main() {
             validateDefinition(input, vector['file'] as String);
           }
         case 'items':
-          final got = itemsOf((vector['input'] as List).cast<Map>())
+          final got = itemsOf(
+            (vector['input'] as List).cast<Map>().map(Criterion.fromMap),
+          )
               .map(
                 (item) => {
                   'description': item.description,

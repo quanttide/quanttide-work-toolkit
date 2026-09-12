@@ -12,7 +12,8 @@ export 'src/criteria.dart';
 export 'src/definition.dart';
 export 'src/envelope.dart';
 export 'src/prompts.dart';
-export 'src/tasklog.dart' hide textOf;
+export 'src/schema.dart';
+export 'src/tasklog.dart';
 
 /// 领域英文名。
 const String domain = 'knowledge-work';

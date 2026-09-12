@@ -1,43 +1,11 @@
 /// 工作流定义：一串有序的步骤。
 ///
-/// 定义要有固定的意义，所以字段名、取值、判据种类都由 schema 定死，不认识的字段直接报错。
+/// 字段名、取值、判据种类由 [schema] 定死，不认识的字段直接报错。
 /// 这一层只管**已经解析好的 Map / List**；YAML 怎么读进来，各语言各自的库去管。
-const String agent = 'agent';
-const String human = 'human';
-const String rule = 'rule';
-const List<String> executors = [agent, human];
-const List<String> criterionTypes = [rule, agent, human];
-const List<String> topFields = ['name', 'description', 'steps'];
-const List<String> stepFields = ['name', 'description', 'executor', 'criteria'];
-const List<String> criterionFields = [
-  'executor',
-  'description',
-  'path',
-  'absent',
-  'file',
-  'contains',
-  'run',
-];
+library;
 
-class DefinitionError implements Exception {
-  DefinitionError(this.message);
-
-  final String message;
-
-  @override
-  String toString() => message;
-}
-
-String textOf(Object? value, String key) {
-  if (value is! Map) return '';
-  final item = value[key];
-  return item is String ? item.trim() : '';
-}
-
-List<String> unknownFields(Map mapping, List<String> allowed) => mapping.keys
-    .map((key) => '$key')
-    .where((key) => !allowed.contains(key))
-    .toList();
+import 'criteria.dart';
+import 'schema.dart';
 
 /// 读一份定义：不是映射、缺字段、取值不对，当场报错。[file] 只用来说话。
 void validateDefinition(Object? payload, String file) {
@@ -167,15 +135,20 @@ class Step {
 
   bool get isHuman => executor == human;
 
-  List<Map> get criteria =>
-      (payload['criteria'] as List?)?.cast<Map>().toList() ?? const [];
+  /// 判据：从定义里的字段读出。定义已经校验过，这里只管认。
+  List<Criterion> get criteria =>
+      (payload['criteria'] as List?)
+          ?.cast<Map>()
+          .map(Criterion.fromMap)
+          .toList(growable: false) ??
+      const [];
 
-  List<Map> ofKind(String kind) =>
-      criteria.where((item) => textOf(item, 'executor') == kind).toList();
+  List<Criterion> _ofKind(String kind) =>
+      criteria.where((item) => item.executor == kind).toList(growable: false);
 
-  List<Map> get rules => ofKind(rule);
-  List<Map> get agents => ofKind(agent);
-  List<Map> get gates => ofKind(human);
+  List<Criterion> get rules => _ofKind(rule);
+  List<Criterion> get agents => _ofKind(agent);
+  List<Criterion> get gates => _ofKind(human);
 }
 
 /// 过程的编排定义：一串步骤（不含文件位置——那是各自包的事）。
@@ -235,8 +208,12 @@ List<Finding> checkWorkflow(
   final found = <Finding>[];
   for (final step in flow.steps) {
     for (final criterion in step.rules) {
-      final literal = criterion['path'] ?? criterion['file'];
-      if (literal is! String || literal.isEmpty) continue;
+      final literal = switch (criterion) {
+        PathExists(:final path) => path,
+        FileContains(:final file) => file,
+        _ => '',
+      };
+      if (literal.isEmpty) continue;
       if (literal.contains('{{report}}') ||
           literal.contains('{{journal}}') ||
           literal.contains('{{log}}')) {
@@ -255,8 +232,8 @@ List<Finding> checkWorkflow(
 
   final covered = flow.steps
       .expand((step) => step.rules)
-      .map((criterion) => criterion['contains'])
-      .whereType<String>()
+      .whereType<FileContains>()
+      .map((criterion) => criterion.contains)
       .toList();
 
   final mentioned = <String>[];

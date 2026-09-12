@@ -5,12 +5,9 @@ import 'criteria.dart';
 /// 这两段话是产品的一部分——说什么、不说什么是定死的，所以抽出来两侧共用。
 
 /// 这一步的判据清单：每条一行「谁判：说明」。
-String criteriaText(List<Map> criteria) {
+String criteriaText(Iterable<Criterion> criteria) {
   final lines = criteria
-      .map(
-        (criterion) =>
-            '- ${criterion['executor'] ?? ''}：${descriptionOf(criterion)}',
-      )
+      .map((criterion) => '- ${criterion.executor}：${criterion.text}')
       .toList();
   return lines.isEmpty ? '（这一步没有判据）' : lines.join('\n');
 }
@@ -49,7 +46,7 @@ class Facts {
 }
 
 /// 交给 AI 的那一段话。
-String promptFor(Facts facts, List<Map> criteria) =>
+String promptFor(Facts facts, Iterable<Criterion> criteria) =>
     '你在按一条工作流走一步。只做这一步，做完就停。\n\n'
     '工作区：${facts.root}\n'
     '数据仓：${facts.data}\n'
@@ -67,10 +64,10 @@ String promptFor(Facts facts, List<Map> criteria) =>
     '规矩：数据只写数据仓；工作区里只动「做什么」点名的东西。最后用一句话说明你做了什么。\n';
 
 /// 交给智能体审的那一段话：产物 + 判准，逐条回答。
-String judgePrompt(Facts facts, List<Map> criteria) {
+String judgePrompt(Facts facts, List<Criterion> criteria) {
   final listed = <String>[];
   for (var i = 0; i < criteria.length; i++) {
-    listed.add('${i + 1}. ${criteria[i]['description'] ?? ''}');
+    listed.add('${i + 1}. ${criteria[i].text}');
   }
   return '你是审查者，不是执行者。别改产物、别改判据文件。\n\n'
       '工作区：${facts.root}\n'

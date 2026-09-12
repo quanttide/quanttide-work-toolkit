@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Changed
+
+- 判据改密封类型：`path` / `absent` / `file`+`contains` / `run` 各一个子类型，`agent` / `human` 各一个；定义的字段形状不变
+- `Step.criteria` / `rules` / `agents` / `gates` 交出 `Criterion`，不再是原始 Map；`itemsOf` 吃 `Iterable<Criterion>`；`prompts` 的判据入参同步
+
+### Added
+
+- `schema.dart`：字段名、取值、判据种类与 `textOf` / `unknownFields` 单列；消掉 `definition.dart` 与 `tasklog.dart` 重复的 `textOf`（公开面不再需要 `hide`）
+
 ## [0.1.0-alpha.10] - 2026-09-12
 
 ### Fixed
