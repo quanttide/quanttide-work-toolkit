@@ -4,7 +4,7 @@
 
 use quanttide_work::executor::AGENT;
 use quanttide_work::workflow::Step;
-use quanttide_work::{criterion, outcome, paths, task, workflow};
+use quanttide_work::{criterion, outcome, paths, task, workflow, workspace};
 use serde_json::{Value, json};
 use serde_yaml::{Mapping, Value as Yaml};
 use std::fs;
@@ -55,7 +55,7 @@ fn workflow_of(steps: &Value) -> workflow::Workflow {
     }
 }
 
-/// 向量里的流水装成一件任务。
+/// 向量里的流水装成一件任务（跑工作流 `v`）。
 fn task_of(events: &Value) -> task::Task {
     let mut payload = Mapping::new();
     payload.insert(
@@ -71,6 +71,7 @@ fn task_of(events: &Value) -> task::Task {
         ),
     );
     payload.insert(Yaml::String("name".into()), Yaml::String("v".into()));
+    payload.insert(Yaml::String("workflow".into()), Yaml::String("v".into()));
     task::Task::of(&Yaml::Mapping(payload))
 }
 
@@ -100,10 +101,7 @@ fn contract() {
             "check" => {
                 let parsed = workflow::Workflow::from_value(&as_yaml(&vector["workflow"]))
                     .expect("向量里的工作流应当合法");
-                let context = task::RunContext {
-                    data: vector["context"]["data"].as_str().unwrap_or("").to_string(),
-                    ..task::RunContext::default()
-                };
+                let base = vector["base"].as_str().unwrap_or("");
                 let exists: Vec<String> = vector["exists"]
                     .as_array()
                     .cloned()
@@ -111,8 +109,10 @@ fn contract() {
                     .iter()
                     .filter_map(|value| value.as_str().map(str::to_string))
                     .collect();
-                let got: Vec<Value> = parsed
-                    .check(&context, |path| exists.iter().any(|known| known == path))
+                let got: Vec<Value> = workspace::Workspace::default()
+                    .check(&parsed, base, |path| {
+                        exists.iter().any(|known| known == path)
+                    })
                     .into_iter()
                     .map(|finding| {
                         json!({
@@ -151,26 +151,22 @@ fn contract() {
                 );
             }
             "done" => {
-                let got = task_of(&vector["events"]).done_steps(&workflow_of(&vector["steps"]));
+                let got = workspace::Workspace::of(vec![workflow_of(&vector["steps"])], Vec::new())
+                    .done_steps(&task_of(&vector["events"]));
                 assert_eq!(json!(got), vector["expect"], "{name}：走过哪几步不一样");
             }
             "section" => {
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
                     let input = case["input"].as_str().unwrap_or("");
-                    let got = workflow::looks_like_section(input);
+                    let got = workspace::looks_like_section(input);
                     assert_eq!(json!(got), case["expect"], "{name}：{input} 算不算小节名");
                 }
             }
             "artifact" => {
-                // 每一格可以自带 root / data（换目录的那几格）；不写就按向量顶层的。
-                let raw_root = vector["root"].as_str().unwrap_or("").to_string();
-                let raw_data = vector["data"].as_str().unwrap_or("").to_string();
+                // 每一格可以自带 base（换目录的那几格）；不写就按向量顶层的。
+                let fallback = vector["base"].as_str().unwrap_or("").to_string();
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
-                    let context = task::RunContext {
-                        root: case["root"].as_str().unwrap_or(&raw_root).to_string(),
-                        data: case["data"].as_str().unwrap_or(&raw_data).to_string(),
-                        workflows: String::new(),
-                    };
+                    let base = case["base"].as_str().unwrap_or(&fallback);
                     let mut payload = Mapping::new();
                     payload.insert(
                         Yaml::String("name".into()),
@@ -184,7 +180,7 @@ fn contract() {
                     let kind = case["artifact"].as_str().unwrap_or("");
                     let note = case["note"].as_str().unwrap_or("");
                     assert_eq!(
-                        task.artifact(kind, &context),
+                        workspace::Workspace::default().artifact(&task, kind, base),
                         case["expect"].as_str().unwrap_or(""),
                         "{name}：{note} 落点算得不对"
                     );
@@ -198,12 +194,12 @@ fn contract() {
                 }
             }
             "expand" => {
-                let fallback = vector["data"].as_str().unwrap_or("");
+                let fallback = vector["base"].as_str().unwrap_or("");
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
                     let input = case["input"].as_str().unwrap_or("");
-                    // 每一格可以自带 data（换目录的那几格）；不写就按向量顶层的。
-                    let data = case["data"].as_str().unwrap_or(fallback);
-                    let got = paths::expand_placeholders(input, data);
+                    // 每一格可以自带 base（换目录的那几格）；不写就按向量顶层的。
+                    let base = case["base"].as_str().unwrap_or(fallback);
+                    let got = paths::expand_placeholders(input, base);
                     assert_eq!(json!(got), case["expect"], "{name}：{input} 展开得不对");
                 }
             }

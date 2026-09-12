@@ -1,13 +1,13 @@
-//! 工作流聚合 / 定义核对：声明与判据对不对得上。
+//! 工作区聚合 / 定义核对：声明与判据对不对得上。
 //!
-//! 判据里的路径在不在、描述提到的报告小节有没有判据覆盖。
-//! 落点/占位在 `crate::paths`；这里是 `workflow --check` 的模型侧。
-//! 模型在 [`super::model`]，语法校验在 [`super::read`]。
+//! 判据里的路径在不在、描述提到的报告小节有没有判据覆盖。判据里的路径按平台给的
+//! 目录基准展开；「在不在」由调用方给——工具箱不碰文件系统。
+//! 出处：`docs/specification/process/workflow.md`·定义核对。
 
-use super::model::Workflow;
-use crate::context::RunContext;
+use super::model::Workspace;
 use crate::criterion::Criterion;
 use crate::paths::expand_placeholders;
+use crate::workflow::Workflow;
 
 /// 定义核对出来的一件事：在哪里、核的是什么、过没过。
 ///
@@ -41,17 +41,17 @@ pub fn looks_like_section(name: &str) -> bool {
         })
 }
 
-impl Workflow {
-    /// 核对这条定义：判据里的路径在不在、描述提到的小节有没有判据覆盖。
+impl Workspace {
+    /// 核对一条定义：判据里的路径在不在、描述提到的小节有没有判据覆盖。
     ///
-    /// `context` 给的是运行上下文，取它的 `data` 展开占位；`exists` 由调用方给——
+    /// `base` 是平台给的目录基准，占位按它展开；`exists` 由调用方给——
     /// 工具箱不碰文件系统。
-    pub fn check<F>(&self, context: &RunContext, exists: F) -> Vec<Finding>
+    pub fn check<F>(&self, workflow: &Workflow, base: &str, exists: F) -> Vec<Finding>
     where
         F: Fn(&str) -> bool,
     {
         let mut found: Vec<Finding> = Vec::new();
-        for step in &self.steps {
+        for step in &workflow.steps {
             for criterion in step.rules() {
                 let literal = match &criterion {
                     Criterion::PathExists { path, .. } => path.clone(),
@@ -66,7 +66,7 @@ impl Workflow {
                     });
                     continue;
                 }
-                let written = expand_placeholders(&literal, &context.data);
+                let written = expand_placeholders(&literal, base);
                 found.push(Finding {
                     where_: format!("{}·{}", step.name, literal),
                     what: format!("判据里的路径在不在：{written}"),
@@ -75,7 +75,7 @@ impl Workflow {
             }
         }
 
-        let covered: Vec<String> = self
+        let covered: Vec<String> = workflow
             .steps
             .iter()
             .flat_map(|step| step.rules())
@@ -85,7 +85,7 @@ impl Workflow {
             })
             .collect();
         let mut mentioned: Vec<String> = Vec::new();
-        for step in &self.steps {
+        for step in &workflow.steps {
             let text = step.description.clone();
             for piece in text.split("## ").skip(1) {
                 let name = piece

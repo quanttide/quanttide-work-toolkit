@@ -1,8 +1,7 @@
-/// 工作流的模型、整体语法校验与定义核对。
+/// 工作流的模型与整体语法校验。
 ///
 /// 断言对着不变量：缺 name / 缺 steps / 不认识的字段 / executor 越界 / criteria 不是
-/// 列表，报错文字都带文件名与第几个步骤；`check` 把判据里的路径与 description 提到的
-/// 小节都翻成一条条回执。
+/// 列表，报错文字都带文件名与第几个步骤。定义核对在 workspace_test.dart。
 library;
 
 import 'package:quanttide_work/quanttide_work.dart';
@@ -236,107 +235,6 @@ void main() {
         }),
         defError('demo.yaml 第 1 个步骤的 criteria 应当是列表'),
       );
-    });
-  });
-
-  group('小节名', () {
-    test('looksLikeSection：空名与超长不算', () {
-      expect(looksLikeSection(''), isFalse);
-      expect(looksLikeSection('一二三四五六七八九十壹贰叁'), isFalse);
-      expect(looksLikeSection('收尾'), isTrue);
-    });
-  });
-
-  group('定义核对', () {
-    test('looksLikeSection 先看：判据路径与 description 提到的小节都出回执', () {
-      final workflow = Workflow.fromValue({
-        'name': 'demo',
-        'steps': [
-          {
-            'name': '甲',
-            'description': '看 ## 案例 一节，再「收尾」一节、「小注」节、'
-                '「两处」两节、「[X]」节，最后 「没闭合',
-            'criteria': [
-              {'executor': 'rule', 'path': '{{artifacts}}/report/甲.md'},
-              {'executor': 'rule', 'path': '{{report}}/x.md'},
-              {'executor': 'rule', 'path': '{{journal}}/y.md'},
-              {'executor': 'rule', 'path': '{{log}}/z.md'},
-              {'executor': 'rule', 'file': 'docs/index.md', 'contains': '收尾'},
-              {'executor': 'rule', 'run': 'true'},
-            ],
-          },
-        ],
-      });
-
-      final findings = workflow.check(
-        const RunContext(data: '/w/data'),
-        (path) => path == '/w/data/artifacts/report/甲.md',
-      );
-
-      // 五条路径回执（四条运行时占位「未核」+ 一条核过）+ 四个小节回执。
-      expect(findings, hasLength(9));
-
-      final pathFindings = findings.where((f) => f.where.startsWith('甲·')).toList();
-      expect(pathFindings, hasLength(5));
-      for (var i = 0; i < 4; i++) {
-        expect(pathFindings[i].ok, isNull, reason: '运行时占位未核');
-        expect(pathFindings[i].what, contains('未核'));
-      }
-      expect(pathFindings[0].where, '甲·{{artifacts}}/report/甲.md');
-      expect(pathFindings[4].where, '甲·docs/index.md');
-      expect(pathFindings[4].what, '判据里的路径在不在：docs/index.md');
-      expect(pathFindings[4].ok, isFalse);
-
-      final sectionFindings =
-          findings.where((f) => f.where == 'description').toList();
-      expect(
-        sectionFindings.map((f) => f.what).toList(),
-        [
-          'description 提到的报告小节有没有判据覆盖：案例',
-          'description 提到的报告小节有没有判据覆盖：收尾',
-          'description 提到的报告小节有没有判据覆盖：小注',
-          'description 提到的报告小节有没有判据覆盖：两处',
-        ],
-      );
-      expect(sectionFindings.map((f) => f.ok).toList(), [false, true, false, false]);
-    });
-
-    test('判据路径带运行时占位的不核，给一条「未核」回执', () {
-      final workflow = Workflow.fromValue({
-        'name': 'demo',
-        'steps': [
-          {
-            'name': '甲',
-            'criteria': [
-              {'executor': 'rule', 'path': '{{report}}/x.md'},
-              {'executor': 'rule', 'path': '{{journal}}/y.md'},
-              {'executor': 'rule', 'path': '{{log}}/z.md'},
-              {'executor': 'rule', 'path': '{{artifacts}}/w.md'},
-            ],
-          },
-        ],
-      });
-
-      final findings = workflow.check(const RunContext(data: '/w/data'), (path) => true);
-      expect(findings, hasLength(4));
-      expect(findings.every((f) => f.ok == null), isTrue);
-      expect(findings.every((f) => f.what.contains('未核')), isTrue);
-    });
-
-    test('command 判据与没有描述的工作流不产生回执', () {
-      final workflow = Workflow.fromValue({
-        'name': 'demo',
-        'steps': [
-          {
-            'name': '甲',
-            'criteria': [
-              {'executor': 'rule', 'run': 'true'},
-            ],
-          },
-        ],
-      });
-
-      expect(workflow.check(const RunContext(data: '/w/data'), (path) => true), isEmpty);
     });
   });
 }

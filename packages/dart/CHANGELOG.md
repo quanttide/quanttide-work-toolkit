@@ -1,7 +1,16 @@
 ## [Unreleased]
 
+### Added
+
+- `workspace` 聚合（`src/workspace/`）：按规范三轴补上「场所」——`Workspace` 装装载好的定义与任务，跨着定义与现场的操作都用扩展挂上去（`WorkspaceCheck.check` / `WorkspaceArtifact.artifact` / `WorkspaceProgress.doneSteps` 等）
+
 ### Changed
 
+- **破坏性**：删掉 `RunContext`（`src/context.dart`，桶文件不再导出）。位置不进模型：落点与核对要用的目录基准改由平台当参数传进来
+- **破坏性**：`WorkflowCheck.check` 与 `looksLikeSection` 从 `workflow/` 搬到 `workspace/`；`Task.doneSteps` / `nextStep` / `stateLine` / `artifact` 从 `task/` 搬到 `workspace/`——落点与流水判定要拿工作区里装载的定义，不是任务自己能算的
+- **破坏性**：`check(workflow, base, exists)` 与 `artifact(task, kind, base)` 都多一个 `base`（平台给的目录基准）；`Task` 不再持 `context`，`toMap()` 也不再写 `root` / `data` / `workflows`
+- `expandPlaceholders(value, base)` 第二参数改名（语义：平台给的目录基准，不再是数据仓）；`stateLine` 对没有步骤的工作流改说「这条工作流没有步骤：<名>」
+- 契约向量：`artifact-location` / `expand-placeholders` 的 `data` 改 `base`，`check-skip` 的 `context` 改 `base`；落点收成单一目录基准，`artifact-location` 补「目录基准为空」一格
 - 工作流的读法归位：`workflowOf` / `stepOf` 进 `read.dart`（原 `validate.dart`），`model.dart` 的 `of` 只留一行委托；与 `criterion/{model,read}` 同形（公共 API 不变）
 - **破坏性**：`RuleKind` 枚举值与 `Criterion` 子类型同名（`path` → `pathExists`、`absent` → `pathAbsent`、`contains` → `fileContains`、`run` → `commandRun`）；线上写法走新增的 `wire`（字段名），契约不变
 - **破坏性**：`Outcome` 改为不可变——字段全 `final`，`withFirst` / `withData` 返回新的一份（与 Rust 侧值语义一致，原先原地改）；`data` 放宽成任意 JSON（`Object?`，原先只收 `Map`）；`dataJson` 改名 `toOutputJson`

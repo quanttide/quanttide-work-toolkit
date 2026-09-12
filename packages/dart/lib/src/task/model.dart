@@ -1,22 +1,19 @@
-import '../context.dart';
 import '../fields.dart';
-import '../paths.dart';
 import 'journal.dart';
 
 /// 任务聚合：工作流的一次执行实例。
 ///
 /// 指令是跑哪条工作流（[workflowName]，**按名字**引用）与从哪开工（[start]）；
-/// 状态是流水（只增不改）、闸门项、产物落点；另带这次执行的运行上下文。
-/// 任务是运行数据，不是产物——程序只维护它，不往产物里写字。
+/// 状态是流水（只增不改）、闸门项、产物声明。任务是运行数据，不是产物——
+/// 程序只维护它，不往产物里写字。任务不带位置：它在哪、产物落哪，由工作区算。
 ///
 /// 不可变：[recorded] / [withGates] 都返回新的任务，改动由调用方落盘。
-/// 「走过哪几步」从流水读出，在 `journal.dart`。
+/// 「走过哪几步」与落点在 `workspace/`。
 class Task {
   const Task({
     required this.name,
     required this.workflowName,
     this.start = '',
-    this.context = const RunContext(),
     this.journal = const [],
     this.gates = const [],
     this.artifacts = const {},
@@ -27,7 +24,6 @@ class Task {
     name: textOf(payload, 'name'),
     workflowName: textOf(payload, 'workflow'),
     start: textOf(payload, 'start'),
-    context: RunContext.of(payload),
     journal: [
       for (final event in (payload['log'] as List? ?? const []).cast<Map>())
         JournalEvent.of(event),
@@ -46,32 +42,18 @@ class Task {
   final String name;
   final String workflowName;
   final String start;
-  final RunContext context;
   final List<JournalEvent> journal;
 
   /// 等人拍板的事项。
   final List<String> gates;
 
-  /// 这次执行往哪写产物（声明写成什么就是什么，相对工作区根）。
+  /// 这次执行往哪写产物（声明写成什么就是什么，相对平台给的目录基准）。
   final Map<String, String> artifacts;
 
   /// 这种产物声明了往哪写；没声明给 null。
   String? declared(String kind) {
     final written = artifacts[kind]?.trim() ?? '';
     return written.isEmpty ? null : written;
-  }
-
-  /// 这次执行往哪写这种产物（规范「任务 / 语法」里的落点）。
-  ///
-  /// 声明了按声明的（相对工作区根）；没声明落数据仓的
-  /// `artifacts/<种类>/<任务名>.md`；流水是任务文件本身。
-  String artifact(String kind, RunContext context) {
-    if (kind == 'log') return join(context.data, 'tasks/$name.yaml');
-    final written = declared(kind);
-    if (written != null) {
-      return written.startsWith('/') ? written : join(context.root, written);
-    }
-    return join(context.data, 'artifacts/$kind/$name.md');
   }
 
   /// 记一笔流水：流水只增不改，所以返回新的任务。
@@ -84,7 +66,6 @@ class Task {
     name: name,
     workflowName: workflowName,
     start: start,
-    context: context,
     journal: [
       ...journal,
       JournalEvent(at: at, step: step, detail: detail, ok: ok),
@@ -103,7 +84,6 @@ class Task {
       name: name,
       workflowName: workflowName,
       start: start,
-      context: context,
       journal: journal,
       gates: all,
       artifacts: artifacts,
@@ -117,6 +97,5 @@ class Task {
     'log': [for (final event in journal) event.toMap()],
     'gates': gates,
     'artifacts': artifacts,
-    ...context.toMap(),
   };
 }

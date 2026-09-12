@@ -1,6 +1,6 @@
 //! 用户手册（`docs/user-guide/`）里的 Rust 示例，逐条真跑一遍。
 //!
-//! 示例里的调用原样保留；这里只补它需要的夹具（真工作流定义、任务文件、运行上下文）。
+//! 示例里的调用原样保留；这里只补它需要的夹具（真工作流定义、任务文件、目录基准）。
 //! 编号按各文件里 ```rust 代码块的出现次序。
 
 use quanttide_work::criterion::{RuleKind, criterion_of, items_of};
@@ -8,8 +8,9 @@ use quanttide_work::error::DefinitionError;
 use quanttide_work::executor::AGENT;
 use quanttide_work::outcome::Outcome;
 use quanttide_work::paths::expand_placeholders;
-use quanttide_work::task::{RunContext, Task};
+use quanttide_work::task::{JournalEvent, Task};
 use quanttide_work::workflow::{Step, Workflow};
+use quanttide_work::workspace::{Finding, Workspace, looks_like_section};
 use serde_json::{Value as Json, json};
 use serde_yaml::Value as Yaml;
 
@@ -155,67 +156,72 @@ fn doc_outcome_3() {
 // 文档：task.md #1
 #[test]
 fn doc_task_1() {
-    use quanttide_work::paths::expand_placeholders;
-    use quanttide_work::task::{JournalEvent, RunContext};
     let task = task_of("甲", json!({}));
     let _: Vec<JournalEvent> = task.journal.clone();
-    let context = RunContext::default();
-    assert_eq!(expand_placeholders("{{log}}", &context.data), "/tasks");
     assert_eq!(task.name, "甲");
 }
 
 // 文档：task.md #2
 #[test]
 fn doc_task_2() {
-    let workflow = code_implement();
-    let task = task_of(
-        "甲",
-        json!({
-            "workflow": "code-implement",
-            "log": [
-                {"at": "t1", "step": "大纲", "detail": "走了", "ok": true},
-                {"at": "t2", "step": "大纲·审", "detail": "审过", "ok": false}
-            ]
-        }),
-    );
-    let done = task.done_steps(&workflow); // 附加判定投票、重跑从头算
-    let next = task.next_step(&workflow);
-    let line = task.state_line(&workflow); // 给用户看的一句话
-    assert!(done.is_empty(), "附加判定投票把大纲否掉了");
-    assert_eq!(next, Some("大纲".to_string()));
-    assert_eq!(line, "下一步：大纲");
-}
-
-// 文档：task.md #3
-#[test]
-fn doc_task_3() {
-    let task = task_of("甲", json!({"artifacts": {"report": "data/report/甲.md"}}));
-    let payload = yaml(json!({"root": "/w", "data": "/w/data", "workflows": "/w/workflows"}));
-    let context = RunContext::of(&payload); // 三处位置
-    let place = task.artifact("report", &context); // 落点：声明了按声明的，没声明落数据仓
-    let text = expand_placeholders("{{report}}/清单.md", &context.data); // 占位展开
-    assert_eq!(context.workflows, "/w/workflows");
-    assert_eq!(place, "/w/data/report/甲.md");
-    assert_eq!(text, "/w/data/artifacts/report/清单.md");
-}
-
-// 文档：task.md #4
-#[test]
-fn doc_task_4() {
     let task = task_of("甲", json!({}));
     let after = task.recorded("2026-09-12", "outline", "走了一步", true); // at / step / detail / ok
     // 端侧：把 after 写回任务文件
     assert!(task.journal.is_empty(), "recorded 拿新值，原任务不动");
-    let event = &after.journal[0];
+    assert_eq!(after.journal.len(), 1);
+}
+
+// ---------------------------------------------------------------------------
+// workspace.md
+// ---------------------------------------------------------------------------
+
+// 文档：workspace.md #1
+#[test]
+fn doc_workspace_1() {
+    let _: Option<Finding> = None;
+    assert!(looks_like_section("收尾"));
+    let workflow = code_implement();
+    let task = task_of("甲", json!({"workflow": "code-implement"}));
+    let workspace = Workspace::of(vec![workflow], vec![task.clone()]);
+    let done = workspace.done_steps(&task); // 附加判定投票、重跑从头算
+    let next = workspace.next_step(&task);
+    let line = workspace.state_line(&task); // 给用户看的一句话
+    assert!(done.is_empty(), "还没走过");
+    assert_eq!(next, Some("大纲".to_string()));
+    assert_eq!(line, "下一步：大纲");
+}
+
+// 文档：workspace.md #2
+#[test]
+fn doc_workspace_2() {
+    let task = task_of("甲", json!({"workflow": "code-implement"}));
+    let workspace = Workspace::of(vec![code_implement()], vec![task.clone()]);
+    let place = workspace.artifact(&task, "report", "/d"); // 声明了按声明的，没声明落默认处
+    let text = expand_placeholders("{{report}}/清单.md", "/d"); // 占位展开
+    assert_eq!(place, "/d/artifacts/report/甲.md");
+    assert_eq!(text, "/d/artifacts/report/清单.md");
+}
+
+// 文档：workspace.md #3
+#[test]
+fn doc_workspace_3() {
+    let workflow = Workflow::from_value(&yaml(json!({
+        "name": "w",
+        "steps": [{
+            "name": "甲",
+            "criteria": [{"executor": "rule", "path": "/nonexistent-quanttide-work-tests/x.md"}]
+        }]
+    })))
+    .expect("合法定义");
+    let task = task_of("甲", json!({"workflow": "w"}));
+    let workspace = Workspace::of(vec![workflow.clone()], vec![task]);
+    let findings = workspace.check(&workflow, "/d", |path| std::path::Path::new(path).exists());
+    assert_eq!(findings.len(), 1);
     assert_eq!(
-        (
-            event.at.as_str(),
-            event.step.as_str(),
-            event.detail.as_str(),
-            event.ok
-        ),
-        ("2026-09-12", "outline", "走了一步", true)
+        findings[0].where_,
+        "甲·/nonexistent-quanttide-work-tests/x.md"
     );
+    assert_eq!(findings[0].ok, Some(false), "这个路径在本机不存在");
 }
 
 // ---------------------------------------------------------------------------
@@ -226,12 +232,10 @@ fn doc_task_4() {
 #[test]
 fn doc_workflow_1() {
     use quanttide_work::error::{DefinitionError, Fault, Position};
-    use quanttide_work::workflow::{Finding, Step, Workflow, looks_like_section, validate};
-    assert!(looks_like_section("收尾"));
+    use quanttide_work::workflow::{Step, Workflow, validate};
     assert!(validate(&yaml(json!({"name": "w", "steps": [{"name": "甲"}]}))).is_ok());
     let error = DefinitionError::new(Position::Top, Fault::MissingName);
     let _: &dyn std::error::Error = &error;
-    let _: Option<Finding> = None;
     let step = Step {
         name: "甲".into(),
         description: String::new(),
@@ -251,30 +255,9 @@ fn doc_workflow_2() -> Result<(), DefinitionError> {
         "description": "实现一段代码",
         "steps": [{"name": "大纲", "executor": "agent"}, {"name": "收尾", "executor": "human"}]
     }));
-    let workflow = Workflow::from_value(&payload)?; // 不合法当场 Err
+    let workflow = Workflow::from_value(&payload)?; // 定义不合法时返回 Err
     assert_eq!(workflow.step_names(), vec!["大纲", "收尾"]);
     let illegal = Workflow::from_value(&yaml(json!({"name": "w", "steps": []})));
     assert!(illegal.is_err(), "少了 steps 当场 Err");
     Ok(())
-}
-
-// 文档：workflow.md #3
-#[test]
-fn doc_workflow_3() {
-    let workflow = Workflow::from_value(&yaml(json!({
-        "name": "w",
-        "steps": [{
-            "name": "甲",
-            "criteria": [{"executor": "rule", "path": "/nonexistent-quanttide-work-tests/x.md"}]
-        }]
-    })))
-    .expect("合法定义");
-    let context = RunContext::of(&yaml(json!({"data": "/w/data"})));
-    let findings = workflow.check(&context, |path| std::path::Path::new(path).exists());
-    assert_eq!(findings.len(), 1);
-    assert_eq!(
-        findings[0].where_,
-        "甲·/nonexistent-quanttide-work-tests/x.md"
-    );
-    assert_eq!(findings[0].ok, Some(false), "这个路径在本机不存在");
 }

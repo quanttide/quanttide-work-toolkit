@@ -14,11 +14,12 @@
 | 目录 | 模型 | 分件 |
 | :-- | :-- | :-- |
 | `criterion/` | 判据 | `model.dart` 模型（`RuleKind` / `Criterion`）、`read.dart` 读法、`items.dart` 翻成「要跑什么」 |
-| `task/` | 任务 | `model.dart` 模型（`Task` 与落点）、`journal.dart` 流水（`JournalEvent` 与「走过」的判定）、`context.dart` 运行上下文 |
-| `workflow/` | 工作流 | `model.dart` 模型（`Step` / `Workflow`）、`read.dart` 读法（取值 + 语法校验）、`check.dart` 定义核对 |
+| `task/` | 任务 | `model.dart` 模型（`Task`）、`journal.dart` 流水（`JournalEvent`） |
+| `workflow/` | 工作流 | `model.dart` 模型（`Step` / `Workflow`）、`read.dart` 读法（取值 + 语法校验） |
+| `workspace/` | 工作区 | `model.dart` 模型（`Workspace`）、`check.dart` 定义核对、`artifact.dart` 落点、`progress.dart` 流水判定 |
 
 没有定义、只是常量或信封的，仍单文件：`executor.dart`、`outcome.dart`。
-横切的公件另立中立文件：`fields.dart`（读字段与字段表）、`error.dart`（`DefinitionError`）、`paths.dart`（路径拼接与占位展开）、`context.dart`（`RunContext`）——聚合只向下依赖它们。
+横切的公件另立中立文件：`fields.dart`（读字段与字段表）、`error.dart`（`DefinitionError`）、`paths.dart`（路径拼接与占位展开）——聚合只向下依赖它们。
 每个目录一个同名出口文件（`criterion/criterion.dart` 等，对应 Rust 的 `mod.rs`），只留出口。
 
 ## 一个文件只讲一件事

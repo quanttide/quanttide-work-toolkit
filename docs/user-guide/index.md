@@ -12,17 +12,18 @@
 
 界限一句话：**能两处一致的，进工具箱；只能一处有的，留端侧。**
 
-## 五个模型（这些是出口）
+## 六个模型（这些是出口）
 
 | 模型 | Rust 路径 | Dart（桶文件内同名） | 管什么 | 接入说明 |
 | :-- | :-- | :-- | :-- | :-- |
 | 判据 | `quanttide_work::criterion` | `criterion` | 判据的取值与读法、翻成「要跑什么」 | [criterion.md](criterion.md) |
-| 任务 | `quanttide_work::task` | `task` | 任务、流水与「走过」的判定、运行上下文、落点与占位展开 | [task.md](task.md) |
-| 工作流 | `quanttide_work::workflow` | `workflow` | 步骤、定义的语法与不变量、定义核对 | [workflow.md](workflow.md) |
+| 任务 | `quanttide_work::task` | `task` | 任务与流水（`JournalEvent`） | [task.md](task.md) |
+| 工作流 | `quanttide_work::workflow` | `workflow` | 步骤、定义的语法与不变量 | [workflow.md](workflow.md) |
+| 工作区 | `quanttide_work::workspace` | `workspace` | 把定义与任务系在一起：流水判定、落点、定义核对 | [workspace.md](workspace.md) |
 | 结果 | `quanttide_work::outcome` | `outcome` | 结果信封（`ok` / `lines` / `columns` / `rows` / `data`） | [outcome.md](outcome.md) |
 | 执行者 | `quanttide_work::executor` | `executor` | 三个取值常量 | [executor.md](executor.md) |
 
-目录里的**分件**（`model` / `read` / `items` / `check` / `journal` / `context`）是内部结构；横切的 `error`（`DefinitionError`）、`paths`（`expand_placeholders`）与 `context`（`RunContext`）另立中立模块，接入者用到时按名字取。
+目录里的**分件**（`model` / `read` / `items` / `journal` / `check` / `artifact` / `progress`）是内部结构；横切的 `error`（`DefinitionError`）与 `paths`（`expand_placeholders`）另立中立模块，接入者用到时按名字取。
 
 ## 各语言速查
 
@@ -44,10 +45,10 @@ Dart 只有一个入口：**桶文件** `package:quanttide_work/quanttide_work.d
 | :-- | :-- | :-- |
 | 一 | **引包**——用版本号，不用本地路径（挂本地路径不算接入） | 上面「各语言速查」+ [versioning.md](versioning.md) |
 | 二 | **读定义**——读进来顺带校验，别在端侧重写检查 | [workflow.md](workflow.md) |
-| 三 | **判流水**——走过哪几步、下一步是哪，别自己实现 | [task.md](task.md) |
+| 三 | **判流水**——走过哪几步、下一步是哪，别自己实现 | [workspace.md](workspace.md) |
 | 四 | **自己跑**——工具箱翻单，端侧真去查文件、起进程 | [criterion.md](criterion.md) |
 | 五 | **向量验收**——`sh scripts/contract.sh`，不靠自报 | [versioning.md](versioning.md) |
 
 ## 这一篇怎么分的
 
-照代码的模块划分：**一个模型一件**（`criterion` / `task` / `workflow` / `outcome` / `executor`），与 `packages/rust/src/`、`packages/dart/lib/src/` 的目录一一对应；不属于任何模型的横切纪律（版本与对齐）另立一件。入口（本文件）只管总则、货架与动线，不装模型细节。
+照代码的模块划分：**一个模型一件**（`criterion` / `task` / `workflow` / `workspace` / `outcome` / `executor`），与 `packages/rust/src/`、`packages/dart/lib/src/` 的目录一一对应；不属于任何模型的横切纪律（版本与对齐）另立一件。入口（本文件）只管总则、货架与动线，不装模型细节。

@@ -113,6 +113,8 @@ cd ../.. && sh scripts/contract.sh
 
 **一处与原文的偏差（已改齐）**：约定文件落在 `src/CONVENTIONS.md`（与 cli 同路子），TODO 原先写的是包根
 
+**后续（issue #2）**：按规范三轴补上「场所」——新增 `workspace/`（模型 + 定义核对 + 落点 + 流水判定），`RunContext` 退出工具箱（位置不进模型，目录基准当参数传）。详见 `CHANGELOG.md`「Unreleased」与 [issue #2](https://github.com/quanttide/quanttide-work-toolkit/issues/2)。
+
 ## 边界外（越界但相关，需要你拍板）
 
 1. **三个空壳语言怎么办**（收益第五条）：摘掉发布线，还是补齐实现？

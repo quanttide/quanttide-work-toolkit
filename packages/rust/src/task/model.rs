@@ -1,18 +1,15 @@
 //! 任务聚合 / 模型：工作流的一次执行实例。
 //!
 //! 指令是跑哪条工作流（`workflow_name`，**按名字**引用）与从哪开工（`start`）；
-//! 状态是流水（只增不改）、闸门项、产物落点；另带这次执行的运行上下文。
-//! 任务是运行数据，不是产物——程序只维护它，不往产物里写字。
+//! 状态是流水（只增不改）、闸门项、产物声明。任务是运行数据，不是产物——
+//! 程序只维护它，不往产物里写字。任务不带位置：它在哪、产物落哪，由工作区算。
 //!
 //! 不可变：`recorded` / `with_gates` 都返回新的任务，改动由调用方落盘。
-//! 「走过哪几步」从流水读出，在 [`super::journal`]；运行上下文在 [`super::context`]。
-//! 落点在 `artifact`；占位展开在中立的 `crate::paths`。
+//! 「走过哪几步」与落点在 [`crate::workspace`]；占位展开在中立的 `crate::paths`。
 //! 出处：`docs/specification/process/task.md`·语法。
 
 use super::journal::JournalEvent;
-use crate::context::RunContext;
 use crate::fields::text_of;
-use crate::paths::join;
 use serde_yaml::{Mapping, Value as Yaml};
 use std::collections::BTreeMap;
 
@@ -22,11 +19,10 @@ pub struct Task {
     pub name: String,
     pub workflow_name: String,
     pub start: String,
-    pub context: RunContext,
     pub journal: Vec<JournalEvent>,
     /// 等人拍板的事项。
     pub gates: Vec<String>,
-    /// 这次执行往哪写产物（声明写成什么就是什么，相对工作区根）。
+    /// 这次执行往哪写产物（声明写成什么就是什么，相对平台给的目录基准）。
     pub artifacts: BTreeMap<String, String>,
 }
 
@@ -64,7 +60,6 @@ impl Task {
             name: text_of(payload, "name"),
             workflow_name: text_of(payload, "workflow"),
             start: text_of(payload, "start"),
-            context: RunContext::of(payload),
             journal,
             gates,
             artifacts,
@@ -79,24 +74,6 @@ impl Task {
         } else {
             Some(written.to_string())
         }
-    }
-
-    /// 这次执行往哪写这种产物（规范「任务 / 语法」里的落点）。
-    ///
-    /// 声明了按声明的（相对工作区根）；没声明落数据仓的
-    /// `artifacts/<种类>/<任务名>.md`；流水是任务文件本身。
-    pub fn artifact(&self, kind: &str, context: &RunContext) -> String {
-        if kind == "log" {
-            return join(&context.data, &format!("tasks/{}.yaml", self.name));
-        }
-        if let Some(written) = self.declared(kind) {
-            return if written.starts_with('/') {
-                written
-            } else {
-                join(&context.root, &written)
-            };
-        }
-        join(&context.data, &format!("artifacts/{kind}/{}.md", self.name))
     }
 
     /// 记一笔流水：流水只增不改，所以返回新的任务。
@@ -152,11 +129,6 @@ impl Task {
             artifacts.insert(Yaml::String(key.clone()), Yaml::String(value.clone()));
         }
         map.insert(Yaml::String("artifacts".into()), Yaml::Mapping(artifacts));
-        if let Yaml::Mapping(context) = self.context.to_yaml() {
-            for (key, value) in context {
-                map.insert(key, value);
-            }
-        }
         Yaml::Mapping(map)
     }
 }

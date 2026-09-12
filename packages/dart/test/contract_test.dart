@@ -33,7 +33,7 @@ Workflow workflowOf(Object? steps) => Workflow(
   steps: [for (final name in (steps as List).cast<String>()) Step(name: name)],
 );
 
-/// 向量里的流水装成一件任务。
+/// 向量里的流水装成一件任务（跑工作流 `v`）。
 Task taskOf(Object? events) => Task(
   name: 'v',
   workflowName: 'v',
@@ -49,12 +49,9 @@ void main() {
       switch (vector['kind']) {
         case 'check':
           final parsed = Workflow.fromValue(vector['workflow']);
-          final context = RunContext(
-            data: (vector['context'] as Map)['data'] as String? ?? '',
-          );
           final exists = (vector['exists'] as List? ?? const []).cast<String>();
-          final got = parsed
-              .check(context, (path) => exists.contains(path))
+          final got = const Workspace()
+              .check(parsed, vector['base'] as String? ?? '', exists.contains)
               .map((f) => {'where': f.where, 'what': f.what, 'ok': f.ok})
               .toList();
           expect(got, vector['expect'], reason: '$name：核对回执不一样');
@@ -92,7 +89,7 @@ void main() {
         case 'done':
           final task = taskOf(vector['events']);
           expect(
-            task.doneSteps(workflowOf(vector['steps'])),
+            Workspace.of([workflowOf(vector['steps'])], const []).doneSteps(task),
             vector['expect'],
             reason: '$name：走过哪几步不一样',
           );
@@ -105,15 +102,15 @@ void main() {
             );
           }
         case 'artifact':
-          // 每一格可以自带 root / data（换目录的那几格）；不写就按向量顶层的。
+          // 每一格可以自带 base（换目录的那几格）；不写就按向量顶层的。
           for (final c in (vector['cases'] as List).cast<Map>()) {
-            final context = RunContext(
-              root: (c['root'] ?? vector['root']) as String,
-              data: (c['data'] ?? vector['data']) as String,
-            );
             final task = Task.of({'name': c['name'], 'artifacts': c['artifacts']});
             expect(
-              task.artifact('${c['artifact']}', context),
+              const Workspace().artifact(
+                task,
+                '${c['artifact']}',
+                (c['base'] ?? vector['base']) as String,
+              ),
               c['expect'],
               reason: '$name：${c['note']} 落点算得不对',
             );
@@ -133,8 +130,8 @@ void main() {
             expect(
               expandPlaceholders(
                 c['input'] as String,
-                // 每一格可以自带 data（换目录的那几格）；不写就按向量顶层的。
-                (c['data'] ?? vector['data']) as String,
+                // 每一格可以自带 base（换目录的那几格）；不写就按向量顶层的。
+                (c['base'] ?? vector['base']) as String,
               ),
               c['expect'],
               reason: '$name：${c['input']} 展开得不对',

@@ -1,56 +1,24 @@
 # task · 任务
 
-任务是**工作流的一次执行实例**：跑哪条工作流 + 流水（只增不改）+ 闸门项 + 产物落点 + 这次执行的运行上下文。
+任务是**工作流的一次执行实例**：跑哪条工作流 + 流水（只增不改）+ 闸门项 + 产物声明。任务不带位置——它在哪、产物落哪，由工作区算（见 [workspace.md](workspace.md)）。
 
 ## 工具箱管什么
 
 - 任务模型：`Task::of` / `Task.of` 读进来——**不校验**（任务文件没有语法好查；有语法可查的是定义，见 [workflow.md](workflow.md)）
-- 流水与「走过」的判定：哪些步骤走过了、下一步是哪、给用户看的一句话
-- 运行上下文：三处位置（`RunContext`）
-- 落点与占位：产物落在哪、占位怎么展开
+- 流水：`JournalEvent` 记什么时候、哪一步、一句话、过没过
+- 产物声明：`declared` 读这次执行往哪写这种产物
 
 ```rust
-use quanttide_work::paths::expand_placeholders;
-use quanttide_work::task::{JournalEvent, RunContext, Task};
+use quanttide_work::task::{JournalEvent, Task};
 ```
 
 ```dart
-import 'package:quanttide_work/quanttide_work.dart';   // Task / JournalEvent / RunContext / expandPlaceholders
+import 'package:quanttide_work/quanttide_work.dart';   // Task / JournalEvent
 ```
 
 ## 端侧接哪一步
 
-**第三步「判流水」**：
-
-```rust
-let done = task.done_steps(&workflow);      // 附加判定投票、重跑从头算
-let next = task.next_step(&workflow);
-let line = task.state_line(&workflow);      // 给用户看的一句话
-```
-
-```dart
-final done = task.doneSteps(workflow);
-final next = task.nextStep(workflow);
-final line = task.stateLine(workflow);
-```
-
-落点、占位与上下文：
-
-```rust
-let context = RunContext::of(&payload);                  // 三处位置
-let place = task.artifact("report", &context);           // 落点：声明了按声明的，没声明落数据仓
-let text = expand_placeholders("{{report}}/清单.md", &context.data);   // 占位展开
-```
-
-```dart
-final context = RunContext.of(payload);
-final place = task.artifact('report', context);
-final text = expandPlaceholders('{{report}}/清单.md', context.data);
-```
-
-占位只有四个：`{{artifacts}}`、`{{report}}`、`{{journal}}`、`{{log}}`；第二个参数给的是**数据目录**（`context.data`），展开成 `<数据目录>/artifacts/...`。
-
-目录怎么写都行——**末尾斜杠与重复斜杠不用管**：`/d/`、`/d//` 都当 `/d` 用（相对目录按原样接，空串与 `/` 等价）。这是规范定的，工具箱在**拼的那一处**统一处理（`docs/specification/process/task.md`·落点），你不需要在端侧自己 trim。
+「走过哪几步」「产物落哪」跨着任务与定义、要拿平台给的目录，是**工作区**的操作——见 [workspace.md](workspace.md)。任务模型只回答「这次执行是哪条工作流、流水里记了什么、产物声明成什么」。
 
 ## 只读对齐（这条最容易踩）
 
@@ -65,10 +33,9 @@ let after = task.recorded("2026-09-12", "outline", "走了一步", true);   // a
 final after = task.recorded(at: '2026-09-12', step: 'outline', detail: '走了一步', ok: true);
 ```
 
-> 端侧**可以**包一层（命令行就是这么做的：把自己的三处位置记在包装类型里，对外只暴露 `artifact(kind)`）——但**算法仍在工具箱**，包一层只是让调用点顺手。
-
 ## 端侧不做什么
 
-- **不自己实现「走过」的算法**——附加判定投票、重跑从头算，正本在工具箱
-- **不自己拼产物落点**——声明了按声明的、没声明落数据仓的规矩在工具箱
+- **不自己实现「走过」的算法**——附加判定投票、重跑从头算，正本在工作区
+- **不自己拼产物落点**——声明了按声明的、没声明落默认处的规矩在工作区
 - **不改任务文件**——工具箱只算，写是你的事
+- **不把位置塞进任务**——任务只装内容，目录由你在调用时传进来

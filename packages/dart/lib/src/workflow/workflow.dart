@@ -1,6 +1,7 @@
-/// 工作流聚合：模型、整体校验、定义核对。
+/// 工作流聚合：模型、读法。
+///
+/// 定义核对（`check`）是跨着定义与工作区的操作，在 `workspace/`。
 library;
 
-export 'check.dart';
 export 'model.dart';
 export 'read.dart';

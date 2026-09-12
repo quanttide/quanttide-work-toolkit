@@ -1,26 +1,47 @@
 {
   "kind": "check",
-  "context": {
-    "data": "/w/data"
-  },
+  "base": "/w/data",
   "workflow": {
     "name": "demo",
     "steps": [
       {
         "name": "甲",
         "criteria": [
-          {"executor": "rule", "path": "{{report}}/x.md"},
-          {"executor": "rule", "path": "{{journal}}/y.md"},
-          {"executor": "rule", "path": "{{log}}/z.md"},
-          {"executor": "rule", "path": "{{artifacts}}/w.md"},
-          {"executor": "rule", "path": "/w/data/seen.md"},
-          {"executor": "rule", "path": "/w/data/gone.md"},
-          {"executor": "rule", "run": "true"}
+          {
+            "executor": "rule",
+            "path": "{{report}}/x.md"
+          },
+          {
+            "executor": "rule",
+            "path": "{{journal}}/y.md"
+          },
+          {
+            "executor": "rule",
+            "path": "{{log}}/z.md"
+          },
+          {
+            "executor": "rule",
+            "path": "{{artifacts}}/w.md"
+          },
+          {
+            "executor": "rule",
+            "path": "/w/data/seen.md"
+          },
+          {
+            "executor": "rule",
+            "path": "/w/data/gone.md"
+          },
+          {
+            "executor": "rule",
+            "run": "true"
+          }
         ]
       }
     ]
   },
-  "exists": ["/w/data/seen.md"],
+  "exists": [
+    "/w/data/seen.md"
+  ],
   "expect": [
     {
       "where": "甲·{{report}}/x.md",

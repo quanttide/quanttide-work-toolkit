@@ -1,6 +1,6 @@
-//! 路径：目录与剩下的路径相接，占位展开到数据仓。
+//! 路径：目录与剩下的路径相接，占位展开到平台给的目录。
 //!
-//! 中立处：`task`（落点）与 `workflow`（定义核对）都向它对齐。
+//! 中立处：`workspace`（落点、定义核对）向它对齐。
 
 /// 拼目录与剩下的路径：末尾斜杠忽略、重复斜杠折叠（`/` 与空串等价——都落在根）。
 ///
@@ -22,11 +22,11 @@ pub(crate) fn join(dir: &str, rest: &str) -> String {
     format!("{}/{rest}", clean.trim_end_matches('/'))
 }
 
-/// 判据里的占位先按数据仓展开（够核对用）。
-pub fn expand_placeholders(value: &str, data: &str) -> String {
+/// 判据里的占位按平台给的目录基准展开（够核对用）。
+pub fn expand_placeholders(value: &str, base: &str) -> String {
     value
-        .replace("{{artifacts}}", &join(data, "artifacts"))
-        .replace("{{report}}", &join(data, "artifacts/report"))
-        .replace("{{journal}}", &join(data, "artifacts/journal"))
-        .replace("{{log}}", &join(data, "tasks"))
+        .replace("{{artifacts}}", &join(base, "artifacts"))
+        .replace("{{report}}", &join(base, "artifacts/report"))
+        .replace("{{journal}}", &join(base, "artifacts/journal"))
+        .replace("{{log}}", &join(base, "tasks"))
 }

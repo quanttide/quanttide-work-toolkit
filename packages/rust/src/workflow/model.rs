@@ -1,7 +1,7 @@
 //! 工作流聚合：一串有序的步骤。
 //!
-//! 本文件只装模型——从定义里读与校验在 [`super::read`]，
-//! 定义核对（[`Workflow::check`]）在 [`super::check`]。
+//! 本文件只装模型——从定义里读与校验在 [`super::read`]；
+//! 定义核对是跨着工作区的操作，在 `crate::workspace`。
 //! 规矩的出处是 `docs/specification/process/workflow.md`·语法。
 //!
 //! 模型不可变：[`Workflow::from_value`] 读进来顺带校验，[`Workflow::of`] 读已经校验过的，

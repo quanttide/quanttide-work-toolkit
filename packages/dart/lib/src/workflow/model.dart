@@ -4,12 +4,12 @@ import 'read.dart';
 
 /// 工作流聚合：一串有序的步骤。
 ///
-/// 本文件只装模型——从定义里读与校验在 `read.dart`。
+/// 本文件只装模型——从定义里读与校验在 `read.dart`；
+/// 定义核对是跨着工作区的操作，在 `workspace/`。
 /// 规矩的出处是 `docs/specification/process/workflow.md`·语法。
 ///
 /// 模型不可变：[Workflow.fromValue] 读进来顺带校验，[Workflow.of] 读已经校验过的，
 /// [toMap] 写成同样的字段形状。YAML 怎么读写是各语言自己的事。
-/// 定义核对（[Workflow.check]）在 `check.dart`。
 class Workflow {
   const Workflow({
     required this.name,

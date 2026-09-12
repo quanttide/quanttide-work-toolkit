@@ -1,6 +1,6 @@
 {
   "kind": "expand",
-  "data": "/d",
+  "base": "/d",
   "cases": [
     {
       "input": "{{report}}/x.md",
@@ -19,22 +19,22 @@
       "expect": "/d/artifacts/y"
     },
     {
-      "data": "/d/",
+      "base": "/d/",
       "input": "{{report}}/x.md",
       "expect": "/d/artifacts/report/x.md"
     },
     {
-      "data": "/d//",
+      "base": "/d//",
       "input": "{{journal}}",
       "expect": "/d/artifacts/journal"
     },
     {
-      "data": "",
+      "base": "",
       "input": "{{log}}",
       "expect": "/tasks"
     },
     {
-      "data": "rel",
+      "base": "rel",
       "input": "{{log}}",
       "expect": "rel/tasks"
     }

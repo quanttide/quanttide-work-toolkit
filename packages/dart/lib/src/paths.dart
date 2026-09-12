@@ -1,6 +1,6 @@
-/// 路径：目录与剩下的路径相接，占位展开到数据仓。
+/// 路径：目录与剩下的路径相接，占位展开到平台给的目录。
 ///
-/// 中立处：`task`（落点）与 `workflow`（定义核对）都向它对齐。
+/// 中立处：`workspace`（落点、定义核对）向它对齐。
 library;
 
 /// 拼目录与剩下的路径：末尾斜杠忽略、重复斜杠折叠（`/` 与空串等价——都落在根）。
@@ -25,9 +25,9 @@ String join(String dir, String rest) {
   return '$head/$rest';
 }
 
-/// 判据里的占位先按数据仓展开（够核对用）。
-String expandPlaceholders(String value, String data) => value
-    .replaceAll('{{artifacts}}', join(data, 'artifacts'))
-    .replaceAll('{{report}}', join(data, 'artifacts/report'))
-    .replaceAll('{{journal}}', join(data, 'artifacts/journal'))
-    .replaceAll('{{log}}', join(data, 'tasks'));
+/// 判据里的占位按平台给的目录基准展开（够核对用）。
+String expandPlaceholders(String value, String base) => value
+    .replaceAll('{{artifacts}}', join(base, 'artifacts'))
+    .replaceAll('{{report}}', join(base, 'artifacts/report'))
+    .replaceAll('{{journal}}', join(base, 'artifacts/journal'))
+    .replaceAll('{{log}}', join(base, 'tasks'));

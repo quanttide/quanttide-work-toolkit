@@ -1,7 +1,16 @@
 ## [Unreleased]
 
+### Added
+
+- `workspace` 聚合（`quanttide_work::workspace`）：按规范三轴补上「场所」——`Workspace` 装装载好的定义与任务，跨着定义与现场的操作都归它（`Workspace::of` / `workflow` / `task`）
+
 ### Changed
 
+- **破坏性**：删掉 `RunContext`（`quanttide_work::context`）。位置不进模型：落点与核对要用的目录基准改由平台当参数传进来
+- **破坏性**：`Workflow::check` 与 `looks_like_section` 从 `workflow` 搬到 `workspace`；`Task::artifact` / `Task::done_steps` / `Task::next_step` / `Task::state_line` 从 `task` 搬到 `workspace`——落点与流水判定要拿工作区里装载的定义，不是任务自己能算的
+- **破坏性**：`Workspace::artifact(&task, kind, base)` 与 `Workspace::check(&workflow, base, exists)` 都多一个 `base`（平台给的目录基准）；`Task` 不再持 `context`，写回时也不再往顶层写 `root` / `data` / `workflows`
+- `paths::expand_placeholders(value, base)` 第二参数改名（语义：平台给的目录基准，不再是数据仓）；`state_line` 对没有步骤的工作流改说「这条工作流没有步骤：<名>」
+- 契约向量：`artifact-location` / `expand-placeholders` 的 `data` 改 `base`，`check-skip` 的 `context` 改 `base`；落点收成单一目录基准，`artifact-location` 补「目录基准为空」一格
 - 工作流的读法归位：`of` / `Step::of` 从 `model` 挪进 `read`（原 `validate`），`model` 只装模型；与 `criterion/{model,read}` 同形（不改行为，公共 API 不变）
 - **破坏性**：`RuleKind` 变体改名，与 `Criterion` 的四个变体同名同义（`Path` → `PathExists`、`Absent` → `PathAbsent`、`Contains` → `FileContains`、`Run` → `CommandRun`）；线上写法由新增的 `as_str()` 固定成字段名（`path` / `absent` / `contains` / `run`），契约不变
 - **破坏性**：`Outcome::data_json` 改名 `to_output_json`（行为不变：托了原文给原文，没托给信封）；补 `Outcome::failed` 与 `Outcome::from_stdout`，与 Dart 侧构造器对齐

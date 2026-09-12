@@ -1,9 +1,8 @@
-//! 工作流：模型读写、整体校验、定义核对（路径在不在、description 提到的小节有没有覆盖）。
+//! 工作流：模型读写与整体校验。
 
 use quanttide_work::error::DefinitionError;
 use quanttide_work::executor::AGENT;
-use quanttide_work::task::RunContext;
-use quanttide_work::workflow::{Finding, Step, Workflow, looks_like_section, validate};
+use quanttide_work::workflow::{Step, Workflow, validate};
 use serde_json::{Value as Json, json};
 use serde_yaml::Value as Yaml;
 
@@ -11,25 +10,9 @@ fn yaml(value: Json) -> Yaml {
     serde_yaml::to_value(value).expect("JSON 装成 YAML 值")
 }
 
-/// 造一个只带数据仓的上下文。
-fn context(data: &str) -> RunContext {
-    RunContext {
-        data: data.to_string(),
-        ..RunContext::default()
-    }
-}
-
 /// 用 `validate` 读一份定义，取它该报的错。
 fn validate_err(value: Json, file: &str) -> String {
     validate(&yaml(value)).expect_err("应当报错").message(file)
-}
-
-/// 核对结果里 description 提到的小节名有没有被覆盖。
-fn section_ok(findings: &[Finding], name: &str) -> Option<bool> {
-    findings
-        .iter()
-        .find(|finding| finding.what.ends_with(name))
-        .and_then(|finding| finding.ok)
 }
 
 // ---------------------------------------------------------------------------
@@ -305,125 +288,5 @@ fn workflow_to_yaml_without_description_still_lists_steps() {
             .and_then(Yaml::as_sequence)
             .map(Vec::len),
         Some(0)
-    );
-}
-
-// ---------------------------------------------------------------------------
-// workflow::check
-// ---------------------------------------------------------------------------
-
-#[test]
-fn looks_like_section_rejects_non_names() {
-    assert!(looks_like_section("收尾"));
-    assert!(!looks_like_section(""), "空名不算");
-    assert!(
-        !looks_like_section("这是一个超过十二个字的报告小节名字"),
-        "太长不算"
-    );
-    for odd in ["<标题>", "a_b", "`代号`", "A>B"] {
-        assert!(!looks_like_section(odd), "{odd} 不算小节名");
-    }
-}
-
-#[test]
-fn check_reports_paths_and_sections() {
-    let workflow = Workflow::from_value(&yaml(json!({
-        "name": "code-implement",
-        "steps": [{
-            "name": "甲",
-            "description": "交一份带 ## 收尾 的报告，并按「结论」一节写清楚",
-            "criteria": [
-                {"executor": "rule", "path": "/w/seen.md"},
-                {"executor": "rule", "file": "report.md", "contains": "收尾"}
-            ]
-        }]
-    })))
-    .expect("合法定义");
-
-    let findings = workflow.check(&context("/w"), |path| path == "/w/seen.md");
-
-    let path_finding = findings
-        .iter()
-        .find(|finding| finding.what.starts_with("判据里的路径在不在"))
-        .expect("路径判据应当出一条核对");
-    assert_eq!(path_finding.where_, "甲·/w/seen.md");
-    assert_eq!(path_finding.what, "判据里的路径在不在：/w/seen.md");
-    assert_eq!(path_finding.ok, Some(true));
-
-    assert_eq!(
-        section_ok(&findings, "收尾"),
-        Some(true),
-        "contains 覆盖了收尾"
-    );
-    assert_eq!(
-        section_ok(&findings, "结论"),
-        Some(false),
-        "没人写结论的判据"
-    );
-}
-
-#[test]
-fn check_marks_runtime_placeholders_unchecked() {
-    let workflow = Workflow::from_value(&yaml(json!({
-        "name": "w",
-        "steps": [{
-            "name": "甲",
-            "criteria": [
-                {"executor": "rule", "path": "{{report}}/x.md"},
-                {"executor": "rule", "path": "{{journal}}/y.md"},
-                {"executor": "rule", "path": "{{log}}/z.yaml"},
-                {"executor": "rule", "path": "{{artifacts}}/w.md"},
-                {"executor": "rule", "absent": "gone.md"},
-                {"executor": "rule", "run": "true"},
-                {"executor": "agent", "description": "写干净了"},
-                {"executor": "human", "description": "人拍板"}
-            ]
-        }]
-    })))
-    .expect("合法定义");
-
-    let findings = workflow.check(&context("/d"), |_| true);
-    assert_eq!(
-        findings.len(),
-        4,
-        "四个运行时占位各出一条「未核」；不查的判法不出核对项：{findings:?}"
-    );
-    assert!(
-        findings.iter().all(|finding| finding.ok.is_none()),
-        "运行时占位一律「未核」"
-    );
-    assert!(
-        findings.iter().all(|finding| finding.what.contains("未核")),
-        "「未核」要写在回执里，不静默丢掉：{findings:?}"
-    );
-}
-
-#[test]
-fn check_dedupes_section_mentions_and_ignores_unclosed_ones() {
-    let workflow = Workflow::from_value(
-        &yaml(json!({
-            "name": "w",
-            "steps": [{
-                "name": "甲",
-                "description": "先写「结论」节，再写「结论」两节，最后「收尾」一节；未闭合的「半句和 ## 版本",
-                "criteria": [
-                    {"executor": "rule", "path": "a.md"},
-                    {"executor": "rule", "file": "b.md", "contains": "结论"}
-                ]
-            }]
-        })))
-    .expect("合法定义");
-
-    let findings = workflow.check(&context("/d"), |_| true);
-    assert_eq!(section_ok(&findings, "结论"), Some(true));
-    assert_eq!(section_ok(&findings, "收尾"), Some(false));
-    assert_eq!(section_ok(&findings, "半句和"), None, "没闭合的「不往后认");
-    assert_eq!(
-        findings
-            .iter()
-            .filter(|finding| finding.what.ends_with("结论"))
-            .count(),
-        1,
-        "同一个小节只出一条"
     );
 }

@@ -1,36 +1,35 @@
 {
   "kind": "artifact",
-  "note": "产物落点：声明了按声明的（相对工作区根记成绝对），没声明落数据仓的 artifacts/<种类>/<任务名>.md；流水是任务文件本身。",
-  "root": "/w",
-  "data": "/w/data",
+  "note": "产物落点：声明了按声明的（相对平台给的目录基准）；没声明落 artifacts/<种类>/<任务名>.md；流水是任务文件本身。任务不写自己在哪。",
+  "base": "/d",
   "cases": [
     {
-      "note": "没声明：报告落数据仓的草稿处",
+      "note": "没声明：报告落默认处",
       "name": "甲",
       "artifacts": {},
       "artifact": "report",
-      "expect": "/w/data/artifacts/report/甲.md"
+      "expect": "/d/artifacts/report/甲.md"
     },
     {
-      "note": "没声明：日志同样落草稿处",
+      "note": "没声明：日志同样落默认处",
       "name": "甲",
       "artifacts": {},
       "artifact": "journal",
-      "expect": "/w/data/artifacts/journal/甲.md"
+      "expect": "/d/artifacts/journal/甲.md"
     },
     {
       "note": "流水就是任务文件本身，与声明无关",
       "name": "甲",
-      "artifacts": { "log": "data/other.md" },
+      "artifacts": { "log": "other.md" },
       "artifact": "log",
-      "expect": "/w/data/tasks/甲.yaml"
+      "expect": "/d/tasks/甲.yaml"
     },
     {
-      "note": "声明了：相对工作区根，记成绝对",
+      "note": "声明了相对路径：接在目录基准之后",
       "name": "甲",
-      "artifacts": { "report": "data/report/甲.md" },
+      "artifacts": { "report": "report/甲.md" },
       "artifact": "report",
-      "expect": "/w/data/report/甲.md"
+      "expect": "/d/report/甲.md"
     },
     {
       "note": "声明了绝对路径：原样",
@@ -44,31 +43,31 @@
       "name": "甲",
       "artifacts": { "report": "  " },
       "artifact": "report",
-      "expect": "/w/data/artifacts/report/甲.md"
+      "expect": "/d/artifacts/report/甲.md"
     },
     {
-      "note": "数据目录带尾斜杠：同一个落点",
-      "data": "/w/data/",
+      "note": "目录基准带尾斜杠：同一个落点",
+      "base": "/d/",
       "name": "甲",
       "artifacts": {},
       "artifact": "report",
-      "expect": "/w/data/artifacts/report/甲.md"
+      "expect": "/d/artifacts/report/甲.md"
     },
     {
-      "note": "数据目录重复斜杠：折叠后同一个落点",
-      "data": "/w/data//",
+      "note": "目录基准重复斜杠：折叠后同一个落点",
+      "base": "/d//",
       "name": "甲",
       "artifacts": {},
       "artifact": "report",
-      "expect": "/w/data/artifacts/report/甲.md"
+      "expect": "/d/artifacts/report/甲.md"
     },
     {
-      "note": "工作区根带尾斜杠：声明的相对路径仍接得对",
-      "root": "/w/",
+      "note": "目录基准为空：拼出来是绝对路径",
+      "base": "",
       "name": "甲",
-      "artifacts": { "report": "data/report/甲.md" },
+      "artifacts": {},
       "artifact": "report",
-      "expect": "/w/data/report/甲.md"
+      "expect": "/artifacts/report/甲.md"
     }
   ]
 }
