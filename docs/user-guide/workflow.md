@@ -1,12 +1,12 @@
 # workflow · 工作流
 
-工作流是一串有序的步骤，是数据不是代码——加一条流程不改程序。
+工作流以数据形式定义，由一串有序的步骤组成；新增流程不需要修改程序。
 
 ## 工具箱管什么
 
-- 定义的语法与不变量：字段名、取值、判据种类——不认识、缺了、越界，当场报错
+- 定义的语法与不变量：字段名、取值、判据种类；出现未知字段、缺失字段或越界取值时立即报错
 - 步骤与工作流的模型（`Step` / `Workflow`）
-- 定义核对：判据里的路径在不在、描述提到的小节有没有判据覆盖（出 `Finding`）
+- 定义核对：判据引用的路径是否存在、描述中提及的小节是否都有判据覆盖；结果以 `Finding` 返回
 
 ```rust
 use quanttide_work::workflow::{looks_like_section, validate, DefinitionError, Finding, Step, Workflow};
@@ -18,23 +18,23 @@ import 'package:quanttide_work/quanttide_work.dart';   // Workflow / Step / Defi
 
 ## 端侧接哪一步
 
-**第二步「读定义」**——读进来顺带校验：
+**第二步「读定义」**：读取定义时同步完成校验。
 
 ```rust
-let workflow = Workflow::from_yaml(&payload, "code-implement.yaml")?;   // 不合法当场 Err
+let workflow = Workflow::from_yaml(&payload, "code-implement.yaml")?;   // 定义不合法时返回 Err
 ```
 
 ```dart
-final workflow = Workflow.fromValue(payload, file: 'code-implement.yaml');  // 不合法当场抛
+final workflow = Workflow.fromValue(payload, file: 'code-implement.yaml');  // 定义不合法时抛出异常
 ```
 
-端侧只负责把文件读成值，YAML 怎么读写是各包的事；校验是工具箱的事。
+端侧负责将文件读取并解析为值，YAML 的读写方式由各语言包实现；校验由工具箱完成。
 
-第二个参数是这份定义的文件名，比如 `code-implement.yaml`，只用在报错文字里（`code-implement.yaml 少了 steps`）。它不是要读的那个文件——工具箱不碰文件系统。命令行那份就是这么做的：端侧读文件、解成值，再把文件名交给工具箱校验。
+第二个参数是定义的文件名（例如 `code-implement.yaml`），仅用于构造报错信息（如 `code-implement.yaml 少了 steps`），并不表示工具箱要读取该文件：工具箱不访问文件系统。命令行工具即采用这一方式：由端侧读取文件、解析为值，再把文件名交给工具箱校验。
 
 ### 定义核对
 
-也就是 `workflow --check` 那一类：
+对应 `workflow --check` 一类命令。
 
 ```rust
 let findings = workflow.check(&context.data, |path| std::path::Path::new(path).exists());
@@ -44,10 +44,10 @@ let findings = workflow.check(&context.data, |path| std::path::Path::new(path).e
 final findings = workflow.check(data, (path) => File(path).existsSync());
 ```
 
-两个参数都由端侧给。第一个是数据目录，用来把 `{{report}}` 这类占位展开成真路径；第二个是「这个路径在不在」的答案。工具箱不碰文件系统，只拿你给的答案核对定义。
+两个参数均由端侧提供：第一个是数据目录，用于将 `{{report}}` 一类占位符展开为实际路径；第二个是「该路径是否存在」的判断结果。工具箱不访问文件系统，仅依据端侧提供的判断结果核对定义。
 
 ## 端侧不做什么
 
-- 不重写校验——缺 `name`、未知顶层字段、判据没写 `executor`、取值越界，报法与报错文字都照工具箱
-- 不自己判哪个小节被提到了——那是 `looks_like_section` / `looksLikeSection` 的事
-- 不自己存一份定义——`Workflow::of` 读已经校验过的值，别在端侧再抄一份结构
+- 不重复实现校验：缺少 `name`、存在未知顶层字段、判据未声明 `executor`、取值越界等情况的判定方式与报错文字，均与工具箱保持一致
+- 不自行判断哪些小节被引用：该判定由 `looks_like_section` / `looksLikeSection` 完成
+- 不重复保存定义：`Workflow::of` 读取已校验的值，端侧不应另行定义同一结构
