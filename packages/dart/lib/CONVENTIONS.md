@@ -13,10 +13,11 @@
 
 | 目录 | 模型 | 分件 |
 | :-- | :-- | :-- |
+| `artifact/` | 产物 | `model.dart` 模型（`Artifact`）——名字 + 规格（验收判据），不带位置 |
 | `criterion/` | 判据 | `model.dart` 模型（`RuleKind` / `Criterion`）、`read.dart` 读法、`items.dart` 翻成「要跑什么」 |
 | `task/` | 任务 | `model.dart` 模型（`Task`）、`journal.dart` 流水（`JournalEvent`） |
 | `workflow/` | 工作流 | `model.dart` 模型（`Step` / `Workflow`）、`read.dart` 读法（取值 + 语法校验） |
-| `workspace/` | 工作区 | `model.dart` 模型（`Workspace`）、`check.dart` 定义核对、`artifact.dart` 落点、`progress.dart` 流水判定 |
+| `workspace/` | 工作区 | `model.dart` 模型（`Workspace`）、`check.dart` 定义核对、`place.dart` 落点、`progress.dart` 流水判定 |
 
 没有定义、只是常量或信封的，仍单文件：`executor.dart`、`outcome.dart`。
 横切的公件另立中立文件：`fields.dart`（读字段与字段表）、`error.dart`（`DefinitionError`）、`paths.dart`（路径拼接与占位展开）——聚合只向下依赖它们。

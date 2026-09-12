@@ -1,5 +1,6 @@
 //! 工作区：装载内容、定义核对、落点、流水判定。
 
+use quanttide_work::artifact::Artifact;
 use quanttide_work::criterion::Criterion;
 use quanttide_work::executor::AGENT;
 use quanttide_work::task::Task;
@@ -201,22 +202,17 @@ fn check_dedupes_section_mentions_and_ignores_unclosed_ones() {
 }
 
 // ---------------------------------------------------------------------------
-// workspace::artifact
+// workspace::place
 // ---------------------------------------------------------------------------
 
 #[test]
-fn artifact_follows_the_declaration_and_the_default() {
+fn place_follows_the_declaration_and_the_default() {
     let workspace = Workspace::default();
     let task = task_of("甲", json!({}));
     assert_eq!(
-        workspace.artifact(&task, "report"),
+        workspace.place(&task, &Artifact::named("report")),
         "artifacts/report/甲.md",
         "没声明落默认处（相对工作区根）"
-    );
-    assert_eq!(
-        workspace.artifact(&task, "log"),
-        "tasks/甲.yaml",
-        "流水是任务文件本身"
     );
 
     let declared = task_of(
@@ -224,19 +220,19 @@ fn artifact_follows_the_declaration_and_the_default() {
         json!({"artifacts": {"report": "report/甲.md", "logs": "/elsewhere/甲.md"}}),
     );
     assert_eq!(
-        workspace.artifact(&declared, "report"),
+        workspace.place(&declared, &Artifact::named("report")),
         "report/甲.md",
         "声明了按声明的"
     );
     assert_eq!(
-        workspace.artifact(&declared, "logs"),
+        workspace.place(&declared, &Artifact::named("logs")),
         "/elsewhere/甲.md",
         "绝对路径原样"
     );
 }
 
 #[test]
-fn expanded_points_at_the_same_landings_as_artifact() {
+fn expanded_points_at_the_same_landings_as_place() {
     let workspace = Workspace::default();
     let task = task_of("甲", json!({}));
 

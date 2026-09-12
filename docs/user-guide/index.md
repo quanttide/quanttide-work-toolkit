@@ -12,10 +12,11 @@
 
 界限一句话：**能两处一致的，进工具箱；只能一处有的，留端侧。**
 
-## 六个模型（这些是出口）
+## 七个模型（这些是出口）
 
 | 模型 | Rust 路径 | Dart（桶文件内同名） | 管什么 | 接入说明 |
 | :-- | :-- | :-- | :-- | :-- |
+| 产物 | `quanttide_work::artifact` | `artifact` | 产物的名字与规格（验收判据） | [artifact.md](artifact.md) |
 | 判据 | `quanttide_work::criterion` | `criterion` | 判据的取值与读法、翻成「要跑什么」 | [criterion.md](criterion.md) |
 | 任务 | `quanttide_work::task` | `task` | 任务与流水（`JournalEvent`） | [task.md](task.md) |
 | 工作流 | `quanttide_work::workflow` | `workflow` | 步骤、定义的语法与不变量 | [workflow.md](workflow.md) |
@@ -23,7 +24,7 @@
 | 结果 | `quanttide_work::outcome` | `outcome` | 结果信封（`ok` / `lines` / `columns` / `rows` / `data`） | [outcome.md](outcome.md) |
 | 执行者 | `quanttide_work::executor` | `executor` | 三个取值常量 | [executor.md](executor.md) |
 
-目录里的**分件**（`model` / `read` / `items` / `journal` / `check` / `artifact` / `progress`）是内部结构；横切的 `error`（`DefinitionError`）与 `paths`（认占位名、替换）另立中立模块，接入者用到时按名字取。
+目录里的**分件**（`model` / `read` / `items` / `journal` / `check` / `place` / `progress`）是内部结构；横切的 `error`（`DefinitionError`）与 `paths`（认占位名、替换）另立中立模块，接入者用到时按名字取。
 
 ## 各语言速查
 
@@ -51,4 +52,4 @@ Dart 只有一个入口：**桶文件** `package:quanttide_work/quanttide_work.d
 
 ## 这一篇怎么分的
 
-照代码的模块划分：**一个模型一件**（`criterion` / `task` / `workflow` / `workspace` / `outcome` / `executor`），与 `packages/rust/src/`、`packages/dart/lib/src/` 的目录一一对应；不属于任何模型的横切纪律（版本与对齐）另立一件。入口（本文件）只管总则、货架与动线，不装模型细节。
+照代码的模块划分：**一个模型一件**（`artifact` / `criterion` / `task` / `workflow` / `workspace` / `outcome` / `executor`），与 `packages/rust/src/`、`packages/dart/lib/src/` 的目录一一对应；不属于任何模型的横切纪律（版本与对齐）另立一件。入口（本文件）只管总则、货架与动线，不装模型细节。

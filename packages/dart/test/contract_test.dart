@@ -105,7 +105,10 @@ void main() {
           for (final c in (vector['cases'] as List).cast<Map>()) {
             final task = Task.of({'name': c['name'], 'artifacts': c['artifacts']});
             expect(
-              const Workspace().artifact(task, '${c['artifact']}'),
+              const Workspace().place(
+                task,
+                Artifact.named('${c['artifact']}'),
+              ),
               c['expect'],
               reason: '$name：${c['note']} 落点算得不对',
             );

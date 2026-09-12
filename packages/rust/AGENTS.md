@@ -10,9 +10,10 @@ packages/rust/
 ├── Cargo.toml         # Rust 包配置
 ├── README.md          # 项目说明
 ├── src/
-│   ├── lib.rs         # 出口：六个模型对外
+│   ├── lib.rs         # 出口：七个模型对外
 │   ├── executor.rs    # 执行者常量
 │   ├── outcome.rs     # 结果信封
+│   ├── artifact/      # 产物：名字 + 规格（验收判据）
 │   ├── criterion/     # 判据：模型 + 读法 + 翻成要跑什么
 │   ├── task/          # 任务：模型 + 流水
 │   ├── workflow/      # 工作流：模型 + 语法校验

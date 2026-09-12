@@ -122,7 +122,7 @@ void main() {
     })], [task]);
 
     final criterion = const PathExists('{{report}}');
-    final place = workspace.artifact(task, 'report');
+    final place = workspace.place(task, const Artifact.named('report'));
     final expanded = workspace.expanded(criterion, task);
 
     expect(place, 'artifacts/report/甲.md');
@@ -165,5 +165,13 @@ void main() {
 
     expect(workflow.name, 'code-implement');
     expect(workflow.stepNames, ['实现']);
+  });
+
+  test('文档：artifact.md #1——名字与规格', () {
+    // 文档：artifact.md #1
+    const criterion = PathExists('artifacts/report/甲.md');
+    final report = Artifact.of('report', [criterion]);
+    expect(report.name, 'report');
+    expect(report.spec, [criterion]);
   });
 }

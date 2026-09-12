@@ -112,18 +112,20 @@ void main() {
     test('声明了按声明的，没声明落默认处', () {
       final task = taskOf('甲', const {});
       expect(
-        const Workspace().artifact(task, 'report'),
+        const Workspace().place(task, const Artifact.named('report')),
         'artifacts/report/甲.md',
         reason: '相对工作区根',
       );
-      expect(const Workspace().artifact(task, 'log'), 'tasks/甲.yaml');
 
       final declared = taskOf('甲', {
         'artifacts': {'report': 'report/甲.md', 'logs': '/elsewhere/甲.md'},
       });
-      expect(const Workspace().artifact(declared, 'report'), 'report/甲.md');
       expect(
-        const Workspace().artifact(declared, 'logs'),
+        const Workspace().place(declared, const Artifact.named('report')),
+        'report/甲.md',
+      );
+      expect(
+        const Workspace().place(declared, const Artifact.named('logs')),
         '/elsewhere/甲.md',
         reason: '绝对路径原样',
       );

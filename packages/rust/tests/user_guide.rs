@@ -3,6 +3,7 @@
 //! 示例里的调用原样保留；这里只补它需要的夹具（真工作流定义、任务文件、目录基准）。
 //! 编号按各文件里 ```rust 代码块的出现次序。
 
+use quanttide_work::artifact::Artifact;
 use quanttide_work::criterion::{Criterion, RuleKind, criterion_of, items_of};
 use quanttide_work::error::DefinitionError;
 use quanttide_work::executor::AGENT;
@@ -199,7 +200,7 @@ fn doc_workspace_2() {
         path: "{{report}}".into(),
         description: String::new(),
     };
-    let place = workspace.artifact(&task, "report"); // 声明了按声明的，没声明落默认处
+    let place = workspace.place(&task, &Artifact::named("report")); // 声明了按声明的，没声明落默认处
     let expanded = workspace.expanded(&criterion, &task); // 判据里的占位换成本次任务的落点
     assert_eq!(place, "artifacts/report/甲.md");
     match expanded {
@@ -266,4 +267,16 @@ fn doc_workflow_2() -> Result<(), DefinitionError> {
     let illegal = Workflow::from_value(&yaml(json!({"name": "w", "steps": []})));
     assert!(illegal.is_err(), "少了 steps 当场 Err");
     Ok(())
+}
+
+// 文档：artifact.md #1
+#[test]
+fn doc_artifact_1() {
+    let criterion = Criterion::PathExists {
+        path: "artifacts/report/甲.md".into(),
+        description: String::new(),
+    };
+    let report = Artifact::of("report", vec![criterion.clone()]);
+    assert_eq!(report.name, "report");
+    assert_eq!(report.spec, vec![criterion]);
 }

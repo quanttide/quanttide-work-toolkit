@@ -16,7 +16,7 @@
 
 新增语言包时在 `packages/{语言}/` 下独立发布，互不依赖。
 
-**实现状态**：目前只有 **Rust 与 Dart 有实现**（六个模型齐全，两侧同一批契约向量对齐）；Go / Python / TypeScript 是空壳，只有领域名与版本常量——各包内 `STATUS.md` / `ROADMAP.md` 记着现状。
+**实现状态**：目前只有 **Rust 与 Dart 有实现**（七个模型齐全，两侧同一批契约向量对齐）；Go / Python / TypeScript 是空壳，只有领域名与版本常量——各包内 `STATUS.md` / `ROADMAP.md` 记着现状。
 
 ## 项目结构
 

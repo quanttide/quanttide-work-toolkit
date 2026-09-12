@@ -40,12 +40,12 @@ final line = workspace.stateLine(task);
 ### 落点与占位
 
 ```rust
-let place = workspace.artifact(&task, "report");          // 声明了按声明的，没声明落默认处
-let expanded = workspace.expanded(&criterion, &task);     // 判据里的占位换成本次任务的落点
+let place = workspace.place(&task, &Artifact::named("report"));   // 声明了按声明的，没声明落默认处
+let expanded = workspace.expanded(&criterion, &task);             // 判据里的占位换成本次任务的落点
 ```
 
 ```dart
-final place = workspace.artifact(task, 'report');
+final place = workspace.place(task, const Artifact.named('report'));
 final expanded = workspace.expanded(criterion, task);
 ```
 
@@ -70,6 +70,6 @@ final findings = workspace.check(workflow, (path) => File(path).existsSync());
 ## 端侧不做什么
 
 - **不自己实现「走过」的算法**——附加判定投票、重跑从头算，正本在工作区
-- **不自己拼产物落点**——声明了按声明的、没声明落默认处的规矩在工作区
+- **不自己拼产物落点**——声明的按声明的、没声明落默认处的规矩在工作区；产物只给名字，落点按名字算（见 [artifact.md](artifact.md)）
 - **不把位置塞进模型**——工作区只给相对工作区根的路径，拼上目录是端侧的事
 - **不重复实现核对**——判据路径在不在、小节有没有覆盖，判定方式与回执文字均以工作区为准

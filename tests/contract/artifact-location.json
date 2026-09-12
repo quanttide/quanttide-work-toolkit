@@ -1,6 +1,6 @@
 {
   "kind": "artifact",
-  "note": "产物落点：只给相对工作区根的路径——声明了按声明的（绝对路径原样），没声明落 artifacts/<种类>/<任务名>.md；流水是任务文件本身。拼上目录是平台的事。",
+  "note": "产物落点：只给相对工作区根的路径——声明了按声明的（绝对路径原样），没声明落 artifacts/<产物的名字>/<任务名>.md。拼上目录是平台的事。流水不是产物（{{log}} 换的是任务文件本身，见 expand-placeholders）。",
   "cases": [
     {
       "note": "没声明：报告落默认处",
@@ -10,18 +10,11 @@
       "expect": "artifacts/report/甲.md"
     },
     {
-      "note": "没声明：日志同样落默认处",
+      "note": "没声明：换个名字同样落默认处——产物不限种类",
       "name": "甲",
       "artifacts": {},
-      "artifact": "journal",
-      "expect": "artifacts/journal/甲.md"
-    },
-    {
-      "note": "流水就是任务文件本身，与声明无关",
-      "name": "甲",
-      "artifacts": { "log": "other.md" },
-      "artifact": "log",
-      "expect": "tasks/甲.yaml"
+      "artifact": "history",
+      "expect": "artifacts/history/甲.md"
     },
     {
       "note": "声明了相对路径：原样（相对工作区根）",

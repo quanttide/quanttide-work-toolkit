@@ -44,7 +44,7 @@ sealed class Criterion {
   /// 占位展开：每个字段里的 `{{name}}` 交给 [resolve] 换成哪条路径。
   ///
   /// [resolve] 认不得的名字原样留着。换成哪条路径是场所的事——
-  /// 见 `WorkspaceArtifact.expanded`。
+  /// 见 `WorkspacePlace.expanded`。
   Criterion expanded(String? Function(String name) resolve) {
     String ex(String value) => replacePlaceholders(value, resolve);
     return switch (this) {

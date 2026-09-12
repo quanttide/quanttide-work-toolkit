@@ -4,7 +4,7 @@
 
 use quanttide_work::executor::AGENT;
 use quanttide_work::workflow::Step;
-use quanttide_work::{criterion, outcome, task, workflow, workspace};
+use quanttide_work::{artifact, criterion, outcome, task, workflow, workspace};
 use serde_json::{Value, json};
 use serde_yaml::{Mapping, Value as Yaml};
 use std::fs;
@@ -171,10 +171,11 @@ fn contract() {
                         as_yaml(&case["artifacts"]),
                     );
                     let task = task::Task::of(&Yaml::Mapping(payload));
-                    let kind = case["artifact"].as_str().unwrap_or("");
+                    let named = case["artifact"].as_str().unwrap_or("");
                     let note = case["note"].as_str().unwrap_or("");
                     assert_eq!(
-                        workspace::Workspace::default().artifact(&task, kind),
+                        workspace::Workspace::default()
+                            .place(&task, &artifact::Artifact::named(named)),
                         case["expect"].as_str().unwrap_or(""),
                         "{name}：{note} 落点算得不对"
                     );

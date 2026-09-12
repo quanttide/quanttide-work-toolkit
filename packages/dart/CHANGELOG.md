@@ -2,10 +2,12 @@
 
 ### Added
 
-- `workspace` 聚合（`src/workspace/`）：按规范三轴补上「场所」——`Workspace` 装装载好的定义与任务，跨着定义与现场的操作都用扩展挂上去（`WorkspaceCheck.check` / `WorkspaceArtifact.artifact` / `WorkspaceProgress.doneSteps` 等）
+- `artifact` 聚合（`src/artifact/`）：产物 = **名字 + 规格**（一组验收判据）——名字是身份，不限定种类（报告、日志只是两个名字），不带位置。出处 `docs/specification/piece/artifact.md`
+- `workspace` 聚合（`src/workspace/`）：按规范三轴补上「场所」——`Workspace` 装装载好的定义与任务，跨着定义与现场的操作都用扩展挂上去（`WorkspaceCheck.check` / `WorkspacePlace.place` / `WorkspaceProgress.doneSteps` 等）
 
 ### Changed
 
+- **破坏性**：`Workspace.artifact(task, kind)` 改名 `WorkspacePlace.place(task, artifact)`，收 `Artifact` 而不是裸种类名——`report` / `journal` / `log` 的特例下线。`{{report}}` / `{{journal}}` 按产物的名字算；`{{artifacts}}`（产物目录）与 `{{log}}`（任务文件）本就不是产物，仍归落点一侧
 - **破坏性**：落点不再拼目录——`artifact` / `expanded` 只给**相对工作区根的路径**（声明成绝对路径就原样），目录由平台接；`join` 随之下线（规范 `process/task.md`·落点）
 - **破坏性**：占位展开收敛成一套——删掉 `expandPlaceholders` 与 `Placeholders`（占位表只是 `artifact` 的四个名字），改用 `Workspace.expanded(criterion, task)` 把判据里的占位换成本次任务的落点；`Criterion.expanded` 改收「名字 → 路径」的解析函数
 - **破坏性**：占位换的是**落点**（`{{report}}` / `{{journal}}` / `{{log}}` 是产物文件，`{{artifacts}}` 是产物目录），与 `Workspace.artifact` 同一处算——原先 `expandPlaceholders` 把前三个也换成目录，与规范对不上

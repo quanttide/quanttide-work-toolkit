@@ -10,10 +10,11 @@ packages/dart/
 ├── README.md                # 项目说明
 ├── lib/
 │   ├── CONVENTIONS.md       # 代码约定（横切约束）
-│   ├── quanttide_work.dart  # 出口（桶文件）：六个模型对外
+│   ├── quanttide_work.dart  # 出口（桶文件）：七个模型对外
 │   └── src/
 │       ├── executor.dart    # 执行者常量
 │       ├── outcome.dart     # 结果信封
+│       ├── artifact/        # 产物：名字 + 规格（验收判据）
 │       ├── criterion/       # 判据：模型 + 读法 + 翻成要跑什么
 │       ├── task/            # 任务：模型 + 流水
 │       ├── workflow/        # 工作流：模型 + 语法校验
@@ -23,8 +24,8 @@ packages/dart/
     └── package_test.dart    # 包测试
 ```
 
-与 [Rust 侧](../rust/src) 的切分同名同职责：`criterion/` / `task/` / `workflow/` / `workspace/`
-四个目录内的分件按「事」一一对应（模型 / 读法 / 流水 / 定义核对 / 落点）。
+与 [Rust 侧](../rust/src) 的切分同名同职责：`artifact/` / `criterion/` / `task/` / `workflow/` / `workspace/`
+目录内的分件按「事」一一对应（模型 / 读法 / 流水 / 定义核对 / 落点）。
 
 ## 事实源
 

@@ -1,0 +1,4 @@
+/// 产物聚合：一件已稳定的产出物。
+library;
+
+export 'model.dart';
