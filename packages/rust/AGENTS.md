@@ -6,10 +6,10 @@
 packages/rust/
 ├── AGENTS.md          # 本文件
 ├── CHANGELOG.md       # 版本变更记录
+├── CONTRIBUTING.md    # 贡献指南
 ├── Cargo.toml         # Rust 包配置
 ├── README.md          # 项目说明
 ├── src/
-│   ├── CONVENTIONS.md # 代码约定（横切约束）
 │   ├── lib.rs         # 出口：五个模型对外
 │   ├── executor.rs    # 执行者常量
 │   ├── outcome.rs     # 结果信封
@@ -24,13 +24,3 @@ packages/rust/
 ## 事实源
 
 领域模型与规格以 `quanttide-work/docs/specification` 为准；本库只做表达，不定义领域。
-
-## 提交约定
-
-Conventional Commits（`feat:` / `fix:` / `docs:` / `chore:`）；破坏性变更标 `!` 并在 body 说明迁移方式。
-
-## 测试
-
-```bash
-cargo test
-```
