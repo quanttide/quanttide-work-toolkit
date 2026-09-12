@@ -314,6 +314,15 @@ fn read_rejects_an_unknown_executor() {
     );
 }
 
+/// 判据不是映射：报「不是映射」，不绕去说 executor 该怎么写（那样会指错方向）。
+#[test]
+fn read_rejects_a_value_that_is_not_a_mapping() {
+    assert_eq!(
+        read_err(json!("裸字符串")),
+        "demo.yaml 第 1 个步骤第 1 条判据不是映射"
+    );
+}
+
 #[test]
 fn read_rejects_unknown_fields() {
     assert_eq!(

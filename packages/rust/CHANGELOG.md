@@ -5,6 +5,10 @@
 - **破坏性**：判据的读法归位——`criterion_of` / `read_criterion` 从 `workflow` 搬到 `criterion`（`quanttide_work::criterion::{criterion_of, read_criterion}`）；`expand_placeholders` 从 `workflow` 搬到 `task`
 - 文件按「一件事一件」重排：`workflow.rs`（516 行）与 `task.rs`（292 行）各拆成一个目录多件，最长 195 行（`criterion/model.rs`）；`Finding` 与 `looks_like_section` 归 `workflow/check`、占位展开归 `task/model`
 
+### Fixed
+
+- 判据不是映射时不再指错方向：原先 `read_criterion` 先校验 `executor`，非映射的值会报「executor 只能是 rule / agent / human」；现在先判是不是映射，报「不是映射」
+
 ## [0.1.0-beta.4] - 2026-09-12
 
 ### Changed

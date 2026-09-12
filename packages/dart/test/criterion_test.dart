@@ -187,6 +187,13 @@ void main() {
       );
     });
 
+    test('不是映射：报「不是映射」，不绕去说 executor 该怎么写', () {
+      expect(
+        () => readCriterion('裸字符串', file: 'd.yaml', place: place),
+        defError('d.yaml 第 1 个步骤第 1 条判据不是映射'),
+      );
+    });
+
     test('不认识的字段：报错列全只认哪些', () {
       expect(
         () => readCriterion(

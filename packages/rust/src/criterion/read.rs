@@ -59,6 +59,11 @@ pub fn criterion_of(value: &Yaml) -> Criterion {
 ///
 /// `file` 与 `place` 只用来说话；返回的是认好的值对象。
 pub fn read_criterion(value: &Yaml, file: &str, place: &str) -> Result<Criterion, DefinitionError> {
+    // 先看是不是映射：不是映射时要说「不是映射」，不能先说 executor 该怎么写——
+    // 那样报错会指错方向（2026-09-12 之前正是这个顺序，这条分支因此永远走不到）。
+    let criterion_map = value
+        .as_mapping()
+        .ok_or_else(|| DefinitionError(format!("{file} {place}不是映射")))?;
     let kind = text_of(value, "executor");
     if !CRITERION_TYPES.contains(&kind.as_str()) {
         return Err(DefinitionError(format!(
@@ -66,9 +71,6 @@ pub fn read_criterion(value: &Yaml, file: &str, place: &str) -> Result<Criterion
             CRITERION_TYPES.join(" / ")
         )));
     }
-    let criterion_map = value
-        .as_mapping()
-        .ok_or_else(|| DefinitionError(format!("{file} {place}不是映射")))?;
     let odd = unknown_fields(criterion_map, &CRITERION_FIELDS);
     if !odd.is_empty() {
         return Err(DefinitionError(format!(

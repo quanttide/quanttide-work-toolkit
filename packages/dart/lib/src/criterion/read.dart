@@ -38,14 +38,16 @@ Criterion readCriterion(
   required String file,
   required String place,
 }) {
+  // 先看是不是映射：不是映射时要说「不是映射」，不能先说 executor 该怎么写——
+  // 那样报错会指错方向（2026-09-12 之前正是这个顺序，这条分支因此永远走不到）。
+  if (value is! Map) {
+    throw DefinitionError('$file $place不是映射');
+  }
   final kind = textOf(value, 'executor');
   if (!criterionTypes.contains(kind)) {
     throw DefinitionError(
       '$file $place的 executor 只能是 ${criterionTypes.join(' / ')}（谁判：规则引擎 / 智能体 / 人）',
     );
-  }
-  if (value is! Map) {
-    throw DefinitionError('$file $place不是映射');
   }
   final odd = unknownFields(value, _criterionFields);
   if (odd.isNotEmpty) {

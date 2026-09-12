@@ -9,6 +9,10 @@
 
 - 两个扩展：`TaskJournal`（`doneSteps` / `nextStep` / `stateLine`）、`WorkflowCheck`（`check`）——Dart 不能跨文件写实现，用扩展承接分件；调用写法不变（`task.doneSteps(...)`、`workflow.check(...)`）
 
+### Fixed
+
+- 判据不是映射时不再指错方向：原先 `readCriterion` 先校验 `executor`，非映射的值会报「executor 只能是 rule / agent / human」；现在先判是不是映射，报「不是映射」
+
 ## [0.1.0-beta.5] - 2026-09-12
 
 ### Changed
