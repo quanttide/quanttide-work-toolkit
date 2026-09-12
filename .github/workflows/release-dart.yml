@@ -79,3 +79,34 @@ jobs:
           relativePath: packages/dart
           force: true
           flutter: false
+
+  # GitHub Release：注册表发布成功后，在仓库里补一条 Release（生成变更说明，预发布打标）。
+  # 与 qtcloud-work 的 release-cli.yml 同路子：tag 是唯一事实源，Release 由 workflow 补上——
+  # 无论 tag 怎么推上来（手动 push 或 qtcloud-devops release publish），Releases 页都不缺版本。
+  github-release:
+    needs: publish
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/dart/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: ensure GitHub Release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "$RELEASE_TAG" --generate-notes
+
+      - name: mark prerelease when applicable
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          VERSION="${RELEASE_TAG#dart/v}"
+          case "$VERSION" in
+            *-alpha.*|*-beta.*|*-rc.*)
+              gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --prerelease
+              ;;
+          esac

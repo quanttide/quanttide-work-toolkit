@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- 发布工作流补上 GitHub Release：`release-rust.yml` / `release-dart.yml` 在注册表发布成功后建 Release（自动生成变更说明，alpha / beta / rc 标预发布）；补齐历史 tag 缺的 Releases（rust `beta.1~4`、dart `beta.1~5`），alpha 系列一并改标预发布
 - 新增工作区（`workspace`）聚合，Rust 与 Dart 两侧同构：按规范三轴补上「场所」，`RunContext` 退出工具箱（位置不进模型）
 - 初始化工具箱仓库：Python 包骨架（`packages/python`）与验证工作流。
 - 初始化 Rust 库骨架（`packages/rust`）。
