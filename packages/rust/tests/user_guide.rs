@@ -4,10 +4,12 @@
 //! 编号按各文件里 ```rust 代码块的出现次序。
 
 use quanttide_work::criterion::{RuleKind, criterion_of, items_of};
+use quanttide_work::error::DefinitionError;
 use quanttide_work::executor::AGENT;
 use quanttide_work::outcome::Outcome;
-use quanttide_work::task::{RunContext, Task, expand_placeholders};
-use quanttide_work::workflow::{DefinitionError, Step, Workflow};
+use quanttide_work::paths::expand_placeholders;
+use quanttide_work::task::{RunContext, Task};
+use quanttide_work::workflow::{Step, Workflow};
 use serde_json::{Value as Json, json};
 use serde_yaml::Value as Yaml;
 
@@ -149,7 +151,8 @@ fn doc_outcome_3() {
 // 文档：task.md #1
 #[test]
 fn doc_task_1() {
-    use quanttide_work::task::{JournalEvent, RunContext, Task, expand_placeholders};
+    use quanttide_work::paths::expand_placeholders;
+    use quanttide_work::task::{JournalEvent, RunContext, Task};
     let task = Task::of("甲", &yaml(json!({})));
     let _: Vec<JournalEvent> = task.journal.clone();
     let context = RunContext::default();
@@ -221,9 +224,8 @@ fn doc_task_4() {
 // 文档：workflow.md #1
 #[test]
 fn doc_workflow_1() {
-    use quanttide_work::workflow::{
-        DefinitionError, Finding, Step, Workflow, looks_like_section, validate,
-    };
+    use quanttide_work::error::DefinitionError;
+    use quanttide_work::workflow::{Finding, Step, Workflow, looks_like_section, validate};
     assert!(looks_like_section("收尾"));
     assert!(
         validate(

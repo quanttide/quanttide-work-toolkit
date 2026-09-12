@@ -1,5 +1,5 @@
 import '../criterion/criterion.dart';
-import '../task/model.dart';
+import '../paths.dart';
 import 'model.dart';
 
 /// 定义核对出来的一件事：在哪里、核的是什么、过没过。

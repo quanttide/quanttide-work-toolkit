@@ -1,50 +1,14 @@
 //! 工作流聚合 / 整体校验：字段缺了、取值越界、有不认识的字段，当场报错。
 //!
 //! 规矩的出处是 `docs/specification/process/workflow.md`·语法。
-//! 模型在 [`super::model`]；这里只装「读一份定义」所需的字段表、错误与校验。
+//! 模型在 [`super::model`]；字段表与取值助手在 `crate::fields`，错误在 `crate::error`。
 
 use super::model::{Step, Workflow};
 use crate::criterion::read_criterion;
+use crate::error::DefinitionError;
 use crate::executor::{AGENT, EXECUTORS};
-use serde_yaml::{Mapping, Value as Yaml};
-
-/// 定义顶层认得的字段。
-const TOP_FIELDS: [&str; 3] = ["name", "description", "steps"];
-
-/// 步骤认得的字段。
-const STEP_FIELDS: [&str; 4] = ["name", "description", "executor", "criteria"];
-
-/// 一份定义读不通：字段缺了、取值越界、有不认识的字段。
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DefinitionError(pub String);
-
-impl std::fmt::Display for DefinitionError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl std::error::Error for DefinitionError {}
-
-/// 取一个字符串字段，去掉两侧空白；不是字符串就当没写。
-pub fn text_of(value: &Yaml, key: &str) -> String {
-    value
-        .get(key)
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .trim()
-        .to_string()
-}
-
-/// 这次给的字段里，哪些是不认识的。
-pub fn unknown_fields(mapping: &Mapping, allowed: &[&str]) -> Vec<String> {
-    mapping
-        .keys()
-        .filter_map(|key| key.as_str())
-        .filter(|key| !allowed.contains(key))
-        .map(|key| key.to_string())
-        .collect()
-}
+use crate::fields::{STEP_FIELDS, TOP_FIELDS, text_of, unknown_fields};
+use serde_yaml::Value as Yaml;
 
 /// 语法校验：不是映射、缺字段、取值不对，当场报错。`file` 只用来说话。
 pub fn validate(payload: &Yaml, file: &str) -> Result<(), DefinitionError> {

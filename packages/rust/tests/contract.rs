@@ -4,7 +4,7 @@
 
 use quanttide_work::executor::AGENT;
 use quanttide_work::workflow::Step;
-use quanttide_work::{criterion, outcome, task, workflow};
+use quanttide_work::{criterion, outcome, paths, task, workflow};
 use serde_json::{Value, json};
 use serde_yaml::{Mapping, Value as Yaml};
 use std::fs;
@@ -168,7 +168,7 @@ fn contract() {
                     let input = case["input"].as_str().unwrap_or("");
                     // 每一格可以自带 data（换目录的那几格）；不写就按向量顶层的。
                     let data = case["data"].as_str().unwrap_or(fallback);
-                    let got = task::expand_placeholders(input, data);
+                    let got = paths::expand_placeholders(input, data);
                     assert_eq!(json!(got), case["expect"], "{name}：{input} 展开得不对");
                 }
             }

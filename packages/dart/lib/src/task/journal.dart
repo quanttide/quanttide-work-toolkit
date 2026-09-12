@@ -1,5 +1,5 @@
 import '../workflow/model.dart';
-import '../workflow/validate.dart';
+import '../fields.dart';
 import 'model.dart';
 
 /// 流水里的一条：什么时候、哪一步、一句话、过没过。

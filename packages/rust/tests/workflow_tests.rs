@@ -1,11 +1,10 @@
 //! 工作流：模型读写、整体校验、定义核对（路径在不在、description 提到的小节有没有覆盖）。
 
+use quanttide_work::error::DefinitionError;
 use quanttide_work::executor::AGENT;
-use quanttide_work::workflow::{
-    DefinitionError, Finding, Step, Workflow, looks_like_section, text_of, unknown_fields, validate,
-};
+use quanttide_work::workflow::{Finding, Step, Workflow, looks_like_section, validate};
 use serde_json::{Value as Json, json};
-use serde_yaml::{Mapping, Value as Yaml};
+use serde_yaml::Value as Yaml;
 
 fn yaml(value: Json) -> Yaml {
     serde_yaml::to_value(value).expect("JSON 装成 YAML 值")
@@ -25,7 +24,7 @@ fn section_ok(findings: &[Finding], name: &str) -> Option<bool> {
 }
 
 // ---------------------------------------------------------------------------
-// 报错与字段表
+// 报错
 // ---------------------------------------------------------------------------
 
 #[test]
@@ -34,25 +33,6 @@ fn definition_error_shows_its_message() {
     assert_eq!(error.to_string(), "demo.yaml 少了 name");
     let as_std: &dyn std::error::Error = &error;
     assert_eq!(as_std.to_string(), "demo.yaml 少了 name");
-}
-
-#[test]
-fn text_of_trims_and_ignores_non_strings() {
-    let value = yaml(json!({"name": "  demo  ", "count": 3, "flag": true}));
-    assert_eq!(text_of(&value, "name"), "demo");
-    assert_eq!(text_of(&value, "count"), "", "数字不当字符串");
-    assert_eq!(text_of(&value, "flag"), "");
-    assert_eq!(text_of(&value, "missing"), "");
-}
-
-#[test]
-fn unknown_fields_names_the_odd_ones() {
-    let mut mapping = Mapping::new();
-    mapping.insert(Yaml::String("name".into()), Yaml::String("x".into()));
-    mapping.insert(Yaml::String("extra".into()), Yaml::Bool(true));
-    mapping.insert(Yaml::Number(1.into()), Yaml::Null);
-    assert_eq!(unknown_fields(&mapping, &["name"]), vec!["extra"]);
-    assert!(unknown_fields(&mapping, &["name", "extra"]).is_empty());
 }
 
 // ---------------------------------------------------------------------------

@@ -6,34 +6,15 @@
 //!
 //! 不可变：`recorded` / `with_gates` 都返回新的任务，改动由调用方落盘。
 //! 「走过哪几步」从流水读出，在 [`super::journal`]；运行上下文在 [`super::context`]。
-//! 落点（`artifact`）与占位（[`expand_placeholders`]）同处。
+//! 落点在 `artifact`；占位展开在中立的 `crate::paths`。
 //! 出处：`docs/specification/process/task.md`·语法。
 
 use super::context::RunContext;
 use super::journal::JournalEvent;
-use crate::workflow::text_of;
+use crate::fields::text_of;
+use crate::paths::join;
 use serde_yaml::{Mapping, Value as Yaml};
 use std::collections::BTreeMap;
-
-/// 拼目录与剩下的路径：末尾斜杠忽略、重复斜杠折叠（`/` 与空串等价——都落在根）。
-///
-/// 规矩的出处是 `docs/specification/process/task.md`·落点。落点只有这一处拼法。
-fn join(dir: &str, rest: &str) -> String {
-    let mut clean = String::with_capacity(dir.len() + rest.len() + 1);
-    let mut last_was_slash = false;
-    for ch in dir.chars() {
-        if ch == '/' {
-            if last_was_slash {
-                continue;
-            }
-            last_was_slash = true;
-        } else {
-            last_was_slash = false;
-        }
-        clean.push(ch);
-    }
-    format!("{}/{rest}", clean.trim_end_matches('/'))
-}
 
 /// 任务聚合。
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -178,13 +159,4 @@ impl Task {
         }
         Yaml::Mapping(map)
     }
-}
-
-/// 判据里的占位先按数据仓展开（够核对用）。
-pub fn expand_placeholders(value: &str, data: &str) -> String {
-    value
-        .replace("{{artifacts}}", &join(data, "artifacts"))
-        .replace("{{report}}", &join(data, "artifacts/report"))
-        .replace("{{journal}}", &join(data, "artifacts/journal"))
-        .replace("{{log}}", &join(data, "tasks"))
 }

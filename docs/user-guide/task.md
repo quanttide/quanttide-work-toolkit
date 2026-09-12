@@ -10,7 +10,8 @@
 - 落点与占位：产物落在哪、占位怎么展开
 
 ```rust
-use quanttide_work::task::{expand_placeholders, JournalEvent, RunContext, Task};
+use quanttide_work::paths::expand_placeholders;
+use quanttide_work::task::{JournalEvent, RunContext, Task};
 ```
 
 ```dart

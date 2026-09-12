@@ -2,6 +2,8 @@
 
 ### Changed
 
+- **破坏性**：`DefinitionError` 搬到中立件 `quanttide_work::error`（原 `workflow::DefinitionError`）；`expand_placeholders` 搬到 `quanttide_work::paths`（原 `task::expand_placeholders`）
+- 抽出中立件 `fields`（`text_of` / `unknown_fields`，转内部、不再从公共出口出去）、`error`、`paths`（`join` + `expand_placeholders`）：`criterion` / `task` / `workflow` 只向下依赖它们，切断 `criterion ↔ workflow` 与 `workflow ↔ task` 两个环
 - **破坏性**：`Workflow::from_yaml` / `Step::from_yaml` 改名 `from_value`（收的是已解析的值，不是 YAML 文本，与 Dart 侧 `fromValue` 同名同义）；删掉与 `of` 完全重复的 `Workflow::new`
 - `validate` 去掉 `from_yaml(...).map(|_| ())` 的壳：自己承担语法校验，`from_value` 调它再建模，两条路共用同一份检查
 - **破坏性**：判据的读法归位——`criterion_of` / `read_criterion` 从 `workflow` 搬到 `criterion`（`quanttide_work::criterion::{criterion_of, read_criterion}`）；`expand_placeholders` 从 `workflow` 搬到 `task`

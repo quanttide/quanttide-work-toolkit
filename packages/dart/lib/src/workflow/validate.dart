@@ -1,34 +1,7 @@
 import '../criterion/criterion.dart';
+import '../error.dart';
 import '../executor.dart';
-
-/// 定义顶层认得的字段。
-const List<String> _topFields = ['name', 'description', 'steps'];
-
-/// 步骤认得的字段。
-const List<String> _stepFields = ['name', 'description', 'executor', 'criteria'];
-
-/// 一份定义读不通：字段缺了、取值越界、有不认识的字段。
-class DefinitionError implements Exception {
-  DefinitionError(this.message);
-
-  final String message;
-
-  @override
-  String toString() => message;
-}
-
-/// 取一个字符串字段，去掉两侧空白；不是字符串就当没写。
-String textOf(Object? value, String key) {
-  if (value is! Map) return '';
-  final item = value[key];
-  return item is String ? item.trim() : '';
-}
-
-/// 这次给的字段里，哪些是不认识的。
-List<String> unknownFields(Map mapping, List<String> allowed) => mapping.keys
-    .map((key) => '$key')
-    .where((key) => !allowed.contains(key))
-    .toList();
+import '../fields.dart';
 
 /// 语法校验一份定义：不是映射、缺字段、取值不对，读不通就抛 [DefinitionError]。
 void validateWorkflow(Object? value, {String file = '定义'}) {
@@ -42,10 +15,10 @@ void validateWorkflow(Object? value, {String file = '定义'}) {
   if (steps is! List || steps.isEmpty) {
     throw DefinitionError('$file 少了 steps（至少一个步骤）');
   }
-  final unknown = unknownFields(value, _topFields);
+  final unknown = unknownFields(value, topFields);
   if (unknown.isNotEmpty) {
     throw DefinitionError(
-      '$file 顶层有不认识的字段：${unknown.join('、')}（只认 ${_topFields.join('、')}）',
+      '$file 顶层有不认识的字段：${unknown.join('、')}（只认 ${topFields.join('、')}）',
     );
   }
   for (var index = 0; index < steps.length; index++) {
@@ -65,10 +38,10 @@ void validateStep(
   if (textOf(value, 'name').isEmpty) {
     throw DefinitionError('$file 第 $position 个步骤少了 name');
   }
-  final extra = unknownFields(value, _stepFields);
+  final extra = unknownFields(value, stepFields);
   if (extra.isNotEmpty) {
     throw DefinitionError(
-      '$file 第 $position 个步骤有不认识的字段：${extra.join('、')}（只认 ${_stepFields.join('、')}）',
+      '$file 第 $position 个步骤有不认识的字段：${extra.join('、')}（只认 ${stepFields.join('、')}）',
     );
   }
   var executor = textOf(value, 'executor');

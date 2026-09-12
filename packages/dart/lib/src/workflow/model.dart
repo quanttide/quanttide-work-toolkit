@@ -1,5 +1,6 @@
 import '../criterion/criterion.dart';
 import '../executor.dart';
+import '../fields.dart';
 import 'validate.dart';
 
 /// 工作流聚合：一串有序的步骤。

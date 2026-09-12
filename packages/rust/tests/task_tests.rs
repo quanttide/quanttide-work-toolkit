@@ -1,7 +1,8 @@
 //! 任务：模型与流水、落点与占位、运行上下文。
 
 use quanttide_work::executor::AGENT;
-use quanttide_work::task::{JournalEvent, RunContext, Task, expand_placeholders};
+use quanttide_work::paths::expand_placeholders;
+use quanttide_work::task::{JournalEvent, RunContext, Task};
 use quanttide_work::workflow::{Step, Workflow};
 use serde_json::{Value as Json, json};
 use serde_yaml::Value as Yaml;

@@ -5,20 +5,10 @@
 //! 不认识、缺了、越界，当场报错。规矩的出处是 `docs/specification/process/workflow.md`·语法。
 
 use super::model::Criterion;
+use crate::error::DefinitionError;
 use crate::executor::{AGENT, CRITERION_TYPES, HUMAN, RULE};
-use crate::workflow::{DefinitionError, text_of, unknown_fields};
+use crate::fields::{CRITERION_FIELDS, text_of, unknown_fields};
 use serde_yaml::Value as Yaml;
-
-/// 一条判据认得的字段。
-const CRITERION_FIELDS: [&str; 7] = [
-    "executor",
-    "description",
-    "path",
-    "absent",
-    "file",
-    "contains",
-    "run",
-];
 
 /// 从定义里的字段认出一条判据（不校验）。
 pub fn criterion_of(value: &Yaml) -> Criterion {

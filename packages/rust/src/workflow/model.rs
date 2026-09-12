@@ -7,9 +7,9 @@
 //! 模型不可变：[`Workflow::from_value`] 读进来顺带校验，[`Workflow::of`] 读已经校验过的，
 //! [`Workflow::to_yaml`] 写成同样的字段形状。YAML 怎么读写是各自包的事。
 
-use super::validate::text_of;
 use crate::criterion::{Criterion, criterion_of};
 use crate::executor::{AGENT, HUMAN, RULE};
+use crate::fields::text_of;
 use serde_yaml::{Mapping, Value as Yaml};
 
 /// 一个工作步骤：叫什么、做什么、谁执行、怎么算完。

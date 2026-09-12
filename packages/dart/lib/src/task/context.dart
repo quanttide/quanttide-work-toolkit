@@ -1,4 +1,4 @@
-import '../workflow/validate.dart';
+import '../fields.dart';
 
 /// 这次执行自带的运行上下文：工作区根、数据仓、工作流目录。
 ///

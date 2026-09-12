@@ -1,17 +1,7 @@
+import '../error.dart';
 import '../executor.dart';
-import '../workflow/validate.dart';
+import '../fields.dart';
 import 'model.dart';
-
-/// 一条判据认得的字段。
-const List<String> _criterionFields = [
-  'executor',
-  'description',
-  'path',
-  'absent',
-  'file',
-  'contains',
-  'run',
-];
 
 /// 从定义里的字段认出一条判据（不校验）。
 Criterion criterionOf(Map map) {
@@ -49,10 +39,10 @@ Criterion readCriterion(
       '$file $place的 executor 只能是 ${criterionTypes.join(' / ')}（谁判：规则引擎 / 智能体 / 人）',
     );
   }
-  final odd = unknownFields(value, _criterionFields);
+  final odd = unknownFields(value, criterionFields);
   if (odd.isNotEmpty) {
     throw DefinitionError(
-      '$file $place有不认识的字段：${odd.join('、')}（只认 ${_criterionFields.join('、')}）',
+      '$file $place有不认识的字段：${odd.join('、')}（只认 ${criterionFields.join('、')}）',
     );
   }
   final given = [

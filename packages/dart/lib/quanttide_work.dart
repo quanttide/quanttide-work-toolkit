@@ -13,8 +13,10 @@
 library;
 
 export 'src/criterion/criterion.dart';
+export 'src/error.dart';
 export 'src/executor.dart';
 export 'src/outcome.dart';
+export 'src/paths.dart';
 export 'src/task/task.dart';
 export 'src/workflow/workflow.dart';
 

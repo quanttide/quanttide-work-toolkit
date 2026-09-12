@@ -6,7 +6,7 @@
 
 use super::model::Workflow;
 use crate::criterion::Criterion;
-use crate::task::expand_placeholders;
+use crate::paths::expand_placeholders;
 
 /// 定义核对出来的一件事：在哪里、核的是什么、过没过。
 ///

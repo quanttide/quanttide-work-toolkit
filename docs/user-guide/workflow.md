@@ -9,7 +9,8 @@
 - 定义核对：判据引用的路径是否存在、描述中提及的小节是否都有判据覆盖；结果以 `Finding` 返回
 
 ```rust
-use quanttide_work::workflow::{looks_like_section, validate, DefinitionError, Finding, Step, Workflow};
+use quanttide_work::error::DefinitionError;
+use quanttide_work::workflow::{looks_like_section, validate, Finding, Step, Workflow};
 ```
 
 ```dart
