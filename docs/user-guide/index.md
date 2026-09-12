@@ -31,7 +31,7 @@
 | **Rust** | `quanttide-work` | crates.io | **有实现** | `cargo add quanttide-work` | `use quanttide_work::criterion::Criterion;` |
 | **Dart** | `quanttide_work` | pub.dev | **有实现** | `dart pub add quanttide_work` | `import 'package:quanttide_work/quanttide_work.dart';` |
 | Go | `github.com/quanttide/quanttide-work-toolkit/packages/go` | 模块路径 | 空壳（只有 `Domain` / `Version`） | — | — |
-| Python | `quanttide-work` | PyPI | 空壳（只有 `__version__`） | — | — |
+| Python | `quanttide-work` | PyPI | 空壳（只有 `DOMAIN` / `__version__`） | — | — |
 | TypeScript | `quanttide-work` | npm | 空壳（只有 `DOMAIN` / `VERSION`） | — | — |
 
 > **空壳语言先别接**：模型还没实现，装进来只有两个常量。实现状态以包内 `STATUS.md` / `ROADMAP.md` 为准。

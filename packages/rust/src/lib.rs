@@ -12,10 +12,10 @@
 //!
 //! 收进来的每一样，都要能在规范里找到出处；规范里没有的，先补规范。
 
-/// 这个工具箱管哪个领域。
+/// 领域英文名。
 pub const DOMAIN: &str = "knowledge-work";
 
-/// 版本号，与 Cargo.toml 一致。
+/// 包版本（与 Cargo.toml 保持一致）。
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 mod fields;
