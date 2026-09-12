@@ -4,9 +4,22 @@
 
 ## 工具箱管什么
 
-- 判据的四种取值：`path` 路径存在、`absent` 路径不存在、`file` + `contains` 文件含这段文字、`run` 这条命令退出码为零
-- 判据的读法：YAML 值 → `Criterion`（不认识、缺字段、越界当场报错）
-- 翻成「要跑什么」：`items_of` / `itemsOf`——这是给端侧的**清单**
+**判据在 YAML 里就四种写法**（机械核对那类都写 `executor: rule`）：
+
+| 写法 | 意思 |
+| :-- | :-- |
+| `path: <路径>` | 路径存在 |
+| `absent: <路径>` | 路径不存在 |
+| `file: <路径>` + `contains: <文字>` | 文件里含这段文字 |
+| `run: <命令>` | 这条命令退出码为零 |
+
+外加一件事：**翻成「要跑什么」**——`items_of` / `itemsOf` 交给端侧一份清单，每条是
+
+```
+description 说明（如「存在：docs/index.md」）、kind 怎么判、args 参数
+```
+
+`kind` 为空就是**不用跑**（那几条的 `executor` 是 `agent` 或 `human`，见 [executor.md](executor.md)）。
 
 ```rust
 use quanttide_work::criterion::{criterion_of, items_of, read_criterion, Criterion, RuleItem, RuleKind};

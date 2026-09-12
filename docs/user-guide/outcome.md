@@ -4,7 +4,7 @@
 
 ## 工具箱管什么
 
-信封的形状与五种装法：`ok` / `lines` / `columns` / `rows` / `data`。
+信封装**四样**：通不通、给人看的话、给界面画表的表格、给窗口与脚本的那一栏。
 
 ```rust
 use quanttide_work::outcome::Outcome;
@@ -16,8 +16,8 @@ import 'package:quanttide_work/quanttide_work.dart';   // Outcome
 
 - `ok`——这次成没成（**退出码怎么定是端侧的事**）
 - `lines`——给人看的那几行
-- `columns` / `rows`——给界面画表的那两栏
-- `data`——给窗口装领域对象的原文
+- `columns` + `rows`——同一份表格：表头与行，命令行与窗口共用
+- `data`——给窗口与脚本的那一栏（要交原文就托在这里）
 
 ## 端侧接哪一步
 

@@ -35,14 +35,14 @@ final workflow = Workflow.fromValue(payload, file: 'code-implement.yaml');  // �
 **定义核对**（`workflow --check` 那一类）：
 
 ```rust
-let findings = workflow.check(&raw, |path| std::path::Path::new(path).exists());
+let findings = workflow.check(&context.data, |path| std::path::Path::new(path).exists());
 ```
 
 ```dart
-final findings = workflow.check(raw, (path) => File(path).existsSync());
+final findings = workflow.check(data, (path) => File(path).existsSync());
 ```
 
-注意括号里那个**存在性判断由端侧给**——工具箱不碰文件系统，它只按你给的答案核对定义。
+两个参数都由端侧给：**第一个是数据目录**（用来把 `{{report}}` 这类占位展开成真路径），**第二个是"这个路径在不在"的答案**——工具箱不碰文件系统，它只拿你给的答案核对定义。
 
 ## 端侧不做什么
 

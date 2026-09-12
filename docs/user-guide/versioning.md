@@ -16,7 +16,7 @@ sh scripts/contract.sh      # 11 份向量，Rust 与 Dart 各跑一遍，结论
 
 这条已挂进两侧的发布工作流（`release-rust.yml` / `release-dart.yml`）：**向量不过，不许发**。
 
-端侧的尺子是另一把：同一处工作区、同一条命令，两端各跑一次，比 `ok` / `columns` / `rows` / `data`（命令行与工作台用的是 `apps/qtcloud-work/src/studio/scripts/parity.sh`，24 条）。改动端侧时用它验收，别只看自己那一侧。
+端侧的尺子是另一把：同一处工作区、同一条命令，两端各跑一次，比 `ok` / `columns` / `rows` / `data`——那把尺子在**领域仓 quanttide-work** 里（本工具箱是它的子模块）：`apps/qtcloud-work/src/studio/scripts/parity.sh`，24 条。改动端侧时用它验收，别只看自己那一侧。
 
 ## 现在的版本状态
 

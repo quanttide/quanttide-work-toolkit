@@ -38,14 +38,16 @@ final line = task.stateLine(workflow);
 ```rust
 let context = RunContext::of(&payload);                  // 三处位置
 let place = task.artifact("report", &context);           // 落点：声明了按声明的，没声明落数据仓
-let text = expand_placeholders("{{任务}}的报告", &raw);   // 占位展开
+let text = expand_placeholders("{{report}}/清单.md", &context.data);   // 占位展开
 ```
 
 ```dart
 final context = RunContext.of(payload);
 final place = task.artifact('report', context);
-final text = expandPlaceholders('{{任务}}的报告', raw);
+final text = expandPlaceholders('{{report}}/清单.md', context.data);
 ```
+
+占位只有四个：`{{artifacts}}`、`{{report}}`、`{{journal}}`、`{{log}}`；第二个参数给的是**数据目录**（`context.data`），展开成 `<数据目录>/artifacts/...`。
 
 ## 只读对齐（这条最容易踩）
 

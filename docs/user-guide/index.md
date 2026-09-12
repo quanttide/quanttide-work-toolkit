@@ -30,7 +30,7 @@
 | :-- | :-- | :-- | :-- | :-- | :-- |
 | **Rust** | `quanttide-work` | crates.io | **有实现** | `cargo add quanttide-work` | `use quanttide_work::criterion::Criterion;` |
 | **Dart** | `quanttide_work` | pub.dev | **有实现** | `dart pub add quanttide_work` | `import 'package:quanttide_work/quanttide_work.dart';` |
-| Go | `.../quanttide-work-toolkit/packages/go` | 模块路径 | 空壳（只有 `Domain` / `Version`） | — | — |
+| Go | `github.com/quanttide/quanttide-work-toolkit/packages/go` | 模块路径 | 空壳（只有 `Domain` / `Version`） | — | — |
 | Python | `quanttide-work` | PyPI | 空壳（只有 `__version__`） | — | — |
 | TypeScript | `quanttide-work` | npm | 空壳（只有 `DOMAIN` / `VERSION`） | — | — |
 
