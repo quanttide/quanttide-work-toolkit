@@ -2,15 +2,52 @@
 
 工具箱装的是知识工作领域**不因平台而变的那部分**——模型的字段与不变量、判据的取值、流水的语义、落点与占位的展开。平台侧（命令行、工作台、以后的语言）向它对齐，**不各写一份**。
 
-语言不同，接法一样。这一篇只管导航，正文在下面四篇里。
+语言不同，接法一样：**先读这篇的总则与货架，再按你要用的模型读对应那一篇。**
 
-| 篇 | 讲什么 | 什么时候读 |
+## 三条总则（不因语言而变，违反任一条，接进来的就不是正本）
+
+1. **只读对齐**——模型不可变：读进来顺带校验（`from_yaml` / `fromValue`），改动用 `with_*` 拿新值，**落盘由端侧做**（工具箱不碰文件）
+2. **工具箱翻单，端侧跑腿**——工具箱把判据翻成「要跑什么」，**真去跑**（查文件、起进程）是端侧的事；**说法**（拼句、退出码、路径怎么显示）与**文案**（提示词）也都留在端侧
+3. **一份正本**——不 fork、不复制模型；端侧向同一批**契约向量**（`tests/contract/*.json`，11 份）对齐
+
+界限一句话：**能两处一致的，进工具箱；只能一处有的，留端侧。**
+
+## 五个模型（这些是出口）
+
+| 模型 | Rust 路径 | Dart（桶文件内同名） | 管什么 | 接入说明 |
+| :-- | :-- | :-- | :-- | :-- |
+| 判据 | `quanttide_work::criterion` | `criterion` | 判据的取值与读法、翻成「要跑什么」 | [criterion.md](criterion.md) |
+| 任务 | `quanttide_work::task` | `task` | 任务、流水与「走过」的判定、运行上下文、落点与占位展开 | [task.md](task.md) |
+| 工作流 | `quanttide_work::workflow` | `workflow` | 步骤、定义的语法与不变量、定义核对 | [workflow.md](workflow.md) |
+| 结果 | `quanttide_work::outcome` | `outcome` | 结果信封（`ok` / `lines` / `columns` / `rows` / `data`） | [outcome.md](outcome.md) |
+| 执行者 | `quanttide_work::executor` | `executor` | 三个取值常量 | [executor.md](executor.md) |
+
+目录里的**分件**（`model` / `read` / `items` / `validate` / `check` / `journal` / `context`）是内部结构，接入者只用上面五个出口。
+
+## 各语言速查
+
+| 语言 | 包名 | 从哪儿装 | 现状 | 装 | 引 |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| **Rust** | `quanttide-work` | crates.io | **有实现** | `cargo add quanttide-work` | `use quanttide_work::criterion::Criterion;` |
+| **Dart** | `quanttide_work` | pub.dev | **有实现** | `dart pub add quanttide_work` | `import 'package:quanttide_work/quanttide_work.dart';` |
+| Go | `.../quanttide-work-toolkit/packages/go` | 模块路径 | 空壳（只有 `Domain` / `Version`） | — | — |
+| Python | `quanttide-work` | PyPI | 空壳（只有 `__version__`） | — | — |
+| TypeScript | `quanttide-work` | npm | 空壳（只有 `DOMAIN` / `VERSION`） | — | — |
+
+> **空壳语言先别接**：模型还没实现，装进来只有两个常量。实现状态以包内 `STATUS.md` / `ROADMAP.md` 为准。
+
+Dart 只有一个入口：**桶文件** `package:quanttide_work/quanttide_work.dart`——接一次全拿到，不必按目录引。
+
+## 接入五步走哪几个模型
+
+| 步 | 做什么 | 去哪篇 |
 | :-- | :-- | :-- |
-| [boundaries.md](boundaries.md)·**边界** | 三条不变量、不做什么 | **先读这篇**——它决定你接进来的还是不是正本 |
-| [packages.md](packages.md)·**包与模型** | 各语言的包名与装法、五个模型出口 | 动手之前，确认引哪个包、用哪个模型 |
-| [steps.md](steps.md)·**接入五步** | 引包 → 读定义 → 判流水 → 自己跑 → 向量验收（各语言并列写法） | 动手的时候，一步一步照做 |
-| [versioning.md](versioning.md)·**版本与对齐** | 两侧同号、向量一致才发、基线怎么拿 | 要发版或对表不齐的时候 |
+| 一 | **引包**——用版本号，不用本地路径（挂本地路径不算接入） | 上面「各语言速查」+ [versioning.md](versioning.md) |
+| 二 | **读定义**——读进来顺带校验，别在端侧重写检查 | [workflow.md](workflow.md) |
+| 三 | **判流水**——走过哪几步、下一步是哪，别自己实现 | [task.md](task.md) |
+| 四 | **自己跑**——工具箱翻单，端侧真去查文件、起进程 | [criterion.md](criterion.md) |
+| 五 | **向量验收**——`sh scripts/contract.sh`，不靠自报 | [versioning.md](versioning.md) |
 
-最短路径：**[boundaries](boundaries.md) → [packages](packages.md) → [steps](steps.md)**，接完用 [versioning](versioning.md) 里的尺子验一遍。
+## 这一篇怎么分的
 
-> **这一篇怎么分的**：照仓库的模块化方法——目录是主题（用户指南），件按「事」分，入口（本文件）只做出口不做内容。所以边界、货架、做法、版本各成一篇，不混写。
+照代码的模块划分：**一个模型一件**（`criterion` / `task` / `workflow` / `outcome` / `executor`），与 `packages/rust/src/`、`packages/dart/lib/src/` 的目录一一对应；不属于任何模型的横切纪律（版本与对齐）另立一件。入口（本文件）只管总则、货架与动线，不装模型细节。
