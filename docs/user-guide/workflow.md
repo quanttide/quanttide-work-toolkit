@@ -22,16 +22,16 @@ import 'package:quanttide_work/quanttide_work.dart';   // Workflow / Step / Defi
 **第二步「读定义」**：读取定义时同步完成校验。
 
 ```rust
-let workflow = Workflow::from_value(&payload, "code-implement.yaml")?;   // 定义不合法时返回 Err
+let workflow = Workflow::from_value(&payload)?;   // 定义不合法时返回 Err
 ```
 
 ```dart
-final workflow = Workflow.fromValue(payload, file: 'code-implement.yaml');  // 定义不合法时抛出异常
+final workflow = Workflow.fromValue(payload);  // 定义不合法时抛出异常
 ```
 
 `payload` 是端侧解析 YAML 得到的值（Rust 为 `serde_yaml::Value`，Dart 为 `Map`），顶层是映射。它既不是文件路径，也不是文件内容的字符串；端侧负责读取文件并解析为值，YAML 的读写方式由各语言包实现。工具箱只接收这个值，校验由工具箱完成。
 
-第二个参数是定义的文件名（例如 `code-implement.yaml`），仅用于构造报错信息（如 `code-implement.yaml 少了 steps`），并不表示工具箱要读取该文件：工具箱不访问文件系统。命令行工具即采用这一方式：由端侧读取文件、解析为值，再把文件名交给工具箱校验。
+定义读不通时，工具箱返回（Rust）或抛出（Dart）一个结构化的 `DefinitionError`：它记着位置（顶层 / 第几个步骤 / 第几条判据）与种类，**不含文件名**。要得到给人看的报错文字，端侧把文件名交给 `error.message("code-implement.yaml")`——工具箱出 canonical 文案（如 `code-implement.yaml 少了 steps`），文件由端侧在渲染时补上。工具箱不访问文件系统。
 
 ### 定义核对
 

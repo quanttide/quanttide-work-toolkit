@@ -52,10 +52,10 @@ void main() {
           final want = vector['expect'] as Map;
           if (want['error'] != null) {
             expect(
-              () => Workflow.fromValue(input, file: vector['file'] as String),
+              () => Workflow.fromValue(input),
               throwsA(
                 isA<DefinitionError>().having(
-                  (e) => e.message,
+                  (e) => e.message(vector['file'] as String),
                   'message',
                   want['error'],
                 ),
@@ -63,7 +63,7 @@ void main() {
               reason: '$name：报错文字不一样',
             );
           } else {
-            Workflow.fromValue(input, file: vector['file'] as String);
+            Workflow.fromValue(input);
           }
         case 'items':
           final got = itemsOf(

@@ -22,28 +22,22 @@ Criterion criterionOf(Map map) {
 
 /// 读一条判据：不是映射、取值不对、缺该有的字段，当场报错。
 ///
-/// `file` 与 `place` 只用来说话；返回的是认好的值对象。
-Criterion readCriterion(
-  Object? value, {
-  required String file,
-  required String place,
-}) {
+/// [step] 与 [order] 是这条判据的位置（第几个步骤、第几条判据），只用来说话；
+/// 返回的是认好的值对象。
+Criterion readCriterion(Object? value, int step, int order) {
+  final at = CriterionPosition(step, order);
   // 先看是不是映射：不是映射时要说「不是映射」，不能先说 executor 该怎么写——
   // 那样报错会指错方向（2026-09-12 之前正是这个顺序，这条分支因此永远走不到）。
   if (value is! Map) {
-    throw DefinitionError('$file $place不是映射');
+    throw DefinitionError(at, const CriterionNotMapping());
   }
   final kind = textOf(value, 'executor');
   if (!criterionTypes.contains(kind)) {
-    throw DefinitionError(
-      '$file $place的 executor 只能是 ${criterionTypes.join(' / ')}（谁判：规则引擎 / 智能体 / 人）',
-    );
+    throw DefinitionError(at, const BadCriterionExecutor());
   }
   final odd = unknownFields(value, criterionFields);
   if (odd.isNotEmpty) {
-    throw DefinitionError(
-      '$file $place有不认识的字段：${odd.join('、')}（只认 ${criterionFields.join('、')}）',
-    );
+    throw DefinitionError(at, UnknownCriterionFields(odd));
   }
   final given = [
     'path',
@@ -54,32 +48,26 @@ Criterion readCriterion(
   ].where((name) => value[name] != null).toList();
   if (kind == rule) {
     if (given.isEmpty) {
-      throw DefinitionError(
-        '$file $place是 rule，得写一条判法（path / absent / file+contains / run）',
-      );
+      throw DefinitionError(at, const RuleNeedsJudgement());
     }
     if (given.contains('contains') && !given.contains('file')) {
-      throw DefinitionError('$file $place写了 contains，还得写 file');
+      throw DefinitionError(at, const ContainsNeedsFile());
     }
     if (given.contains('file') && !given.contains('contains')) {
-      throw DefinitionError('$file $place写了 file，还得写 contains');
+      throw DefinitionError(at, const FileNeedsContains());
     }
     final others = given
         .where((name) => name != 'file' && name != 'contains')
         .toList();
     if (others.length > 1 || (others.isNotEmpty && given.contains('file'))) {
-      throw DefinitionError('$file $place的判法只能一种：path / absent / file+contains / run');
+      throw DefinitionError(at, const OnlyOneJudgement());
     }
   } else {
     if (textOf(value, 'description').isEmpty) {
-      throw DefinitionError(
-        '$file $place是 $kind，必须写 description（判准 / 要人拍板的事）',
-      );
+      throw DefinitionError(at, NeedsDescription(kind));
     }
     if (given.isNotEmpty) {
-      throw DefinitionError(
-        '$file $place是 $kind，不该带 ${given.join('、')}（那是 rule 的字段）',
-      );
+      throw DefinitionError(at, NoRuleFields(kind, given));
     }
   }
   return criterionOf(value);

@@ -153,43 +153,39 @@ void main() {
 
   group('读一条判据', () {
     Matcher defError(String message) =>
-        throwsA(isA<DefinitionError>().having((e) => e.message, 'message', message));
-
-    const place = '第 1 个步骤第 1 条判据';
+        throwsA(isA<DefinitionError>().having((e) => e.message('d.yaml'), 'message', message));
 
     test('rule 四种判法各自认出', () {
       expect(
-        readCriterion({'executor': 'rule', 'path': 'a'}, file: 'd.yaml', place: place),
+        readCriterion({'executor': 'rule', 'path': 'a'}, 1, 1),
         isA<PathExists>(),
       );
       expect(
-        readCriterion({'executor': 'rule', 'absent': 'a'}, file: 'd.yaml', place: place),
+        readCriterion({'executor': 'rule', 'absent': 'a'}, 1, 1),
         isA<PathAbsent>(),
       );
       expect(
         readCriterion(
-          {'executor': 'rule', 'file': 'a', 'contains': 'b'},
-          file: 'd.yaml',
-          place: place,
+          {'executor': 'rule', 'file': 'a', 'contains': 'b'}, 1, 1
         ),
         isA<FileContains>(),
       );
       expect(
-        readCriterion({'executor': 'rule', 'run': 'true'}, file: 'd.yaml', place: place),
+        readCriterion({'executor': 'rule', 'run': 'true'}, 1, 1),
         isA<CommandRun>(),
       );
     });
 
     test('executor 不在三选一里：报错点出三种取值', () {
       expect(
-        () => readCriterion({'executor': 'auto', 'path': 'a'}, file: 'd.yaml', place: place),
+        () => readCriterion({'executor': 'auto', 'path': 'a'}, 1, 1),
         defError('d.yaml 第 1 个步骤第 1 条判据的 executor 只能是 rule / agent / human（谁判：规则引擎 / 智能体 / 人）'),
       );
     });
 
     test('不是映射：报「不是映射」，不绕去说 executor 该怎么写', () {
       expect(
-        () => readCriterion('裸字符串', file: 'd.yaml', place: place),
+        () => readCriterion('裸字符串', 1, 1),
         defError('d.yaml 第 1 个步骤第 1 条判据不是映射'),
       );
     });
@@ -197,9 +193,7 @@ void main() {
     test('不认识的字段：报错列全只认哪些', () {
       expect(
         () => readCriterion(
-          {'executor': 'rule', 'path': 'a', 'version': 2},
-          file: 'd.yaml',
-          place: place,
+          {'executor': 'rule', 'path': 'a', 'version': 2}, 1, 1
         ),
         defError('d.yaml 第 1 个步骤第 1 条判据有不认识的字段：version'
             '（只认 executor、description、path、absent、file、contains、run）'),
@@ -208,7 +202,7 @@ void main() {
 
     test('rule 一条判法都没写：报错点出四种判法', () {
       expect(
-        () => readCriterion({'executor': 'rule'}, file: 'd.yaml', place: place),
+        () => readCriterion({'executor': 'rule'}, 1, 1),
         defError('d.yaml 第 1 个步骤第 1 条判据是 rule，得写一条判法（path / absent / file+contains / run）'),
       );
     });
@@ -216,9 +210,7 @@ void main() {
     test('写了 contains 没写 file', () {
       expect(
         () => readCriterion(
-          {'executor': 'rule', 'contains': 'b'},
-          file: 'd.yaml',
-          place: place,
+          {'executor': 'rule', 'contains': 'b'}, 1, 1
         ),
         defError('d.yaml 第 1 个步骤第 1 条判据写了 contains，还得写 file'),
       );
@@ -226,7 +218,7 @@ void main() {
 
     test('写了 file 没写 contains', () {
       expect(
-        () => readCriterion({'executor': 'rule', 'file': 'a'}, file: 'd.yaml', place: place),
+        () => readCriterion({'executor': 'rule', 'file': 'a'}, 1, 1),
         defError('d.yaml 第 1 个步骤第 1 条判据写了 file，还得写 contains'),
       );
     });
@@ -234,17 +226,13 @@ void main() {
     test('判法混着写：只准一种', () {
       expect(
         () => readCriterion(
-          {'executor': 'rule', 'path': 'a', 'run': 'true'},
-          file: 'd.yaml',
-          place: place,
+          {'executor': 'rule', 'path': 'a', 'run': 'true'}, 1, 1
         ),
         defError('d.yaml 第 1 个步骤第 1 条判据的判法只能一种：path / absent / file+contains / run'),
       );
       expect(
         () => readCriterion(
-          {'executor': 'rule', 'path': 'a', 'file': 'b', 'contains': 'c'},
-          file: 'd.yaml',
-          place: place,
+          {'executor': 'rule', 'path': 'a', 'file': 'b', 'contains': 'c'}, 1, 1
         ),
         defError('d.yaml 第 1 个步骤第 1 条判据的判法只能一种：path / absent / file+contains / run'),
       );
@@ -253,9 +241,7 @@ void main() {
     test('agent / human 带了 rule 的字段：报错列出来', () {
       expect(
         () => readCriterion(
-          {'executor': 'agent', 'description': '审一下', 'path': 'a'},
-          file: 'd.yaml',
-          place: place,
+          {'executor': 'agent', 'description': '审一下', 'path': 'a'}, 1, 1
         ),
         defError('d.yaml 第 1 个步骤第 1 条判据是 agent，不该带 path（那是 rule 的字段）'),
       );
@@ -263,7 +249,7 @@ void main() {
 
     test('agent / human 没写 description：报错说清要写', () {
       expect(
-        () => readCriterion({'executor': 'agent'}, file: 'd.yaml', place: place),
+        () => readCriterion({'executor': 'agent'}, 1, 1),
         defError('d.yaml 第 1 个步骤第 1 条判据是 agent，必须写 description（判准 / 要人拍板的事）'),
       );
     });

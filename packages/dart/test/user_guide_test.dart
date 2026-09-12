@@ -24,7 +24,7 @@ void main() {
         {'executor': 'rule', 'path': 'docs/index.md'},
         {'executor': 'agent', 'description': '写干净了'},
       ],
-    }, file: 'demo.yaml', position: 1);
+    }, position: 1);
 
     final items = itemsOf(step.rules);
 
@@ -38,7 +38,7 @@ void main() {
     // 文档：executor.md #2
     final step = Step.fromValue({
       'name': '实现',
-    }, file: 'demo.yaml', position: 1);
+    }, position: 1);
 
     if (step.executor == agent) { /* 这一段交给智能体 */ }
 
@@ -136,7 +136,7 @@ void main() {
       ],
     };
 
-    final workflow = Workflow.fromValue(payload, file: 'code-implement.yaml');
+    final workflow = Workflow.fromValue(payload);
 
     expect(workflow.name, 'code-implement');
     expect(workflow.stepNames, ['实现']);
@@ -154,7 +154,7 @@ void main() {
           ],
         },
       ],
-    }, file: 'demo.yaml');
+    });
     const data = '/w/data';
 
     final findings = workflow.check(data, (path) => File(path).existsSync());

@@ -10,9 +10,9 @@ fn yaml(value: Json) -> Yaml {
     serde_yaml::to_value(value).expect("JSON 装成 YAML 值")
 }
 
-/// 用 `validate` / `from_value` 读一份定义，取它该报的错。
+/// 用 `validate` 读一份定义，取它该报的错。
 fn validate_err(value: Json, file: &str) -> String {
-    validate(&yaml(value), file).expect_err("应当报错").0
+    validate(&yaml(value)).expect_err("应当报错").message(file)
 }
 
 /// 核对结果里 description 提到的小节名有没有被覆盖。
@@ -29,10 +29,12 @@ fn section_ok(findings: &[Finding], name: &str) -> Option<bool> {
 
 #[test]
 fn definition_error_shows_its_message() {
-    let error = DefinitionError("demo.yaml 少了 name".into());
-    assert_eq!(error.to_string(), "demo.yaml 少了 name");
+    use quanttide_work::error::{Fault, Position};
+    let error = DefinitionError::new(Position::Top, Fault::MissingName);
+    assert_eq!(error.message("demo.yaml"), "demo.yaml 少了 name");
+    assert_eq!(error.to_string(), "少了 name");
     let as_std: &dyn std::error::Error = &error;
-    assert_eq!(as_std.to_string(), "demo.yaml 少了 name");
+    assert_eq!(as_std.to_string(), "少了 name");
 }
 
 // ---------------------------------------------------------------------------
@@ -41,14 +43,11 @@ fn definition_error_shows_its_message() {
 
 #[test]
 fn validate_reads_a_well_formed_definition() {
-    let workflow = Workflow::from_value(
-        &yaml(json!({
-            "name": "demo",
-            "description": "走一遍给我看",
-            "steps": [{"name": "甲", "executor": "agent"}, {"name": "乙", "executor": "human"}]
-        })),
-        "demo.yaml",
-    )
+    let workflow = Workflow::from_value(&yaml(json!({
+        "name": "demo",
+        "description": "走一遍给我看",
+        "steps": [{"name": "甲", "executor": "agent"}, {"name": "乙", "executor": "human"}]
+    })))
     .expect("合法定义");
     assert_eq!(workflow.name, "demo");
     assert_eq!(workflow.step_names(), vec!["甲", "乙"]);
@@ -168,13 +167,12 @@ fn validate_points_at_the_offending_step_and_criterion() {
 
 #[test]
 fn step_from_value_defaults_executor_and_empty_criteria() {
-    let step = Step::from_value(&yaml(json!({"name": "甲"})), "demo.yaml", 1).expect("合法步骤");
+    let step = Step::from_value(&yaml(json!({"name": "甲"})), 1).expect("合法步骤");
     assert_eq!(step.executor(), AGENT);
     assert!(step.criteria().is_empty());
 
     let explicit_null = Step::from_value(
         &yaml(json!({"name": "甲", "executor": "human", "criteria": null})),
-        "demo.yaml",
         1,
     )
     .expect("criteria 为 null 等于没写");
@@ -204,13 +202,10 @@ fn workflow_of_reads_fields_without_checking() {
 
 #[test]
 fn workflow_step_and_steps_accessors() {
-    let workflow = Workflow::from_value(
-        &yaml(json!({
-            "name": "w",
-            "steps": [{"name": "甲", "description": "做甲"}, {"name": "乙", "executor": "human"}]
-        })),
-        "w.yaml",
-    )
+    let workflow = Workflow::from_value(&yaml(json!({
+        "name": "w",
+        "steps": [{"name": "甲", "description": "做甲"}, {"name": "乙", "executor": "human"}]
+    })))
     .expect("合法定义");
     assert_eq!(workflow.steps().len(), 2);
     assert_eq!(
@@ -278,9 +273,8 @@ fn workflow_to_yaml_roundtrips() {
             {"name": "收尾", "executor": "human", "criteria": [{"executor": "human", "description": "人拍板"}]}
         ]
     }));
-    let workflow = Workflow::from_value(&payload, "code-implement.yaml").expect("合法定义");
-    let back =
-        Workflow::from_value(&workflow.to_yaml(), "code-implement.yaml").expect("写回仍合法");
+    let workflow = Workflow::from_value(&payload).expect("合法定义");
+    let back = Workflow::from_value(&workflow.to_yaml()).expect("写回仍合法");
     assert_eq!(back, workflow);
 }
 
@@ -321,20 +315,17 @@ fn looks_like_section_rejects_non_names() {
 
 #[test]
 fn check_reports_paths_and_sections() {
-    let workflow = Workflow::from_value(
-        &yaml(json!({
-            "name": "code-implement",
-            "steps": [{
-                "name": "甲",
-                "description": "交一份带 ## 收尾 的报告，并按「结论」一节写清楚",
-                "criteria": [
-                    {"executor": "rule", "path": "/w/seen.md"},
-                    {"executor": "rule", "file": "report.md", "contains": "收尾"}
-                ]
-            }]
-        })),
-        "code-implement.yaml",
-    )
+    let workflow = Workflow::from_value(&yaml(json!({
+        "name": "code-implement",
+        "steps": [{
+            "name": "甲",
+            "description": "交一份带 ## 收尾 的报告，并按「结论」一节写清楚",
+            "criteria": [
+                {"executor": "rule", "path": "/w/seen.md"},
+                {"executor": "rule", "file": "report.md", "contains": "收尾"}
+            ]
+        }]
+    })))
     .expect("合法定义");
 
     let findings = workflow.check("/w", |path| path == "/w/seen.md");
@@ -361,24 +352,21 @@ fn check_reports_paths_and_sections() {
 
 #[test]
 fn check_skips_placeholders_and_unchecked_kinds() {
-    let workflow = Workflow::from_value(
-        &yaml(json!({
-            "name": "w",
-            "steps": [{
-                "name": "甲",
-                "criteria": [
-                    {"executor": "rule", "path": "{{report}}/x.md"},
-                    {"executor": "rule", "path": "{{journal}}/y.md"},
-                    {"executor": "rule", "path": "{{log}}/z.yaml"},
-                    {"executor": "rule", "absent": "gone.md"},
-                    {"executor": "rule", "run": "true"},
-                    {"executor": "agent", "description": "写干净了"},
-                    {"executor": "human", "description": "人拍板"}
-                ]
-            }]
-        })),
-        "w.yaml",
-    )
+    let workflow = Workflow::from_value(&yaml(json!({
+        "name": "w",
+        "steps": [{
+            "name": "甲",
+            "criteria": [
+                {"executor": "rule", "path": "{{report}}/x.md"},
+                {"executor": "rule", "path": "{{journal}}/y.md"},
+                {"executor": "rule", "path": "{{log}}/z.yaml"},
+                {"executor": "rule", "absent": "gone.md"},
+                {"executor": "rule", "run": "true"},
+                {"executor": "agent", "description": "写干净了"},
+                {"executor": "human", "description": "人拍板"}
+            ]
+        }]
+    })))
     .expect("合法定义");
 
     let findings = workflow.check("/d", |_| true);
@@ -401,9 +389,7 @@ fn check_dedupes_section_mentions_and_ignores_unclosed_ones() {
                     {"executor": "rule", "file": "b.md", "contains": "结论"}
                 ]
             }]
-        })),
-        "w.yaml",
-    )
+        })))
     .expect("合法定义");
 
     let findings = workflow.check("/d", |_| true);

@@ -4,52 +4,43 @@ import '../executor.dart';
 import '../fields.dart';
 
 /// 语法校验一份定义：不是映射、缺字段、取值不对，读不通就抛 [DefinitionError]。
-void validateWorkflow(Object? value, {String file = '定义'}) {
+void validateWorkflow(Object? value) {
   if (value is! Map) {
-    throw DefinitionError('$file 的顶层不是映射（name / steps）');
+    throw DefinitionError(const TopPosition(), const TopNotMapping());
   }
   if (textOf(value, 'name').isEmpty) {
-    throw DefinitionError('$file 少了 name');
+    throw DefinitionError(const TopPosition(), const MissingName());
   }
   final steps = value['steps'];
   if (steps is! List || steps.isEmpty) {
-    throw DefinitionError('$file 少了 steps（至少一个步骤）');
+    throw DefinitionError(const TopPosition(), const MissingSteps());
   }
   final unknown = unknownFields(value, topFields);
   if (unknown.isNotEmpty) {
-    throw DefinitionError(
-      '$file 顶层有不认识的字段：${unknown.join('、')}（只认 ${topFields.join('、')}）',
-    );
+    throw DefinitionError(const TopPosition(), UnknownTopFields(unknown));
   }
   for (var index = 0; index < steps.length; index++) {
-    validateStep(steps[index], file: file, position: index + 1);
+    validateStep(steps[index], position: index + 1);
   }
 }
 
 /// 语法校验一个步骤：读不通就抛 [DefinitionError]。
-void validateStep(
-  Object? value, {
-  required String file,
-  required int position,
-}) {
+void validateStep(Object? value, {required int position}) {
+  final at = StepPosition(position);
   if (value is! Map) {
-    throw DefinitionError('$file 第 $position 个步骤少了 name');
+    throw DefinitionError(at, const MissingStepName());
   }
   if (textOf(value, 'name').isEmpty) {
-    throw DefinitionError('$file 第 $position 个步骤少了 name');
+    throw DefinitionError(at, const MissingStepName());
   }
   final extra = unknownFields(value, stepFields);
   if (extra.isNotEmpty) {
-    throw DefinitionError(
-      '$file 第 $position 个步骤有不认识的字段：${extra.join('、')}（只认 ${stepFields.join('、')}）',
-    );
+    throw DefinitionError(at, UnknownStepFields(extra));
   }
   var executor = textOf(value, 'executor');
   if (executor.isEmpty) executor = agent;
   if (!executors.contains(executor)) {
-    throw DefinitionError(
-      '$file 第 $position 个步骤的 executor 只能是 ${executors.join(' 或 ')}，实得 $executor',
-    );
+    throw DefinitionError(at, BadStepExecutor(executor));
   }
   final raw = value['criteria'];
   final List items;
@@ -58,13 +49,9 @@ void validateStep(
   } else if (raw is List) {
     items = raw;
   } else {
-    throw DefinitionError('$file 第 $position 个步骤的 criteria 应当是列表');
+    throw DefinitionError(at, const CriteriaNotList());
   }
   for (var order = 0; order < items.length; order++) {
-    readCriterion(
-      items[order],
-      file: file,
-      place: '第 $position 个步骤第 ${order + 1} 条判据',
-    );
+    readCriterion(items[order], position, order + 1);
   }
 }

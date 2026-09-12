@@ -15,16 +15,16 @@ fn yaml(value: Json) -> Yaml {
     serde_yaml::to_value(value).expect("JSON 装成 YAML 值")
 }
 
-/// 读一条合法判据；`place` 固定成第 1 个步骤第 1 条判据。
+/// 读一条合法判据；位置固定成第 1 个步骤第 1 条判据。
 fn read(value: Json) -> Criterion {
-    read_criterion(&yaml(value), "demo.yaml", "第 1 个步骤第 1 条判据").expect("合法判据")
+    read_criterion(&yaml(value), 1, 1).expect("合法判据")
 }
 
 /// 读一条判据，取它该报的错。
 fn read_err(value: Json) -> String {
-    read_criterion(&yaml(value), "demo.yaml", "第 1 个步骤第 1 条判据")
+    read_criterion(&yaml(value), 1, 1)
         .expect_err("应当报错")
-        .0
+        .message("demo.yaml")
 }
 
 // ---------------------------------------------------------------------------

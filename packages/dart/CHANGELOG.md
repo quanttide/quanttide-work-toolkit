@@ -2,6 +2,7 @@
 
 ### Changed
 
+- **破坏性**：`Workflow.fromValue` / `Step.fromValue` / `readCriterion` / `validateWorkflow` / `validateStep` 不再收 `file` / `place`；`DefinitionError` 改成结构化（`position` + `fault`），`message(file)` 出 canonical 文案，`toString()` 给不带文件的那一句
 - 抽出中立件 `fields.dart`（`textOf` / `unknownFields`，不经桶文件导出）、`error.dart`（`DefinitionError`）、`paths.dart`（`join` + `expandPlaceholders`）：切断 `criterion ↔ workflow` 与 `workflow ↔ task` 两个环；桶文件照旧导出 `DefinitionError` / `expandPlaceholders`，接入者无感
 - **破坏性**：`validateWorkflow` / `validateStep` 改为只做语法校验（返回 `void`），不再顺带建模型；建模走 `Workflow.fromValue` / `Step.fromValue`——与 Rust 侧 `validate` / `from_value` 对齐
 - 判据的读法归位：`criterionOf` / `readCriterion` 从 `workflow` 搬到 `criterion`（桶文件导入方式不变，端侧无感）

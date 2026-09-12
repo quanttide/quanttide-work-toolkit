@@ -19,17 +19,14 @@ fn yaml(value: Json) -> Yaml {
 
 /// 手册里反复出现的工作流夹具。
 fn code_implement() -> Workflow {
-    Workflow::from_value(
-        &yaml(json!({
-            "name": "code-implement",
-            "description": "实现一段代码",
-            "steps": [
-                {"name": "大纲", "executor": "agent"},
-                {"name": "收尾", "executor": "human"}
-            ]
-        })),
-        "code-implement.yaml",
-    )
+    Workflow::from_value(&yaml(json!({
+        "name": "code-implement",
+        "description": "实现一段代码",
+        "steps": [
+            {"name": "大纲", "executor": "agent"},
+            {"name": "收尾", "executor": "human"}
+        ]
+    })))
     .expect("夹具工作流合法")
 }
 
@@ -50,8 +47,8 @@ fn doc_criterion_1() {
     assert_eq!(items[0].kind, Some(RuleKind::Path));
     let checked = read_criterion(
         &yaml(json!({"executor": "rule", "path": "docs/index.md"})),
-        "demo.yaml",
-        "第 1 个步骤第 1 条判据",
+        1,
+        1,
     );
     assert!(checked.is_ok());
 }
@@ -224,17 +221,11 @@ fn doc_task_4() {
 // 文档：workflow.md #1
 #[test]
 fn doc_workflow_1() {
-    use quanttide_work::error::DefinitionError;
+    use quanttide_work::error::{DefinitionError, Fault, Position};
     use quanttide_work::workflow::{Finding, Step, Workflow, looks_like_section, validate};
     assert!(looks_like_section("收尾"));
-    assert!(
-        validate(
-            &yaml(json!({"name": "w", "steps": [{"name": "甲"}]})),
-            "w.yaml"
-        )
-        .is_ok()
-    );
-    let error = DefinitionError("x".into());
+    assert!(validate(&yaml(json!({"name": "w", "steps": [{"name": "甲"}]}))).is_ok());
+    let error = DefinitionError::new(Position::Top, Fault::MissingName);
     let _: &dyn std::error::Error = &error;
     let _: Option<Finding> = None;
     let step = Step {
@@ -256,12 +247,9 @@ fn doc_workflow_2() -> Result<(), DefinitionError> {
         "description": "实现一段代码",
         "steps": [{"name": "大纲", "executor": "agent"}, {"name": "收尾", "executor": "human"}]
     }));
-    let workflow = Workflow::from_value(&payload, "code-implement.yaml")?; // 不合法当场 Err
+    let workflow = Workflow::from_value(&payload)?; // 不合法当场 Err
     assert_eq!(workflow.step_names(), vec!["大纲", "收尾"]);
-    let illegal = Workflow::from_value(
-        &yaml(json!({"name": "w", "steps": []})),
-        "code-implement.yaml",
-    );
+    let illegal = Workflow::from_value(&yaml(json!({"name": "w", "steps": []})));
     assert!(illegal.is_err(), "少了 steps 当场 Err");
     Ok(())
 }
@@ -269,16 +257,13 @@ fn doc_workflow_2() -> Result<(), DefinitionError> {
 // 文档：workflow.md #3
 #[test]
 fn doc_workflow_3() {
-    let workflow = Workflow::from_value(
-        &yaml(json!({
-            "name": "w",
-            "steps": [{
-                "name": "甲",
-                "criteria": [{"executor": "rule", "path": "/nonexistent-quanttide-work-tests/x.md"}]
-            }]
-        })),
-        "w.yaml",
-    )
+    let workflow = Workflow::from_value(&yaml(json!({
+        "name": "w",
+        "steps": [{
+            "name": "甲",
+            "criteria": [{"executor": "rule", "path": "/nonexistent-quanttide-work-tests/x.md"}]
+        }]
+    })))
     .expect("合法定义");
     let context = RunContext::of(&yaml(json!({"data": "/w/data"})));
     let findings = workflow.check(&context.data, |path| std::path::Path::new(path).exists());

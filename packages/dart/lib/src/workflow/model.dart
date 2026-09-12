@@ -32,8 +32,8 @@ class Workflow {
   );
 
   /// 从定义里的字段读出，顺带把语法过一遍。读不通就抛 [DefinitionError]。
-  factory Workflow.fromValue(Object? value, {String file = '定义'}) {
-    validateWorkflow(value, file: file);
+  factory Workflow.fromValue(Object? value) {
+    validateWorkflow(value);
     return Workflow.of(textOf(value, 'name'), value as Map);
   }
 
@@ -87,12 +87,8 @@ class Step {
   }
 
   /// 从定义里的字段读出，顺带把语法过一遍。
-  factory Step.fromValue(
-    Object? value, {
-    required String file,
-    required int position,
-  }) {
-    validateStep(value, file: file, position: position);
+  factory Step.fromValue(Object? value, {required int position}) {
+    validateStep(value, position: position);
     return Step.of(value as Map);
   }
 

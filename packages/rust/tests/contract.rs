@@ -81,15 +81,17 @@ fn contract() {
         match kind {
             "validate" => {
                 let file = vector["file"].as_str().unwrap_or("");
-                let got = workflow::validate(&as_yaml(&vector["input"]), file);
+                let got = workflow::validate(&as_yaml(&vector["input"]));
                 match vector["expect"].get("error") {
                     Some(Value::String(wanted)) => match got {
                         Ok(()) => panic!("{name}：期望报错，却通过了"),
-                        Err(error) => assert_eq!(&error.0, wanted, "{name}：报错文字不一样"),
+                        Err(error) => {
+                            assert_eq!(error.message(file), *wanted, "{name}：报错文字不一样")
+                        }
                     },
                     _ => {
                         if let Err(error) = got {
-                            panic!("{name}：期望通过，却报错：{}", error.0);
+                            panic!("{name}：期望通过，却报错：{}", error.message(file));
                         }
                     }
                 }

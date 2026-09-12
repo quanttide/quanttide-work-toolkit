@@ -81,7 +81,6 @@ void main() {
     test('Step.fromValue：读进来顺带校验', () {
       final step = Step.fromValue(
         {'name': '乙', 'executor': 'human'},
-        file: 'demo.yaml',
         position: 2,
       );
       expect(step.name, '乙');
@@ -127,15 +126,18 @@ void main() {
 
   group('定义校验', () {
     Matcher defError(String message) =>
-        throwsA(isA<DefinitionError>().having((e) => e.message, 'message', message));
+        throwsA(isA<DefinitionError>().having((e) => e.message('demo.yaml'), 'message', message));
 
     test('DefinitionError.toString 交原文', () {
-      expect(DefinitionError('少了 name').toString(), '少了 name');
+      expect(
+        DefinitionError(const TopPosition(), const MissingName()).toString(),
+        '少了 name',
+      );
     });
 
     test('顶层不是映射', () {
       expect(
-        () => Workflow.fromValue('不是映射', file: 'demo.yaml'),
+        () => Workflow.fromValue('不是映射'),
         defError('demo.yaml 的顶层不是映射（name / steps）'),
       );
     });
@@ -146,18 +148,18 @@ void main() {
           'steps': [
             {'name': '甲'},
           ],
-        }, file: 'demo.yaml'),
+        }),
         defError('demo.yaml 少了 name'),
       );
     });
 
     test('少了 steps 或 steps 是空的', () {
       expect(
-        () => Workflow.fromValue({'name': 'x'}, file: 'demo.yaml'),
+        () => Workflow.fromValue({'name': 'x'}),
         defError('demo.yaml 少了 steps（至少一个步骤）'),
       );
       expect(
-        () => Workflow.fromValue({'name': 'x', 'steps': const []}, file: 'demo.yaml'),
+        () => Workflow.fromValue({'name': 'x', 'steps': const []}),
         defError('demo.yaml 少了 steps（至少一个步骤）'),
       );
     });
@@ -170,7 +172,7 @@ void main() {
           'steps': [
             {'name': '甲'},
           ],
-        }, file: 'demo.yaml'),
+        }),
         defError('demo.yaml 顶层有不认识的字段：version（只认 name、description、steps）'),
       );
     });
@@ -180,7 +182,7 @@ void main() {
         () => Workflow.fromValue({
           'name': 'x',
           'steps': ['甲'],
-        }, file: 'demo.yaml'),
+        }),
         defError('demo.yaml 第 1 个步骤少了 name'),
       );
     });
@@ -192,7 +194,7 @@ void main() {
           'steps': [
             {'executor': 'agent'},
           ],
-        }, file: 'demo.yaml'),
+        }),
         defError('demo.yaml 第 1 个步骤少了 name'),
       );
     });
@@ -204,7 +206,7 @@ void main() {
           'steps': [
             {'name': '甲', 'foo': 1},
           ],
-        }, file: 'demo.yaml'),
+        }),
         defError('demo.yaml 第 1 个步骤有不认识的字段：foo（只认 name、description、executor、criteria）'),
       );
     });
@@ -216,7 +218,7 @@ void main() {
           'steps': [
             {'name': '甲', 'executor': 'auto'},
           ],
-        }, file: 'demo.yaml'),
+        }),
         defError('demo.yaml 第 1 个步骤的 executor 只能是 agent 或 human，实得 auto'),
       );
     });
@@ -228,7 +230,7 @@ void main() {
           'steps': [
             {'name': '甲', 'criteria': 'path: a'},
           ],
-        }, file: 'demo.yaml'),
+        }),
         defError('demo.yaml 第 1 个步骤的 criteria 应当是列表'),
       );
     });
@@ -261,7 +263,7 @@ void main() {
             ],
           },
         ],
-      }, file: 'demo.yaml');
+      });
 
       final findings = workflow.check(
         '/w/data',
@@ -307,7 +309,7 @@ void main() {
             ],
           },
         ],
-      }, file: 'demo.yaml');
+      });
 
       expect(workflow.check('/w/data', (path) => true), isEmpty);
     });
@@ -323,7 +325,7 @@ void main() {
             ],
           },
         ],
-      }, file: 'demo.yaml');
+      });
 
       expect(workflow.check('/w/data', (path) => true), isEmpty);
     });

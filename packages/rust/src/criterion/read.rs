@@ -5,7 +5,7 @@
 //! 不认识、缺了、越界，当场报错。规矩的出处是 `docs/specification/process/workflow.md`·语法。
 
 use super::model::Criterion;
-use crate::error::DefinitionError;
+use crate::error::{DefinitionError, Fault, Position};
 use crate::executor::{AGENT, CRITERION_TYPES, HUMAN, RULE};
 use crate::fields::{CRITERION_FIELDS, text_of, unknown_fields};
 use serde_yaml::Value as Yaml;
@@ -47,27 +47,32 @@ pub fn criterion_of(value: &Yaml) -> Criterion {
 
 /// 读一条判据：取值不对、缺该有的字段，当场报错。
 ///
-/// `file` 与 `place` 只用来说话；返回的是认好的值对象。
-pub fn read_criterion(value: &Yaml, file: &str, place: &str) -> Result<Criterion, DefinitionError> {
+/// `step` 与 `order` 是这条判据的位置（第几个步骤、第几条判据），只用来说话；
+/// 返回的是认好的值对象。
+pub fn read_criterion(
+    value: &Yaml,
+    step: usize,
+    order: usize,
+) -> Result<Criterion, DefinitionError> {
+    let at = || Position::Criterion {
+        step,
+        criterion: order,
+    };
     // 先看是不是映射：不是映射时要说「不是映射」，不能先说 executor 该怎么写——
     // 那样报错会指错方向（2026-09-12 之前正是这个顺序，这条分支因此永远走不到）。
     let criterion_map = value
         .as_mapping()
-        .ok_or_else(|| DefinitionError(format!("{file} {place}不是映射")))?;
+        .ok_or_else(|| DefinitionError::new(at(), Fault::CriterionNotMapping))?;
     let kind = text_of(value, "executor");
     if !CRITERION_TYPES.contains(&kind.as_str()) {
-        return Err(DefinitionError(format!(
-            "{file} {place}的 executor 只能是 {}（谁判：规则引擎 / 智能体 / 人）",
-            CRITERION_TYPES.join(" / ")
-        )));
+        return Err(DefinitionError::new(at(), Fault::BadCriterionExecutor));
     }
     let odd = unknown_fields(criterion_map, &CRITERION_FIELDS);
     if !odd.is_empty() {
-        return Err(DefinitionError(format!(
-            "{file} {place}有不认识的字段：{}（只认 {}）",
-            odd.join("、"),
-            CRITERION_FIELDS.join("、")
-        )));
+        return Err(DefinitionError::new(
+            at(),
+            Fault::UnknownCriterionFields(odd),
+        ));
     }
     let given: Vec<&str> = ["path", "absent", "file", "contains", "run"]
         .into_iter()
@@ -75,19 +80,13 @@ pub fn read_criterion(value: &Yaml, file: &str, place: &str) -> Result<Criterion
         .collect();
     if kind == RULE {
         if given.is_empty() {
-            return Err(DefinitionError(format!(
-                "{file} {place}是 rule，得写一条判法（path / absent / file+contains / run）"
-            )));
+            return Err(DefinitionError::new(at(), Fault::RuleNeedsJudgement));
         }
         if given.contains(&"contains") && !given.contains(&"file") {
-            return Err(DefinitionError(format!(
-                "{file} {place}写了 contains，还得写 file"
-            )));
+            return Err(DefinitionError::new(at(), Fault::ContainsNeedsFile));
         }
         if given.contains(&"file") && !given.contains(&"contains") {
-            return Err(DefinitionError(format!(
-                "{file} {place}写了 file，还得写 contains"
-            )));
+            return Err(DefinitionError::new(at(), Fault::FileNeedsContains));
         }
         let others: Vec<&str> = given
             .iter()
@@ -95,21 +94,20 @@ pub fn read_criterion(value: &Yaml, file: &str, place: &str) -> Result<Criterion
             .filter(|name| *name != "file" && *name != "contains")
             .collect();
         if others.len() > 1 || (!others.is_empty() && given.contains(&"file")) {
-            return Err(DefinitionError(format!(
-                "{file} {place}的判法只能一种：path / absent / file+contains / run"
-            )));
+            return Err(DefinitionError::new(at(), Fault::OnlyOneJudgement));
         }
     } else {
         if text_of(value, "description").is_empty() {
-            return Err(DefinitionError(format!(
-                "{file} {place}是 {kind}，必须写 description（判准 / 要人拍板的事）"
-            )));
+            return Err(DefinitionError::new(at(), Fault::NeedsDescription { kind }));
         }
         if !given.is_empty() {
-            return Err(DefinitionError(format!(
-                "{file} {place}是 {kind}，不该带 {}（那是 rule 的字段）",
-                given.join("、")
-            )));
+            return Err(DefinitionError::new(
+                at(),
+                Fault::NoRuleFields {
+                    kind,
+                    given: given.iter().map(|name| name.to_string()).collect(),
+                },
+            ));
         }
     }
     Ok(criterion_of(value))
