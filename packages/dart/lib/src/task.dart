@@ -1,6 +1,9 @@
 
 import 'workflow.dart';
 
+/// 去掉尾巴上的斜杠，拼路径不出双斜杠。
+String _trim(String path) => path.endsWith('/') ? path.substring(0, path.length - 1) : path;
+
 /// 任务聚合：工作流的一次执行实例。
 ///
 /// 指令是跑哪条工作流（[workflowName]，**按名字**引用）与从哪开工（[start]）；
@@ -16,7 +19,7 @@ class Task {
     this.context = const RunContext(),
     this.journal = const [],
     this.gates = const [],
-    this.products = const {},
+    this.artifacts = const {},
   });
 
   /// 从任务文件里的字段读出。[name] 由调用方给（文件名即任务名）。
@@ -33,8 +36,8 @@ class Task {
       for (final note in payload['gates'] as List? ?? const [])
         if (note is String) note,
     ],
-    products: {
-      for (final entry in (payload['products'] as Map? ?? const {}).entries)
+    artifacts: {
+      for (final entry in (payload['artifacts'] as Map? ?? const {}).entries)
         if (entry.key is String && entry.value is String)
           '${entry.key}': '${entry.value}',
     },
@@ -50,12 +53,26 @@ class Task {
   final List<String> gates;
 
   /// 这次执行往哪写产物（声明写成什么就是什么，相对工作区根）。
-  final Map<String, String> products;
+  final Map<String, String> artifacts;
 
-  /// 这种产物声明了往哪写；没声明给 null（落哪是各自包的事）。
-  String? product(String kind) {
-    final written = products[kind]?.trim() ?? '';
+  /// 这种产物声明了往哪写；没声明给 null。
+  String? declared(String kind) {
+    final written = artifacts[kind]?.trim() ?? '';
     return written.isEmpty ? null : written;
+  }
+
+  /// 这次执行往哪写这种产物（规范「任务 / 语法」里的落点）。
+  ///
+  /// 声明了按声明的（相对工作区根）；没声明落数据仓的
+  /// `artifacts/<种类>/<任务名>.md`；流水是任务文件本身。
+  String artifact(String kind, RunContext context) {
+    final data = _trim(context.data);
+    if (kind == 'log') return '$data/tasks/$name.yaml';
+    final written = declared(kind);
+    if (written != null) {
+      return written.startsWith('/') ? written : '${_trim(context.root)}/$written';
+    }
+    return '$data/artifacts/$kind/$name.md';
   }
 
   /// 走过哪几步。
@@ -115,7 +132,7 @@ class Task {
       JournalEvent(at: at, step: step, detail: detail, ok: ok),
     ],
     gates: gates,
-    products: products,
+    artifacts: artifacts,
   );
 
   /// 记下闸门项；已有的不重复记。同样返回新的任务。
@@ -131,7 +148,7 @@ class Task {
       context: context,
       journal: journal,
       gates: all,
-      products: products,
+      artifacts: artifacts,
     );
   }
 
@@ -141,7 +158,7 @@ class Task {
     'workflow': workflowName,
     'log': [for (final event in journal) event.toMap()],
     'gates': gates,
-    'products': products,
+    'artifacts': artifacts,
     ...context.toMap(),
   };
 }

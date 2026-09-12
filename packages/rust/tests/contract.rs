@@ -127,6 +127,31 @@ fn contract() {
                     assert_eq!(json!(got), case["expect"], "{name}：{input} 算不算小节名");
                 }
             }
+            "artifact" => {
+                let context = task::RunContext {
+                    root: vector["root"].as_str().unwrap_or("").to_string(),
+                    data: vector["data"].as_str().unwrap_or("").to_string(),
+                    workflows: String::new(),
+                };
+                for case in vector["cases"].as_array().cloned().unwrap_or_default() {
+                    let mut payload = Mapping::new();
+                    payload.insert(
+                        Yaml::String("artifacts".into()),
+                        as_yaml(&case["artifacts"]),
+                    );
+                    let task = task::Task::of(
+                        case["name"].as_str().unwrap_or(""),
+                        &Yaml::Mapping(payload),
+                    );
+                    let kind = case["artifact"].as_str().unwrap_or("");
+                    let note = case["note"].as_str().unwrap_or("");
+                    assert_eq!(
+                        task.artifact(kind, &context),
+                        case["expect"].as_str().unwrap_or(""),
+                        "{name}：{note} 落点算得不对"
+                    );
+                }
+            }
             "outcome" => {
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
                     let got = outcome::Outcome::from_json(&case["input"]).to_json();
@@ -145,6 +170,6 @@ fn contract() {
             other => panic!("{name}：不认得的向量类型 {other}"),
         }
     }
-    assert!(vectors.len() >= 10, "向量太少：{}", vectors.len());
+    assert!(vectors.len() >= 11, "向量太少：{}", vectors.len());
     println!("契约：{} 份向量，两侧一致", vectors.len());
 }

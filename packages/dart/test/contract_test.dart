@@ -93,6 +93,19 @@ void main() {
               reason: '$name：${c['input']} 算不算小节名',
             );
           }
+        case 'artifact':
+          final context = RunContext(
+            root: vector['root'] as String,
+            data: vector['data'] as String,
+          );
+          for (final c in (vector['cases'] as List).cast<Map>()) {
+            final task = Task.of('${c['name']}', {'artifacts': c['artifacts']});
+            expect(
+              task.artifact('${c['artifact']}', context),
+              c['expect'],
+              reason: '$name：${c['note']} 落点算得不对',
+            );
+          }
         case 'outcome':
           for (final c in (vector['cases'] as List).cast<Map>()) {
             expect(
@@ -118,6 +131,6 @@ void main() {
           fail('$name：不认得的向量类型 ${vector['kind']}');
       }
     }
-    expect(all.length, greaterThanOrEqualTo(10), reason: '向量太少');
+    expect(all.length, greaterThanOrEqualTo(11), reason: '向量太少');
   });
 }

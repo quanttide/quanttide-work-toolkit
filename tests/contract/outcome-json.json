@@ -31,7 +31,7 @@
         "rows": [],
         "data": {
           "payload": { "name": "x", "workflow": "y" },
-          "products": { "report": "artifacts/report/x.md" }
+          "artifacts": { "report": "artifacts/report/x.md" }
         }
       },
       "expect": {
@@ -41,7 +41,7 @@
         "rows": [],
         "data": {
           "payload": { "name": "x", "workflow": "y" },
-          "products": { "report": "artifacts/report/x.md" }
+          "artifacts": { "report": "artifacts/report/x.md" }
         }
       }
     },

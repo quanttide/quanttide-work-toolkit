@@ -1,0 +1,50 @@
+{
+  "kind": "artifact",
+  "note": "产物落点：声明了按声明的（相对工作区根记成绝对），没声明落数据仓的 artifacts/<种类>/<任务名>.md；流水是任务文件本身。",
+  "root": "/w",
+  "data": "/w/data",
+  "cases": [
+    {
+      "note": "没声明：报告落数据仓的草稿处",
+      "name": "甲",
+      "artifacts": {},
+      "artifact": "report",
+      "expect": "/w/data/artifacts/report/甲.md"
+    },
+    {
+      "note": "没声明：日志同样落草稿处",
+      "name": "甲",
+      "artifacts": {},
+      "artifact": "journal",
+      "expect": "/w/data/artifacts/journal/甲.md"
+    },
+    {
+      "note": "流水就是任务文件本身，与声明无关",
+      "name": "甲",
+      "artifacts": { "log": "data/other.md" },
+      "artifact": "log",
+      "expect": "/w/data/tasks/甲.yaml"
+    },
+    {
+      "note": "声明了：相对工作区根，记成绝对",
+      "name": "甲",
+      "artifacts": { "report": "data/report/甲.md" },
+      "artifact": "report",
+      "expect": "/w/data/report/甲.md"
+    },
+    {
+      "note": "声明了绝对路径：原样",
+      "name": "甲",
+      "artifacts": { "report": "/elsewhere/甲.md" },
+      "artifact": "report",
+      "expect": "/elsewhere/甲.md"
+    },
+    {
+      "note": "声明成空白：等于没声明",
+      "name": "甲",
+      "artifacts": { "report": "  " },
+      "artifact": "report",
+      "expect": "/w/data/artifacts/report/甲.md"
+    }
+  ]
+}

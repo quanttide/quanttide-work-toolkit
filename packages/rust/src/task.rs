@@ -83,6 +83,11 @@ impl RunContext {
     }
 }
 
+/// 去掉尾巴上的斜杠，拼路径不出双斜杠。
+fn trim(path: &str) -> &str {
+    path.strip_suffix('/').unwrap_or(path)
+}
+
 /// 任务聚合。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Task {
@@ -94,7 +99,7 @@ pub struct Task {
     /// 等人拍板的事项。
     pub gates: Vec<String>,
     /// 这次执行往哪写产物（声明写成什么就是什么，相对工作区根）。
-    pub products: BTreeMap<String, String>,
+    pub artifacts: BTreeMap<String, String>,
 }
 
 impl Task {
@@ -115,8 +120,8 @@ impl Task {
                     .collect()
             })
             .unwrap_or_default();
-        let products = payload
-            .get("products")
+        let artifacts = payload
+            .get("artifacts")
             .and_then(|v| v.as_mapping())
             .map(|mapping| {
                 mapping
@@ -134,18 +139,37 @@ impl Task {
             context: RunContext::of(payload),
             journal,
             gates,
-            products,
+            artifacts,
         }
     }
 
-    /// 这种产物声明了往哪写；没声明给 `None`（落哪是各自包的事）。
-    pub fn product(&self, kind: &str) -> Option<String> {
-        let written = self.products.get(kind)?.trim();
+    /// 这种产物声明了往哪写；没声明给 `None`。
+    pub fn declared(&self, kind: &str) -> Option<String> {
+        let written = self.artifacts.get(kind)?.trim();
         if written.is_empty() {
             None
         } else {
             Some(written.to_string())
         }
+    }
+
+    /// 这次执行往哪写这种产物（规范「任务 / 语法」里的落点）。
+    ///
+    /// 声明了按声明的（相对工作区根）；没声明落数据仓的
+    /// `artifacts/<种类>/<任务名>.md`；流水是任务文件本身。
+    pub fn artifact(&self, kind: &str, context: &RunContext) -> String {
+        let data = trim(&context.data);
+        if kind == "log" {
+            return format!("{data}/tasks/{}.yaml", self.name);
+        }
+        if let Some(written) = self.declared(kind) {
+            return if written.starts_with('/') {
+                written
+            } else {
+                format!("{}/{written}", trim(&context.root))
+            };
+        }
+        format!("{data}/artifacts/{kind}/{}.md", self.name)
     }
 
     /// 走过哪几步。
@@ -253,11 +277,11 @@ impl Task {
                     .collect(),
             ),
         );
-        let mut products = Mapping::new();
-        for (key, value) in &self.products {
-            products.insert(Yaml::String(key.clone()), Yaml::String(value.clone()));
+        let mut artifacts = Mapping::new();
+        for (key, value) in &self.artifacts {
+            artifacts.insert(Yaml::String(key.clone()), Yaml::String(value.clone()));
         }
-        map.insert(Yaml::String("products".into()), Yaml::Mapping(products));
+        map.insert(Yaml::String("artifacts".into()), Yaml::Mapping(artifacts));
         if let Yaml::Mapping(context) = self.context.to_yaml() {
             for (key, value) in context {
                 map.insert(key, value);

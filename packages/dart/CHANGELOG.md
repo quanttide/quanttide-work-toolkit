@@ -2,6 +2,17 @@
 
 ### Changed
 
+- 声明表正名为 `artifacts`（原先叫 `products`）：任务文件里的键、`Task` 的字段、读它的访问器都跟着改；`product(kind)` → `declared(kind)`
+
+### Added
+
+- `artifact(kind, context)`：产物落点收进聚合——声明了按声明的（相对工作区根），没声明落数据仓的 `artifacts/<种类>/<任务名>.md`，流水是任务文件本身（规范 `process/task.md`）
+- 契约向量 `artifact-location`（第 11 份）：落点六格——没声明 / 流水 / 相对 / 绝对 / 声明成空白
+
+## [0.1.0-beta.4] - 2026-09-12
+
+### Changed
+
 - `Outcome` 的四个字段改成可写、`lines` / `columns` / `rows` 缺省给能增的列表：答复是边算边拼的（`lines.add(...)` 直接能用），`withFirst` / `withData` 就地添上再返回自己
 
 ## [0.1.0-beta.3] - 2026-09-12
