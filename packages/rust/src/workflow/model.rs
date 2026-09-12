@@ -4,7 +4,7 @@
 //! 定义核对（[`Workflow::check`]）在 [`super::check`]。
 //! 规矩的出处是 `docs/specification/process/workflow.md`·语法。
 //!
-//! 模型不可变：[`Workflow::from_yaml`] 读进来顺带校验，[`Workflow::of`] 读已经校验过的，
+//! 模型不可变：[`Workflow::from_value`] 读进来顺带校验，[`Workflow::of`] 读已经校验过的，
 //! [`Workflow::to_yaml`] 写成同样的字段形状。YAML 怎么读写是各自包的事。
 
 use super::validate::text_of;
@@ -126,11 +126,6 @@ impl Workflow {
                 .map(|items| items.iter().map(Step::of).collect())
                 .unwrap_or_default(),
         }
-    }
-
-    /// 读已校验的定义；`name` 由调用方给（比如文件名）。
-    pub fn new(name: &str, payload: &Yaml) -> Workflow {
-        Workflow::of(name, payload)
     }
 
     pub fn description(&self) -> String {

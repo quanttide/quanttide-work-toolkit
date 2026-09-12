@@ -17,7 +17,7 @@ fn yaml(value: Json) -> Yaml {
 
 /// 手册里反复出现的工作流夹具。
 fn code_implement() -> Workflow {
-    Workflow::from_yaml(
+    Workflow::from_value(
         &yaml(json!({
             "name": "code-implement",
             "description": "实现一段代码",
@@ -254,9 +254,9 @@ fn doc_workflow_2() -> Result<(), DefinitionError> {
         "description": "实现一段代码",
         "steps": [{"name": "大纲", "executor": "agent"}, {"name": "收尾", "executor": "human"}]
     }));
-    let workflow = Workflow::from_yaml(&payload, "code-implement.yaml")?; // 不合法当场 Err
+    let workflow = Workflow::from_value(&payload, "code-implement.yaml")?; // 不合法当场 Err
     assert_eq!(workflow.step_names(), vec!["大纲", "收尾"]);
-    let illegal = Workflow::from_yaml(
+    let illegal = Workflow::from_value(
         &yaml(json!({"name": "w", "steps": []})),
         "code-implement.yaml",
     );
@@ -267,7 +267,7 @@ fn doc_workflow_2() -> Result<(), DefinitionError> {
 // 文档：workflow.md #3
 #[test]
 fn doc_workflow_3() {
-    let workflow = Workflow::from_yaml(
+    let workflow = Workflow::from_value(
         &yaml(json!({
             "name": "w",
             "steps": [{

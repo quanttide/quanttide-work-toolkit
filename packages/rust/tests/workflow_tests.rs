@@ -11,7 +11,7 @@ fn yaml(value: Json) -> Yaml {
     serde_yaml::to_value(value).expect("JSON 装成 YAML 值")
 }
 
-/// 用 `validate` / `from_yaml` 读一份定义，取它该报的错。
+/// 用 `validate` / `from_value` 读一份定义，取它该报的错。
 fn validate_err(value: Json, file: &str) -> String {
     validate(&yaml(value), file).expect_err("应当报错").0
 }
@@ -56,12 +56,12 @@ fn unknown_fields_names_the_odd_ones() {
 }
 
 // ---------------------------------------------------------------------------
-// validate / from_yaml
+// validate / from_value
 // ---------------------------------------------------------------------------
 
 #[test]
 fn validate_reads_a_well_formed_definition() {
-    let workflow = Workflow::from_yaml(
+    let workflow = Workflow::from_value(
         &yaml(json!({
             "name": "demo",
             "description": "走一遍给我看",
@@ -187,12 +187,12 @@ fn validate_points_at_the_offending_step_and_criterion() {
 }
 
 #[test]
-fn step_from_yaml_defaults_executor_and_empty_criteria() {
-    let step = Step::from_yaml(&yaml(json!({"name": "甲"})), "demo.yaml", 1).expect("合法步骤");
+fn step_from_value_defaults_executor_and_empty_criteria() {
+    let step = Step::from_value(&yaml(json!({"name": "甲"})), "demo.yaml", 1).expect("合法步骤");
     assert_eq!(step.executor(), AGENT);
     assert!(step.criteria().is_empty());
 
-    let explicit_null = Step::from_yaml(
+    let explicit_null = Step::from_value(
         &yaml(json!({"name": "甲", "executor": "human", "criteria": null})),
         "demo.yaml",
         1,
@@ -223,17 +223,8 @@ fn workflow_of_reads_fields_without_checking() {
 }
 
 #[test]
-fn workflow_new_is_the_same_as_of() {
-    let payload = yaml(json!({"description": "x", "steps": [{"name": "甲"}]}));
-    assert_eq!(
-        Workflow::new("w.yaml", &payload),
-        Workflow::of("w.yaml", &payload)
-    );
-}
-
-#[test]
 fn workflow_step_and_steps_accessors() {
-    let workflow = Workflow::from_yaml(
+    let workflow = Workflow::from_value(
         &yaml(json!({
             "name": "w",
             "steps": [{"name": "甲", "description": "做甲"}, {"name": "乙", "executor": "human"}]
@@ -307,8 +298,9 @@ fn workflow_to_yaml_roundtrips() {
             {"name": "收尾", "executor": "human", "criteria": [{"executor": "human", "description": "人拍板"}]}
         ]
     }));
-    let workflow = Workflow::from_yaml(&payload, "code-implement.yaml").expect("合法定义");
-    let back = Workflow::from_yaml(&workflow.to_yaml(), "code-implement.yaml").expect("写回仍合法");
+    let workflow = Workflow::from_value(&payload, "code-implement.yaml").expect("合法定义");
+    let back =
+        Workflow::from_value(&workflow.to_yaml(), "code-implement.yaml").expect("写回仍合法");
     assert_eq!(back, workflow);
 }
 
@@ -349,7 +341,7 @@ fn looks_like_section_rejects_non_names() {
 
 #[test]
 fn check_reports_paths_and_sections() {
-    let workflow = Workflow::from_yaml(
+    let workflow = Workflow::from_value(
         &yaml(json!({
             "name": "code-implement",
             "steps": [{
@@ -389,7 +381,7 @@ fn check_reports_paths_and_sections() {
 
 #[test]
 fn check_skips_placeholders_and_unchecked_kinds() {
-    let workflow = Workflow::from_yaml(
+    let workflow = Workflow::from_value(
         &yaml(json!({
             "name": "w",
             "steps": [{
@@ -418,7 +410,7 @@ fn check_skips_placeholders_and_unchecked_kinds() {
 
 #[test]
 fn check_dedupes_section_mentions_and_ignores_unclosed_ones() {
-    let workflow = Workflow::from_yaml(
+    let workflow = Workflow::from_value(
         &yaml(json!({
             "name": "w",
             "steps": [{

@@ -2,6 +2,8 @@
 
 ### Changed
 
+- **破坏性**：`Workflow::from_yaml` / `Step::from_yaml` 改名 `from_value`（收的是已解析的值，不是 YAML 文本，与 Dart 侧 `fromValue` 同名同义）；删掉与 `of` 完全重复的 `Workflow::new`
+- `validate` 去掉 `from_yaml(...).map(|_| ())` 的壳：自己承担语法校验，`from_value` 调它再建模，两条路共用同一份检查
 - **破坏性**：判据的读法归位——`criterion_of` / `read_criterion` 从 `workflow` 搬到 `criterion`（`quanttide_work::criterion::{criterion_of, read_criterion}`）；`expand_placeholders` 从 `workflow` 搬到 `task`
 - 文件按「一件事一件」重排：`workflow.rs`（516 行）与 `task.rs`（292 行）各拆成一个目录多件，最长 195 行（`criterion/model.rs`）；`Finding` 与 `looks_like_section` 归 `workflow/check`、占位展开归 `task/model`
 

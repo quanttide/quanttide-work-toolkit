@@ -21,7 +21,7 @@ import 'package:quanttide_work/quanttide_work.dart';   // Workflow / Step / Defi
 **第二步「读定义」**：读取定义时同步完成校验。
 
 ```rust
-let workflow = Workflow::from_yaml(&payload, "code-implement.yaml")?;   // 定义不合法时返回 Err
+let workflow = Workflow::from_value(&payload, "code-implement.yaml")?;   // 定义不合法时返回 Err
 ```
 
 ```dart

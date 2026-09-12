@@ -1,6 +1,5 @@
 import '../criterion/criterion.dart';
 import '../executor.dart';
-import 'model.dart';
 
 /// 定义顶层认得的字段。
 const List<String> _topFields = ['name', 'description', 'steps'];
@@ -31,8 +30,8 @@ List<String> unknownFields(Map mapping, List<String> allowed) => mapping.keys
     .where((key) => !allowed.contains(key))
     .toList();
 
-/// 读一份定义，顺带把整体语法过一遍。读不通就抛 [DefinitionError]。
-Workflow validateWorkflow(Object? value, {String file = '定义'}) {
+/// 语法校验一份定义：不是映射、缺字段、取值不对，读不通就抛 [DefinitionError]。
+void validateWorkflow(Object? value, {String file = '定义'}) {
   if (value is! Map) {
     throw DefinitionError('$file 的顶层不是映射（name / steps）');
   }
@@ -49,18 +48,13 @@ Workflow validateWorkflow(Object? value, {String file = '定义'}) {
       '$file 顶层有不认识的字段：${unknown.join('、')}（只认 ${_topFields.join('、')}）',
     );
   }
-  return Workflow(
-    name: textOf(value, 'name'),
-    description: textOf(value, 'description'),
-    steps: [
-      for (var index = 0; index < steps.length; index++)
-        validateStep(steps[index], file: file, position: index + 1),
-    ],
-  );
+  for (var index = 0; index < steps.length; index++) {
+    validateStep(steps[index], file: file, position: index + 1);
+  }
 }
 
-/// 读一个步骤，顺带把语法过一遍。读不通就抛 [DefinitionError]。
-Step validateStep(
+/// 语法校验一个步骤：读不通就抛 [DefinitionError]。
+void validateStep(
   Object? value, {
   required String file,
   required int position,
@@ -93,20 +87,11 @@ Step validateStep(
   } else {
     throw DefinitionError('$file 第 $position 个步骤的 criteria 应当是列表');
   }
-  final parsed = <Criterion>[];
   for (var order = 0; order < items.length; order++) {
-    parsed.add(
-      readCriterion(
-        items[order],
-        file: file,
-        place: '第 $position 个步骤第 ${order + 1} 条判据',
-      ),
+    readCriterion(
+      items[order],
+      file: file,
+      place: '第 $position 个步骤第 ${order + 1} 条判据',
     );
   }
-  return Step(
-    name: textOf(value, 'name'),
-    description: textOf(value, 'description'),
-    executor: executor,
-    criteria: parsed,
-  );
 }
