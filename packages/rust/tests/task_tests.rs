@@ -11,6 +11,20 @@ fn yaml(value: Json) -> Yaml {
     serde_yaml::to_value(value).expect("JSON 装成 YAML 值")
 }
 
+/// 装一件任务：把名字并进 payload（任务名是文件里的 `name` 字段）。
+fn task_of(name: &str, payload: Json) -> Task {
+    let mut map = payload.as_object().cloned().unwrap_or_default();
+    map.insert("name".to_string(), Json::String(name.to_string()));
+    Task::of(&yaml(Json::Object(map)))
+}
+
+/// 同上，但 payload 已经是 YAML 值。
+fn task_of_yaml(name: &str, payload: &Yaml) -> Task {
+    let mut map = payload.as_mapping().cloned().unwrap_or_default();
+    map.insert(Yaml::String("name".into()), Yaml::String(name.to_string()));
+    Task::of(&Yaml::Mapping(map))
+}
+
 /// 只按步骤名搭一条工作流，流水判定够用。
 fn workflow(steps: &[&str]) -> Workflow {
     Workflow {
@@ -30,7 +44,7 @@ fn workflow(steps: &[&str]) -> Workflow {
 
 /// 用一串流水事件装一件任务。
 fn task_with_log(events: Json) -> Task {
-    Task::of("甲", &yaml(json!({"log": events})))
+    task_of("甲", json!({"log": events}))
 }
 
 // ---------------------------------------------------------------------------
@@ -108,7 +122,7 @@ fn next_step_is_the_first_not_done() {
 
 #[test]
 fn state_line_names_the_next_or_the_finish() {
-    let task = Task::of("甲", &yaml(json!({"workflow": "w"})));
+    let task = task_of("甲", json!({"workflow": "w"}));
     let empty = Workflow {
         name: "w".into(),
         description: String::new(),
@@ -144,7 +158,7 @@ fn task_of_reads_journal_gates_artifacts_and_context() {
         "gates": ["等老板拍板", 3],
         "artifacts": {"report": "data/report/甲.md", "bad": 7}
     }));
-    let task = Task::of("甲", &payload);
+    let task = task_of_yaml("甲", &payload);
     assert_eq!(task.name, "甲");
     assert_eq!(task.workflow_name, "code-implement");
     assert_eq!(task.start, "outline");
@@ -164,9 +178,9 @@ fn task_of_reads_journal_gates_artifacts_and_context() {
 
 #[test]
 fn task_of_treats_missing_or_wrong_blocks_as_empty() {
-    let task = Task::of(
+    let task = task_of(
         "甲",
-        &yaml(json!({"log": "不是列表", "gates": "不是列表", "artifacts": "不是映射"})),
+        json!({"log": "不是列表", "gates": "不是列表", "artifacts": "不是映射"}),
     );
     assert!(task.journal.is_empty());
     assert!(task.gates.is_empty());
@@ -187,15 +201,15 @@ fn task_to_yaml_roundtrips() {
         "gates": ["等老板拍板"],
         "artifacts": {"report": "data/report/甲.md"}
     }));
-    let task = Task::of("甲", &payload);
-    assert_eq!(Task::of("甲", &task.to_yaml()), task);
+    let task = task_of_yaml("甲", &payload);
+    assert_eq!(Task::of(&task.to_yaml()), task);
 }
 
 #[test]
 fn declared_trims_and_ignores_blank() {
-    let task = Task::of(
+    let task = task_of(
         "甲",
-        &yaml(json!({"artifacts": {"report": "  data/甲.md  ", "blank": "   "}})),
+        json!({"artifacts": {"report": "  data/甲.md  ", "blank": "   "}}),
     );
     assert_eq!(task.declared("report"), Some("data/甲.md".into()));
     assert_eq!(task.declared("blank"), None, "声明成空白等于没声明");
@@ -209,16 +223,16 @@ fn artifact_trims_trailing_slashes_and_follows_the_rules() {
         data: "/d/".into(),
         workflows: "/w/workflows".into(),
     };
-    let task = Task::of("甲", &yaml(json!({})));
+    let task = task_of("甲", json!({}));
     assert_eq!(
         task.artifact("report", &context),
         "/d/artifacts/report/甲.md"
     );
     assert_eq!(task.artifact("log", &context), "/d/tasks/甲.yaml");
 
-    let declared = Task::of(
+    let declared = task_of(
         "甲",
-        &yaml(json!({"artifacts": {"report": "drafts/甲.md", "logs": "/elsewhere/甲.md"}})),
+        json!({"artifacts": {"report": "drafts/甲.md", "logs": "/elsewhere/甲.md"}}),
     );
     assert_eq!(
         declared.artifact("report", &context),
@@ -234,7 +248,7 @@ fn artifact_trims_trailing_slashes_and_follows_the_rules() {
 
 #[test]
 fn recorded_hands_back_a_new_task_and_leaves_the_origin_alone() {
-    let task = Task::of("甲", &yaml(json!({})));
+    let task = task_of("甲", json!({}));
     let after = task.recorded("2026-09-12", "outline", "走了一步", true);
     assert!(task.journal.is_empty(), "原标题不变");
     assert_eq!(
@@ -250,7 +264,7 @@ fn recorded_hands_back_a_new_task_and_leaves_the_origin_alone() {
 
 #[test]
 fn with_gates_skips_duplicates() {
-    let task = Task::of("甲", &yaml(json!({"gates": ["甲项"]})));
+    let task = task_of("甲", json!({"gates": ["甲项"]}));
     let after = task.with_gates(&["甲项".into(), "乙项".into()]);
     assert_eq!(after.gates, vec!["甲项", "乙项"]);
     assert_eq!(task.gates, vec!["甲项"], "原标题不变");
@@ -284,7 +298,7 @@ fn to_yaml_writes_the_run_context_back_at_top_level() {
         "data": "/d",
         "workflows": "/wf"
     }));
-    let written = Task::of("甲", &payload).to_yaml();
+    let written = task_of_yaml("甲", &payload).to_yaml();
     let map = written.as_mapping().expect("任务写成映射");
     for (key, want) in [("root", "/r"), ("data", "/d"), ("workflows", "/wf")] {
         assert_eq!(

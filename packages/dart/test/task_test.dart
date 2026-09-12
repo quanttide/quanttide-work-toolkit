@@ -7,6 +7,9 @@ library;
 import 'package:quanttide_work/quanttide_work.dart';
 import 'package:test/test.dart';
 
+/// 装一件任务：把名字并进 payload（任务名是文件里的 `name` 字段）。
+Task taskOf(String name, Map payload) => Task.of({...payload, 'name': name});
+
 void main() {
   group('RunContext', () {
     test('三处位置读出来、写回去', () {
@@ -61,7 +64,7 @@ void main() {
 
   group('Task.of', () {
     test('读任务文件：工作流、开工处、上下文、流水、闸门、落点', () {
-      final task = Task.of('甲', {
+      final task = taskOf('甲', {
         'workflow': 'code-implement',
         'start': 'outline',
         'root': '/w',
@@ -89,7 +92,7 @@ void main() {
     });
 
     test('缺样按空算', () {
-      final task = Task.of('甲', const {});
+      final task = taskOf('甲', const {});
       expect(task.workflowName, '');
       expect(task.start, '');
       expect(task.journal, isEmpty);
@@ -100,7 +103,7 @@ void main() {
   });
 
   group('不可变改动', () {
-    final task = Task.of('甲', {
+    final task = taskOf('甲', {
       'workflow': 'w',
       'root': '/w',
       'data': '/w/data',
@@ -143,7 +146,7 @@ void main() {
       expect(map['data'], '/w/data');
       expect(map['workflows'], '');
 
-      final back = Task.of('甲', map);
+      final back = taskOf('甲', map);
       expect(back.workflowName, task.workflowName);
       expect(back.context.toMap(), task.context.toMap());
       expect(back.artifacts, task.artifacts);
@@ -226,7 +229,7 @@ void main() {
 
   group('落点与占位', () {
     test('declared：声明成空白等于没声明', () {
-      final task = Task.of('甲', {
+      final task = taskOf('甲', {
         'artifacts': {'report': '  ', 'journal': 'data/j.md'},
       });
       expect(task.declared('report'), isNull);

@@ -1,3 +1,4 @@
+import '../context.dart';
 import '../criterion/criterion.dart';
 import '../paths.dart';
 import 'model.dart';
@@ -24,7 +25,7 @@ extension WorkflowCheck on Workflow {
   /// 核对这条定义：判据里的路径在不在、描述提到的小节有没有判据覆盖。
   ///
   /// [exists] 由调用方给——工具箱不碰文件系统。
-  List<Finding> check(String data, bool Function(String path) exists) {
+  List<Finding> check(RunContext context, bool Function(String path) exists) {
     final found = <Finding>[];
     for (final step in steps) {
       for (final criterion in step.rules) {
@@ -39,7 +40,7 @@ extension WorkflowCheck on Workflow {
             literal.contains('{{log}}')) {
           continue;
         }
-        final written = expandPlaceholders(literal, data);
+        final written = expandPlaceholders(literal, context.data);
         found.add(
           Finding(
             where: '${step.name}·$literal',

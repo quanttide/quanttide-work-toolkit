@@ -20,8 +20,8 @@ class Workflow {
 
   /// 从定义里的字段读出（不校验）。用在已经校验过的定义上；
   /// [name] 由调用方给（文件名即工作流名）。
-  factory Workflow.of(String name, Map payload) => Workflow(
-    name: name,
+  factory Workflow.of(Map payload) => Workflow(
+    name: textOf(payload, 'name'),
     description: textOf(payload, 'description'),
     steps:
         (payload['steps'] as List?)
@@ -34,7 +34,7 @@ class Workflow {
   /// 从定义里的字段读出，顺带把语法过一遍。读不通就抛 [DefinitionError]。
   factory Workflow.fromValue(Object? value) {
     validateWorkflow(value);
-    return Workflow.of(textOf(value, 'name'), value as Map);
+    return Workflow.of(value as Map);
   }
 
   final String name;

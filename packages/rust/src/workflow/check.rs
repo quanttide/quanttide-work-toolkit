@@ -5,6 +5,7 @@
 //! 模型在 [`super::model`]，语法校验在 [`super::validate`]。
 
 use super::model::Workflow;
+use crate::context::RunContext;
 use crate::criterion::Criterion;
 use crate::paths::expand_placeholders;
 
@@ -35,8 +36,9 @@ pub fn looks_like_section(name: &str) -> bool {
 impl Workflow {
     /// 核对这条定义：判据里的路径在不在、描述提到的小节有没有判据覆盖。
     ///
-    /// `exists` 由调用方给——工具箱不碰文件系统。
-    pub fn check<F>(&self, data: &str, exists: F) -> Vec<Finding>
+    /// `context` 给的是运行上下文，取它的 `data` 展开占位；`exists` 由调用方给——
+    /// 工具箱不碰文件系统。
+    pub fn check<F>(&self, context: &RunContext, exists: F) -> Vec<Finding>
     where
         F: Fn(&str) -> bool,
     {
@@ -54,7 +56,7 @@ impl Workflow {
                 {
                     continue;
                 }
-                let written = expand_placeholders(&literal, data);
+                let written = expand_placeholders(&literal, &context.data);
                 found.push(Finding {
                     where_: format!("{}·{}", step.name, literal),
                     what: format!("判据里的路径在不在：{written}"),

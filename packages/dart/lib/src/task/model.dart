@@ -1,6 +1,6 @@
+import '../context.dart';
 import '../fields.dart';
 import '../paths.dart';
-import 'context.dart';
 import 'journal.dart';
 
 /// 任务聚合：工作流的一次执行实例。
@@ -23,8 +23,8 @@ class Task {
   });
 
   /// 从任务文件里的字段读出。[name] 由调用方给（文件名即任务名）。
-  factory Task.of(String name, Map payload) => Task(
-    name: name,
+  factory Task.of(Map payload) => Task(
+    name: textOf(payload, 'name'),
     workflowName: textOf(payload, 'workflow'),
     start: textOf(payload, 'start'),
     context: RunContext.of(payload),

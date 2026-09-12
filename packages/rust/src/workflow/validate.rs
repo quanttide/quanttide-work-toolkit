@@ -74,7 +74,7 @@ impl Workflow {
     /// 从定义里的字段读出，顺带把语法过一遍。
     pub fn from_value(payload: &Yaml) -> Result<Workflow, DefinitionError> {
         validate(payload)?;
-        Ok(Workflow::of(&text_of(payload, "name"), payload))
+        Ok(Workflow::of(payload))
     }
 }
 

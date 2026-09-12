@@ -38,14 +38,14 @@ final workflow = Workflow.fromValue(payload);  // 定义不合法时抛出异常
 对应 `workflow --check` 一类命令。
 
 ```rust
-let findings = workflow.check(&context.data, |path| std::path::Path::new(path).exists());
+let findings = workflow.check(&context, |path| std::path::Path::new(path).exists());
 ```
 
 ```dart
-final findings = workflow.check(data, (path) => File(path).existsSync());
+final findings = workflow.check(context, (path) => File(path).existsSync());
 ```
 
-`check` 接收两个参数，均由端侧提供。第一个 `data` 是数据仓路径，即运行上下文 `RunContext` 的 `data` 字段（示例中为 `context.data`）；它用于把 `{{artifacts}}`、`{{report}}`、`{{journal}}`、`{{log}}` 展开成数据仓内的实际路径。第二个 `exists` 是「该路径是否存在」的判断函数，由端侧针对真实文件系统实现。工具箱不访问文件系统，仅依据端侧给出的判断结果核对定义。
+`check` 接收两个参数，均由端侧提供。第一个 `context` 是运行上下文（`RunContext`），取它的 `data` 字段用于把 `{{artifacts}}`、`{{report}}`、`{{journal}}`、`{{log}}` 展开成数据仓内的实际路径。第二个 `exists` 是「该路径是否存在」的判断函数，由端侧针对真实文件系统实现。工具箱不访问文件系统，仅依据端侧给出的判断结果核对定义。
 
 ## 端侧不做什么
 

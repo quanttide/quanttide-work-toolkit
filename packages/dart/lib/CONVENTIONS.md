@@ -18,7 +18,7 @@
 | `workflow/` | 工作流 | `model.dart` 模型（`Step` / `Workflow`）、`validate.dart` 整体语法校验、`check.dart` 定义核对 |
 
 没有定义、只是常量或信封的，仍单文件：`executor.dart`、`outcome.dart`。
-横切的公件另立中立文件：`fields.dart`（读字段与字段表）、`error.dart`（`DefinitionError`）、`paths.dart`（路径拼接与占位展开）——聚合只向下依赖它们。
+横切的公件另立中立文件：`fields.dart`（读字段与字段表）、`error.dart`（`DefinitionError`）、`paths.dart`（路径拼接与占位展开）、`context.dart`（`RunContext`）——聚合只向下依赖它们。
 每个目录一个同名出口文件（`criterion/criterion.dart` 等，对应 Rust 的 `mod.rs`），只留出口。
 
 ## 一个文件只讲一件事

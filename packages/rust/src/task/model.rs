@@ -9,8 +9,8 @@
 //! 落点在 `artifact`；占位展开在中立的 `crate::paths`。
 //! 出处：`docs/specification/process/task.md`·语法。
 
-use super::context::RunContext;
 use super::journal::JournalEvent;
+use crate::context::RunContext;
 use crate::fields::text_of;
 use crate::paths::join;
 use serde_yaml::{Mapping, Value as Yaml};
@@ -31,8 +31,8 @@ pub struct Task {
 }
 
 impl Task {
-    /// 从任务文件里的字段读出；`name` 由调用方给（文件名即任务名）。
-    pub fn of(name: &str, payload: &Yaml) -> Task {
+    /// 从任务文件里的字段读出（不校验）；任务名取自 `name` 字段。
+    pub fn of(payload: &Yaml) -> Task {
         let journal = payload
             .get("log")
             .and_then(|v| v.as_sequence())
@@ -61,7 +61,7 @@ impl Task {
             })
             .unwrap_or_default();
         Task {
-            name: name.to_string(),
+            name: text_of(payload, "name"),
             workflow_name: text_of(payload, "workflow"),
             start: text_of(payload, "start"),
             context: RunContext::of(payload),

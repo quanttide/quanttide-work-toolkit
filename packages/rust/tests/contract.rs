@@ -70,7 +70,8 @@ fn task_of(events: &Value) -> task::Task {
                 .collect(),
         ),
     );
-    task::Task::of("v", &Yaml::Mapping(payload))
+    payload.insert(Yaml::String("name".into()), Yaml::String("v".into()));
+    task::Task::of(&Yaml::Mapping(payload))
 }
 
 #[test]
@@ -141,13 +142,14 @@ fn contract() {
                     };
                     let mut payload = Mapping::new();
                     payload.insert(
+                        Yaml::String("name".into()),
+                        Yaml::String(case["name"].as_str().unwrap_or("").to_string()),
+                    );
+                    payload.insert(
                         Yaml::String("artifacts".into()),
                         as_yaml(&case["artifacts"]),
                     );
-                    let task = task::Task::of(
-                        case["name"].as_str().unwrap_or(""),
-                        &Yaml::Mapping(payload),
-                    );
+                    let task = task::Task::of(&Yaml::Mapping(payload));
                     let kind = case["artifact"].as_str().unwrap_or("");
                     let note = case["note"].as_str().unwrap_or("");
                     assert_eq!(

@@ -20,6 +20,8 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 mod fields;
 
+pub mod context;
+
 pub mod criterion;
 pub mod error;
 pub mod executor;

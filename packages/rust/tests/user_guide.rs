@@ -17,6 +17,13 @@ fn yaml(value: Json) -> Yaml {
     serde_yaml::to_value(value).expect("JSON 装成 YAML 值")
 }
 
+/// 装一件任务：把名字并进 payload（任务名是文件里的 `name` 字段）。
+fn task_of(name: &str, payload: Json) -> Task {
+    let mut map = payload.as_object().cloned().unwrap_or_default();
+    map.insert("name".to_string(), Json::String(name.to_string()));
+    Task::of(&yaml(Json::Object(map)))
+}
+
 /// 手册里反复出现的工作流夹具。
 fn code_implement() -> Workflow {
     Workflow::from_value(&yaml(json!({
@@ -149,8 +156,8 @@ fn doc_outcome_3() {
 #[test]
 fn doc_task_1() {
     use quanttide_work::paths::expand_placeholders;
-    use quanttide_work::task::{JournalEvent, RunContext, Task};
-    let task = Task::of("甲", &yaml(json!({})));
+    use quanttide_work::task::{JournalEvent, RunContext};
+    let task = task_of("甲", json!({}));
     let _: Vec<JournalEvent> = task.journal.clone();
     let context = RunContext::default();
     assert_eq!(expand_placeholders("{{log}}", &context.data), "/tasks");
@@ -161,15 +168,15 @@ fn doc_task_1() {
 #[test]
 fn doc_task_2() {
     let workflow = code_implement();
-    let task = Task::of(
+    let task = task_of(
         "甲",
-        &yaml(json!({
+        json!({
             "workflow": "code-implement",
             "log": [
                 {"at": "t1", "step": "大纲", "detail": "走了", "ok": true},
                 {"at": "t2", "step": "大纲·审", "detail": "审过", "ok": false}
             ]
-        })),
+        }),
     );
     let done = task.done_steps(&workflow); // 附加判定投票、重跑从头算
     let next = task.next_step(&workflow);
@@ -182,10 +189,7 @@ fn doc_task_2() {
 // 文档：task.md #3
 #[test]
 fn doc_task_3() {
-    let task = Task::of(
-        "甲",
-        &yaml(json!({"artifacts": {"report": "data/report/甲.md"}})),
-    );
+    let task = task_of("甲", json!({"artifacts": {"report": "data/report/甲.md"}}));
     let payload = yaml(json!({"root": "/w", "data": "/w/data", "workflows": "/w/workflows"}));
     let context = RunContext::of(&payload); // 三处位置
     let place = task.artifact("report", &context); // 落点：声明了按声明的，没声明落数据仓
@@ -198,7 +202,7 @@ fn doc_task_3() {
 // 文档：task.md #4
 #[test]
 fn doc_task_4() {
-    let task = Task::of("甲", &yaml(json!({})));
+    let task = task_of("甲", json!({}));
     let after = task.recorded("2026-09-12", "outline", "走了一步", true); // at / step / detail / ok
     // 端侧：把 after 写回任务文件
     assert!(task.journal.is_empty(), "recorded 拿新值，原任务不动");
@@ -234,7 +238,7 @@ fn doc_workflow_1() {
         executor: AGENT.into(),
         criteria: Vec::new(),
     };
-    let workflow = Workflow::of("w.yaml", &yaml(json!({"steps": []})));
+    let workflow = Workflow::of(&yaml(json!({"steps": []})));
     assert_eq!(workflow.steps().len(), 0);
     assert_eq!(step.name(), "甲");
 }
@@ -266,7 +270,7 @@ fn doc_workflow_3() {
     })))
     .expect("合法定义");
     let context = RunContext::of(&yaml(json!({"data": "/w/data"})));
-    let findings = workflow.check(&context.data, |path| std::path::Path::new(path).exists());
+    let findings = workflow.check(&context, |path| std::path::Path::new(path).exists());
     assert_eq!(findings.len(), 1);
     assert_eq!(
         findings[0].where_,

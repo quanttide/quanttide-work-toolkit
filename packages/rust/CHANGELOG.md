@@ -2,6 +2,8 @@
 
 ### Changed
 
+- **破坏性**：`Workflow::of` / `Task::of` 不再收名字，改从定义 / 任务文件的 `name` 字段读（与 `from_value` 同源）；`Workflow::check` 第一参数由裸 `&str` 换成 `&RunContext`
+- `RunContext` 搬到中立件 `quanttide_work::context`（`task::RunContext` 仍可引，是再出口）：免得 `workflow` 与 `task` 互相依赖
 - **破坏性**：`Workflow::from_value` / `Step::from_value` / `read_criterion` / `validate` 不再收文件名与「第 N 个步骤」话头；`DefinitionError` 改成结构化——只存位置（`Position`）与种类（`Fault`），文件由端侧在渲染时交给 `message(file)` 拼 canonical 文案
 - **破坏性**：`DefinitionError` 搬到中立件 `quanttide_work::error`（原 `workflow::DefinitionError`）；`expand_placeholders` 搬到 `quanttide_work::paths`（原 `task::expand_placeholders`）
 - 抽出中立件 `fields`（`text_of` / `unknown_fields`，转内部、不再从公共出口出去）、`error`、`paths`（`join` + `expand_placeholders`）：`criterion` / `task` / `workflow` 只向下依赖它们，切断 `criterion ↔ workflow` 与 `workflow ↔ task` 两个环

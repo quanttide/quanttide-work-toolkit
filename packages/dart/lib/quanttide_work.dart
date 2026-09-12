@@ -12,6 +12,7 @@
 /// 收进来的每一样，都要能在规范里找到出处；规范里没有的，先补规范。
 library;
 
+export 'src/context.dart';
 export 'src/criterion/criterion.dart';
 export 'src/error.dart';
 export 'src/executor.dart';

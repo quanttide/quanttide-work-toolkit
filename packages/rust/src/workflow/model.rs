@@ -115,10 +115,10 @@ pub struct Workflow {
 }
 
 impl Workflow {
-    /// 从定义里的字段读出（不校验）；`name` 由调用方给（比如文件名）。
-    pub fn of(name: &str, payload: &Yaml) -> Workflow {
+    /// 从定义里的字段读出（不校验）；工作流名取自 `name` 字段。
+    pub fn of(payload: &Yaml) -> Workflow {
         Workflow {
-            name: name.to_string(),
+            name: text_of(payload, "name"),
             description: text_of(payload, "description"),
             steps: payload
                 .get("steps")

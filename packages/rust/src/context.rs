@@ -1,5 +1,6 @@
-//! 任务聚合 / 运行上下文：工作区根、数据仓、工作流目录。
+//! 运行上下文：工作区根、数据仓、工作流目录。
 //!
+//! 中立处：`task`（模型）与 `workflow`（定义核对）都用它，放这里免得两边互相依赖。
 //! 三个字段怎么读、怎么写由各自的包定（工具箱只管托着它们）。
 //! 出处：`docs/specification/process/task.md`·语法（运行上下文）。
 
@@ -7,8 +8,6 @@ use crate::fields::text_of;
 use serde_yaml::{Mapping, Value as Yaml};
 
 /// 这次执行自带的运行上下文：工作区根、数据仓、工作流目录。
-///
-/// 三个字段怎么读、怎么写由各自的包定（工具箱只管托着它们）。
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct RunContext {
     pub root: String,

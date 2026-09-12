@@ -100,7 +100,7 @@ void main() {
               root: (c['root'] ?? vector['root']) as String,
               data: (c['data'] ?? vector['data']) as String,
             );
-            final task = Task.of('${c['name']}', {'artifacts': c['artifacts']});
+            final task = Task.of({'name': c['name'], 'artifacts': c['artifacts']});
             expect(
               task.artifact('${c['artifact']}', context),
               c['expect'],

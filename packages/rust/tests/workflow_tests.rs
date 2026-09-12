@@ -2,12 +2,21 @@
 
 use quanttide_work::error::DefinitionError;
 use quanttide_work::executor::AGENT;
+use quanttide_work::task::RunContext;
 use quanttide_work::workflow::{Finding, Step, Workflow, looks_like_section, validate};
 use serde_json::{Value as Json, json};
 use serde_yaml::Value as Yaml;
 
 fn yaml(value: Json) -> Yaml {
     serde_yaml::to_value(value).expect("JSON 装成 YAML 值")
+}
+
+/// 造一个只带数据仓的上下文。
+fn context(data: &str) -> RunContext {
+    RunContext {
+        data: data.to_string(),
+        ..RunContext::default()
+    }
 }
 
 /// 用 `validate` 读一份定义，取它该报的错。
@@ -194,8 +203,11 @@ fn workflow_of_reads_fields_without_checking() {
             {"name": "收尾", "executor": "human"}
         ]
     }));
-    let workflow = Workflow::of("code-implement.yaml", &payload);
-    assert_eq!(workflow.name, "code-implement.yaml", "name 由调用方给");
+    let workflow = Workflow::of(&payload);
+    assert_eq!(
+        workflow.name, "code-implement",
+        "name 来自定义里的 name 字段"
+    );
     assert_eq!(workflow.description(), "实现一段代码");
     assert_eq!(workflow.step_names(), vec!["大纲", "收尾"]);
 }
@@ -328,7 +340,7 @@ fn check_reports_paths_and_sections() {
     })))
     .expect("合法定义");
 
-    let findings = workflow.check("/w", |path| path == "/w/seen.md");
+    let findings = workflow.check(&context("/w"), |path| path == "/w/seen.md");
 
     let path_finding = findings
         .iter()
@@ -369,7 +381,7 @@ fn check_skips_placeholders_and_unchecked_kinds() {
     })))
     .expect("合法定义");
 
-    let findings = workflow.check("/d", |_| true);
+    let findings = workflow.check(&context("/d"), |_| true);
     assert!(
         findings.is_empty(),
         "占位路径与不查的判法都不出核对项：{findings:?}"
@@ -392,7 +404,7 @@ fn check_dedupes_section_mentions_and_ignores_unclosed_ones() {
         })))
     .expect("合法定义");
 
-    let findings = workflow.check("/d", |_| true);
+    let findings = workflow.check(&context("/d"), |_| true);
     assert_eq!(section_ok(&findings, "结论"), Some(true));
     assert_eq!(section_ok(&findings, "收尾"), Some(false));
     assert_eq!(section_ok(&findings, "半句和"), None, "没闭合的「不往后认");

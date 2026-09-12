@@ -155,9 +155,9 @@ void main() {
         },
       ],
     });
-    const data = '/w/data';
+    const context = RunContext(data: '/w/data');
 
-    final findings = workflow.check(data, (path) => File(path).existsSync());
+    final findings = workflow.check(context, (path) => File(path).existsSync());
 
     expect(findings, hasLength(1));
     expect(findings.single.where, '核对·docs/index.md');

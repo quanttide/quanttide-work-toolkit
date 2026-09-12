@@ -11,7 +11,8 @@ import 'package:test/test.dart';
 void main() {
   group('工作流模型', () {
     test('Workflow.of：读步骤，按顺序；step 按名取', () {
-      final workflow = Workflow.of('w', {
+      final workflow = Workflow.of({
+        'name': 'w',
         'description': '走一遍',
         'steps': [
           {'name': '甲'},
@@ -27,7 +28,8 @@ void main() {
     });
 
     test('Workflow.toMap：与进定义时同一形状，空说明不写', () {
-      final workflow = Workflow.of('w', {
+      final workflow = Workflow.of({
+        'name': 'w',
         'description': '走一遍',
         'steps': [
           {'name': '甲'},
@@ -43,7 +45,8 @@ void main() {
         ],
       });
 
-      final bare = Workflow.of('w', {
+      final bare = Workflow.of({
+        'name': 'w',
         'steps': [
           {'name': '甲'},
         ],
@@ -266,7 +269,7 @@ void main() {
       });
 
       final findings = workflow.check(
-        '/w/data',
+        const RunContext(data: '/w/data'),
         (path) => path == '/w/data/artifacts/report/甲.md',
       );
 
@@ -311,7 +314,7 @@ void main() {
         ],
       });
 
-      expect(workflow.check('/w/data', (path) => true), isEmpty);
+      expect(workflow.check(const RunContext(data: '/w/data'), (path) => true), isEmpty);
     });
 
     test('command 判据与没有描述的工作流不产生回执', () {
@@ -327,7 +330,7 @@ void main() {
         ],
       });
 
-      expect(workflow.check('/w/data', (path) => true), isEmpty);
+      expect(workflow.check(const RunContext(data: '/w/data'), (path) => true), isEmpty);
     });
   });
 }
