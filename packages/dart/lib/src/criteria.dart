@@ -26,6 +26,29 @@ sealed class Criterion {
   /// 写回定义里的字段形状。
   Map<String, Object?> toMap();
 
+  /// 占位展开：每个字段里的 `{{…}}` 交给 [expand] 换掉。
+  Criterion expanded(String Function(String) expand) {
+    String ex(String value) => value.contains('{{') ? expand(value) : value;
+    return switch (this) {
+      PathExists(:final path, :final description) => PathExists(
+        ex(path),
+        description: ex(description),
+      ),
+      PathAbsent(:final absent, :final description) => PathAbsent(
+        ex(absent),
+        description: ex(description),
+      ),
+      FileContains(:final file, :final contains, :final description) =>
+        FileContains(ex(file), ex(contains), description: ex(description)),
+      CommandRun(:final run, :final description) => CommandRun(
+        ex(run),
+        description: ex(description),
+      ),
+      AgentJudgement(:final description) => AgentJudgement(ex(description)),
+      HumanGate(:final description) => HumanGate(ex(description)),
+    };
+  }
+
   /// 从定义里的字段读出。字段已经校验过——这里只管认。
   static Criterion fromMap(Map map) {
     final description = textOf(map, 'description');

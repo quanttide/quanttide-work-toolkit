@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `Criterion.expanded(f)`：判据各字段里的占位一次换掉（Rust 侧 beta.1 已有，Dart 侧下一版带上）
+
 ## [0.1.0-beta.1] - 2026-09-12
 
 ### Changed
