@@ -99,9 +99,9 @@ cd ../.. && sh scripts/contract.sh
 **段一~段五已完成**（2026-09-12，pi 执行 + Hermes 复核）：
 
 - 判据归位：读法（`criterion_of` / `read_criterion`）进 `criterion/`，与模型、`items_of` 同处
-- `workflow.rs` 516 行 → `workflow/{model,validate,check}`；`task.rs` 292 行 → `task/{model,journal,context}`；**最长文件 195 行**（全部 ≤250）
+- `workflow.rs` 516 行 → `workflow/{model,read,check}`；`task.rs` 292 行 → `task/{model,journal,context}`；**最长文件 195 行**（全部 ≤250）
 - 三件寄居物各归其主：`Finding` + `looks_like_section` → `workflow/check`，`expand_placeholders` → `task/model`
-- 与 Dart 侧**九个分件逐个对位**（`criterion/{model,items,read}`、`task/{model,journal,context}`、`workflow/{model,validate,check}`）
+- 与 Dart 侧**九个分件逐个对位**（`criterion/{model,items,read}`、`task/{model,journal,context}`、`workflow/{model,read,check}`）
 - 约定立在 `src/CONVENTIONS.md`；`AGENTS.md` 结构块已改对
 - 门禁：`fmt` / `clippy` / `test` 全绿；`sh scripts/contract.sh` **12 份向量、两侧一致**
 - CHANGELOG 已记 `[Unreleased]`：三条公共路径迁移属**破坏性变更**（下游 cli 与 studio 经查均未用到，无需改动）

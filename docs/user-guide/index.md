@@ -22,7 +22,7 @@
 | 结果 | `quanttide_work::outcome` | `outcome` | 结果信封（`ok` / `lines` / `columns` / `rows` / `data`） | [outcome.md](outcome.md) |
 | 执行者 | `quanttide_work::executor` | `executor` | 三个取值常量 | [executor.md](executor.md) |
 
-目录里的**分件**（`model` / `read` / `items` / `validate` / `check` / `journal` / `context`）是内部结构；横切的 `error`（`DefinitionError`）、`paths`（`expand_placeholders`）与 `context`（`RunContext`）另立中立模块，接入者用到时按名字取。
+目录里的**分件**（`model` / `read` / `items` / `check` / `journal` / `context`）是内部结构；横切的 `error`（`DefinitionError`）、`paths`（`expand_placeholders`）与 `context`（`RunContext`）另立中立模块，接入者用到时按名字取。
 
 ## 各语言速查
 

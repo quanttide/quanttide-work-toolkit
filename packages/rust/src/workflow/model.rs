@@ -1,15 +1,14 @@
 //! 工作流聚合：一串有序的步骤。
 //!
-//! 本文件只装模型——字段名、不变量、取值校验与报错在 [`super::validate`]，
+//! 本文件只装模型——从定义里读与校验在 [`super::read`]，
 //! 定义核对（[`Workflow::check`]）在 [`super::check`]。
 //! 规矩的出处是 `docs/specification/process/workflow.md`·语法。
 //!
 //! 模型不可变：[`Workflow::from_value`] 读进来顺带校验，[`Workflow::of`] 读已经校验过的，
 //! [`Workflow::to_yaml`] 写成同样的字段形状。YAML 怎么读写是各自包的事。
 
-use crate::criterion::{Criterion, criterion_of};
+use crate::criterion::Criterion;
 use crate::executor::{AGENT, HUMAN, RULE};
-use crate::fields::text_of;
 use serde_yaml::{Mapping, Value as Yaml};
 
 /// 一个工作步骤：叫什么、做什么、谁执行、怎么算完。
@@ -22,25 +21,6 @@ pub struct Step {
 }
 
 impl Step {
-    /// 从定义里的字段读出（不校验）。用在已经校验过的定义上。
-    pub fn of(value: &Yaml) -> Step {
-        let criteria = value
-            .get("criteria")
-            .and_then(|v| v.as_sequence())
-            .map(|items| items.iter().map(criterion_of).collect())
-            .unwrap_or_default();
-        let mut executor = text_of(value, "executor");
-        if executor.is_empty() {
-            executor = AGENT.to_string();
-        }
-        Step {
-            name: text_of(value, "name"),
-            description: text_of(value, "description"),
-            executor,
-            criteria,
-        }
-    }
-
     /// 这一步的执行者是不是人。
     pub fn human(&self) -> bool {
         self.executor == HUMAN
@@ -115,19 +95,6 @@ pub struct Workflow {
 }
 
 impl Workflow {
-    /// 从定义里的字段读出（不校验）；工作流名取自 `name` 字段。
-    pub fn of(payload: &Yaml) -> Workflow {
-        Workflow {
-            name: text_of(payload, "name"),
-            description: text_of(payload, "description"),
-            steps: payload
-                .get("steps")
-                .and_then(|v| v.as_sequence())
-                .map(|items| items.iter().map(Step::of).collect())
-                .unwrap_or_default(),
-        }
-    }
-
     pub fn description(&self) -> String {
         self.description.clone()
     }

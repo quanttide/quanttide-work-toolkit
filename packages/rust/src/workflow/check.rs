@@ -2,7 +2,7 @@
 //!
 //! 判据里的路径在不在、描述提到的报告小节有没有判据覆盖。
 //! 落点/占位在 `crate::paths`；这里是 `workflow --check` 的模型侧。
-//! 模型在 [`super::model`]，语法校验在 [`super::validate`]。
+//! 模型在 [`super::model`]，语法校验在 [`super::read`]。
 
 use super::model::Workflow;
 use crate::context::RunContext;

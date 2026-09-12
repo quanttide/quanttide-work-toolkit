@@ -2,6 +2,35 @@ import '../criterion/criterion.dart';
 import '../error.dart';
 import '../executor.dart';
 import '../fields.dart';
+import 'model.dart';
+
+/// 从定义里的字段读出工作流（不校验）。用在已经校验过的定义上。
+Workflow workflowOf(Map payload) => Workflow(
+  name: textOf(payload, 'name'),
+  description: textOf(payload, 'description'),
+  steps:
+      (payload['steps'] as List?)
+          ?.cast<Map>()
+          .map(stepOf)
+          .toList(growable: false) ??
+      const [],
+);
+
+/// 从定义里的字段读出一个步骤（不校验）。
+Step stepOf(Map value) {
+  final executor = textOf(value, 'executor');
+  return Step(
+    name: textOf(value, 'name'),
+    description: textOf(value, 'description'),
+    executor: executor.isEmpty ? agent : executor,
+    criteria:
+        (value['criteria'] as List?)
+            ?.cast<Map>()
+            .map(criterionOf)
+            .toList(growable: false) ??
+        const [],
+  );
+}
 
 /// 语法校验一份定义：不是映射、缺字段、取值不对，读不通就抛 [DefinitionError]。
 void validateWorkflow(Object? value) {

@@ -108,7 +108,7 @@ cd ../.. && sh scripts/contract.sh
 **段一~段五已完成**（2026-09-12，pi 执行 + Hermes 复核）：
 
 - 判据归位：读法（`criterionOf` / `readCriterion`）进 `criterion/`，与模型、`itemsOf` 同处
-- `workflow.dart` 405 行 → `workflow/{model,validate,check}`；`task.dart` 216 行 → `task/{model,journal,context}`；**最长文件 169 行**（全部 ≤250）
+- `workflow.dart` 405 行 → `workflow/{model,read,check}`；`task.dart` 216 行 → `task/{model,journal,context}`；**最长文件 169 行**（全部 ≤250）
 - 三件寄居物各归其主：`Finding` + `looksLikeSection` → `workflow/check`，`expandPlaceholders` → `task/model`
 - 与 Rust 侧**九个分件逐个对位**；桶文件仍是一处导入（`import 'package:quanttide_work/quanttide_work.dart'`）
 - 新增两个扩展名：`TaskJournal`、`WorkflowCheck`（Dart 不能跨文件写实现，用扩展承接分件；调用写法不变）

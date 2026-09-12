@@ -1,11 +1,10 @@
 import '../criterion/criterion.dart';
 import '../executor.dart';
-import '../fields.dart';
-import 'validate.dart';
+import 'read.dart';
 
 /// 工作流聚合：一串有序的步骤。
 ///
-/// 本文件只装模型——字段名、不变量、取值校验与报错在 `validate.dart`。
+/// 本文件只装模型——从定义里读与校验在 `read.dart`。
 /// 规矩的出处是 `docs/specification/process/workflow.md`·语法。
 ///
 /// 模型不可变：[Workflow.fromValue] 读进来顺带校验，[Workflow.of] 读已经校验过的，
@@ -18,18 +17,8 @@ class Workflow {
     this.steps = const [],
   });
 
-  /// 从定义里的字段读出（不校验）。用在已经校验过的定义上；
-  /// [name] 由调用方给（文件名即工作流名）。
-  factory Workflow.of(Map payload) => Workflow(
-    name: textOf(payload, 'name'),
-    description: textOf(payload, 'description'),
-    steps:
-        (payload['steps'] as List?)
-            ?.cast<Map>()
-            .map(Step.of)
-            .toList(growable: false) ??
-        const [],
-  );
+  /// 从定义里的字段读出（不校验）。用在已经校验过的定义上。
+  factory Workflow.of(Map payload) => workflowOf(payload);
 
   /// 从定义里的字段读出，顺带把语法过一遍。读不通就抛 [DefinitionError]。
   factory Workflow.fromValue(Object? value) {
@@ -71,20 +60,7 @@ class Step {
   });
 
   /// 从定义里的字段读出（不校验）。
-  factory Step.of(Map value) {
-    final executor = textOf(value, 'executor');
-    return Step(
-      name: textOf(value, 'name'),
-      description: textOf(value, 'description'),
-      executor: executor.isEmpty ? agent : executor,
-      criteria:
-          (value['criteria'] as List?)
-              ?.cast<Map>()
-              .map(criterionOf)
-              .toList(growable: false) ??
-          const [],
-    );
-  }
+  factory Step.of(Map value) => stepOf(value);
 
   /// 从定义里的字段读出，顺带把语法过一遍。
   factory Step.fromValue(Object? value, {required int position}) {

@@ -2,6 +2,7 @@
 
 ### Changed
 
+- 工作流的读法归位：`of` / `Step::of` 从 `model` 挪进 `read`（原 `validate`），`model` 只装模型；与 `criterion/{model,read}` 同形（不改行为，公共 API 不变）
 - **破坏性**：`RuleKind` 变体改名，与 `Criterion` 的四个变体同名同义（`Path` → `PathExists`、`Absent` → `PathAbsent`、`Contains` → `FileContains`、`Run` → `CommandRun`）；线上写法由新增的 `as_str()` 固定成字段名（`path` / `absent` / `contains` / `run`），契约不变
 - **破坏性**：`Outcome::data_json` 改名 `to_output_json`（行为不变：托了原文给原文，没托给信封）；补 `Outcome::failed` 与 `Outcome::from_stdout`，与 Dart 侧构造器对齐
 - **破坏性**：`Workflow::check` 不再静默跳过含运行时占位的判据：`{{report}}` / `{{journal}}` / `{{log}}` / `{{artifacts}}` 四个都跳过，并各出一条 `Finding`，其 `ok` 为 `None`（未核）；`Finding.ok` 由 `bool` 改成 `Option<bool>`。契约向量补 `check-skip`（第 12 份）

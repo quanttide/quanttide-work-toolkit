@@ -2,8 +2,8 @@
 
 mod check;
 mod model;
-mod validate;
+mod read;
 
 pub use check::*;
 pub use model::*;
-pub use validate::*;
+pub use read::*;

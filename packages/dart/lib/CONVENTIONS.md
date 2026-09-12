@@ -15,7 +15,7 @@
 | :-- | :-- | :-- |
 | `criterion/` | 判据 | `model.dart` 模型（`RuleKind` / `Criterion`）、`read.dart` 读法、`items.dart` 翻成「要跑什么」 |
 | `task/` | 任务 | `model.dart` 模型（`Task` 与落点）、`journal.dart` 流水（`JournalEvent` 与「走过」的判定）、`context.dart` 运行上下文 |
-| `workflow/` | 工作流 | `model.dart` 模型（`Step` / `Workflow`）、`validate.dart` 整体语法校验、`check.dart` 定义核对 |
+| `workflow/` | 工作流 | `model.dart` 模型（`Step` / `Workflow`）、`read.dart` 读法（取值 + 语法校验）、`check.dart` 定义核对 |
 
 没有定义、只是常量或信封的，仍单文件：`executor.dart`、`outcome.dart`。
 横切的公件另立中立文件：`fields.dart`（读字段与字段表）、`error.dart`（`DefinitionError`）、`paths.dart`（路径拼接与占位展开）、`context.dart`（`RunContext`）——聚合只向下依赖它们。
@@ -32,7 +32,7 @@
 ## 一件事只写一处
 
 判据的模型、读法、翻成要跑什么都在 `criterion/`；工作流不再解析判据字段。
-从定义里读字段在 `fields.dart`、报错在 `error.dart`、路径与占位在 `paths.dart`——三者是中立的横切件，聚合只向下依赖，别处只借不抄。改一处，改一处。
+从定义里读与校验在 `workflow/read.dart`，字段助手在 `fields.dart`、报错在 `error.dart`、路径与占位在 `paths.dart`——三者是中立的横切件，聚合只向下依赖，别处只借不抄。改一处，改一处。
 
 ## 说法与文案不进库
 

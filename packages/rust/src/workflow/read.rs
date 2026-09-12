@@ -1,14 +1,52 @@
-//! 工作流聚合 / 整体校验：字段缺了、取值越界、有不认识的字段，当场报错。
+//! 工作流聚合 / 读法：从定义里的字段读出 `Step` / `Workflow`，顺带把语法过一遍。
 //!
+//! 读分两种：`of` / `Step::of` 只读不校验（用在已经校验过的定义上）；
+//! `from_value` / `Step::from_value` 读进来顺带校验，读不通当场报错。
 //! 规矩的出处是 `docs/specification/process/workflow.md`·语法。
-//! 模型在 [`super::model`]；字段表与取值助手在 `crate::fields`，错误在 `crate::error`。
+//! 字段表与取值助手在 `crate::fields`，错误在 `crate::error`。
 
 use super::model::{Step, Workflow};
-use crate::criterion::read_criterion;
+use crate::criterion::{criterion_of, read_criterion};
 use crate::error::{DefinitionError, Fault, Position};
 use crate::executor::{AGENT, EXECUTORS};
 use crate::fields::{STEP_FIELDS, TOP_FIELDS, text_of, unknown_fields};
 use serde_yaml::Value as Yaml;
+
+impl Step {
+    /// 从定义里的字段读出（不校验）。用在已经校验过的定义上。
+    pub fn of(value: &Yaml) -> Step {
+        let criteria = value
+            .get("criteria")
+            .and_then(|v| v.as_sequence())
+            .map(|items| items.iter().map(criterion_of).collect())
+            .unwrap_or_default();
+        let mut executor = text_of(value, "executor");
+        if executor.is_empty() {
+            executor = AGENT.to_string();
+        }
+        Step {
+            name: text_of(value, "name"),
+            description: text_of(value, "description"),
+            executor,
+            criteria,
+        }
+    }
+}
+
+impl Workflow {
+    /// 从定义里的字段读出（不校验）；工作流名取自 `name` 字段。
+    pub fn of(payload: &Yaml) -> Workflow {
+        Workflow {
+            name: text_of(payload, "name"),
+            description: text_of(payload, "description"),
+            steps: payload
+                .get("steps")
+                .and_then(|v| v.as_sequence())
+                .map(|items| items.iter().map(Step::of).collect())
+                .unwrap_or_default(),
+        }
+    }
+}
 
 /// 语法校验：不是映射、缺字段、取值不对，当场报错。
 pub fn validate(payload: &Yaml) -> Result<(), DefinitionError> {
