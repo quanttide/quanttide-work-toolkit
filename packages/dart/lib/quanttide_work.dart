@@ -26,4 +26,4 @@ export 'src/workspace/workspace.dart';
 const String domain = 'knowledge-work';
 
 /// 包版本（与 pubspec.yaml 保持一致）。
-const String version = '0.1.0-beta.5';
+const String version = '0.1.0-beta.6';

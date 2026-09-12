@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.1.0-beta.6] - 2026-09-12
+
 ### Added
 
 - `artifact` 聚合（`src/artifact/`）：产物 = **名字 + 规格**（一组验收判据）——名字是身份，不限定种类（报告、日志只是两个名字），不带位置。出处 `docs/specification/piece/artifact.md`
@@ -33,6 +35,8 @@
 ### Added
 
 - 两个扩展：`TaskJournal`（`doneSteps` / `nextStep` / `stateLine`）、`WorkflowCheck`（`check`）——Dart 不能跨文件写实现，用扩展承接分件；调用写法不变（`task.doneSteps(...)`、`workflow.check(...)`）
+
+- 版本对齐：Rust 与 Dart 同号发（`0.1.0-beta.6`）；`scripts/contract.sh` 加「两侧清单版本一致」一条判据，错号即红；包版本常量不再写死在测试里——Dart 没得编译期注入，常量手写一份、测试对着 `pubspec.yaml` 核一遍
 
 ### Fixed
 

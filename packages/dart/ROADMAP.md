@@ -118,7 +118,7 @@ cd ../.. && sh scripts/contract.sh
 
 **剩下两件**：
 
-- **段六 6.1 版本对齐——等你拍板**：Dart `0.1.0-beta.5` 与 Rust `0.1.0-beta.4` 要合成一个号（端侧 studio / cli 也跟着引同一号）。**版本号由你定，我不擅自改**
+- **段六 6.1 版本对齐——已对齐到 `0.1.0-beta.6`**：两侧清单与版本常量改齐（取两侧的下一号，规则是「向量一致时两侧发同一个号」），`scripts/contract.sh` 加了一条「两侧清单版本一致」的判据，错号即红。**包还没发布**——按发布纪律等创始人放行
 - 段六 6.2 已做：`sh scripts/contract.sh` 已挂进两条发布工作流的门禁（两侧一起跑）
 
 **后续（issue #2）**：按规范三轴补上「场所」——新增 `workspace/`（模型 + 定义核对 + 落点 + 流水判定，用扩展承接分件），`RunContext` 退出工具箱（位置不进模型，目录基准当参数传；桶文件不再导出 `RunContext`）。详见 `CHANGELOG.md`「Unreleased」与 [issue #2](https://github.com/quanttide/quanttide-work-toolkit/issues/2)。
@@ -131,3 +131,4 @@ cd ../.. && sh scripts/contract.sh
 4. **校验态类型化（`Raw` / `Validated`）**：让「未校验」与「已校验」在类型上分开。Dart 没有 Rust 那样的零成本 phantom，做了要么只有 Rust 做（镜像破裂），要么 Dart 用两层类包装——除非出现「拿未校验值当已校验用」的真实事故，先不做（[issue #1](https://github.com/quanttide/quanttide-work-toolkit/issues/1)）
 5. **`exists` 回调扩展成能核内容**：`check` 的 `exists` 只能答「在不在」。「判据怎么核」该先由规范定，不宜先扩接口再补规范（同上 issue）
 6. **`RuleItem` 换成保留类型的结构**：现在是 `kind` + 位置 `args`，端侧要按顺序重新解释。等真需要更多语义时再动，避免提前抽象（同上 issue）
+7. **路径改用路径类型**：判据里的路径现在是裸 `String`（`path` / `absent` / `file`）。审下来的结论是**不立**——加了类型不删一行代码，`expanded` / `check` 还得在字符串上认占位（描述字段也带占位，逃不掉）；真正出过事的是**错误出处**（次序写反害得一条分支走不到），那一处已经用 `Source` + `Position` 类型化了。路径的拼接与规范化归端侧——「平台管位置」。等出现「把落点当定义里的路径用」这类真实事故再回头立（同上 issue）

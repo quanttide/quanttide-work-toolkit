@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.1.0-beta.6] - 2026-09-12
+
 ### Added
 
 - `artifact` 聚合（`quanttide_work::artifact`）：产物 = **名字 + 规格**（一组验收判据）——名字是身份，不限定种类（报告、日志只是两个名字），不带位置。出处 `docs/specification/piece/artifact.md`
@@ -31,6 +33,8 @@
 - `validate` 去掉 `from_yaml(...).map(|_| ())` 的壳：自己承担语法校验，`from_value` 调它再建模，两条路共用同一份检查
 - **破坏性**：判据的读法归位——`criterion_of` / `read_criterion` 从 `workflow` 搬到 `criterion`（`quanttide_work::criterion::{criterion_of, read_criterion}`）；`expand_placeholders` 从 `workflow` 搬到 `task`
 - 文件按「一件事一件」重排：`workflow.rs`（516 行）与 `task.rs`（292 行）各拆成一个目录多件，最长 195 行（`criterion/model.rs`）；`Finding` 与 `looks_like_section` 归 `workflow/check`、占位展开归 `task/model`
+
+- 版本对齐：Rust 与 Dart 同号发（`0.1.0-beta.6`）；`scripts/contract.sh` 加「两侧清单版本一致」一条判据，错号即红；包版本常量不再写死在测试里——Rust 由清单注入（`CARGO_PKG_VERSION`），Dart / Python / TypeScript 的测试改成读自己的清单
 
 ### Fixed
 
