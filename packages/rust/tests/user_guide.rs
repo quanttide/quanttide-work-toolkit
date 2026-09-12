@@ -51,7 +51,7 @@ fn doc_criterion_1() {
         criterion_of(&yaml(json!({"executor": "rule", "path": "docs/index.md"})));
     assert_eq!(parsed.text(), "存在：docs/index.md");
     let items: Vec<RuleItem> = items_of(&[parsed]);
-    assert_eq!(items[0].kind, Some(RuleKind::Path));
+    assert_eq!(items[0].kind, Some(RuleKind::PathExists));
     let checked = read_criterion(
         &yaml(json!({"executor": "rule", "path": "docs/index.md"})),
         1,
@@ -78,7 +78,7 @@ fn doc_criterion_2() {
     // 端侧：真的去查文件、起进程，把结果装进 Outcome
     assert_eq!(items.len(), 1, "只有 rule 那条要跑");
     assert_eq!(items[0].description, "存在：outline.md");
-    assert_eq!(items[0].kind, Some(RuleKind::Path));
+    assert_eq!(items[0].kind, Some(RuleKind::PathExists));
 }
 
 // ---------------------------------------------------------------------------

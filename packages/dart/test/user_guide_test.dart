@@ -30,7 +30,7 @@ void main() {
 
     expect(items, hasLength(1));
     expect(items.single.description, '存在：docs/index.md');
-    expect(items.single.kind, RuleKind.path);
+    expect(items.single.kind, RuleKind.pathExists);
     expect(items.single.args, ['docs/index.md']);
   });
 

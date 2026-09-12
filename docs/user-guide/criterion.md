@@ -19,7 +19,7 @@
 description 说明（如「存在：docs/index.md」）、kind 怎么判、args 参数
 ```
 
-`kind` 为空就是**不用跑**（那几条的 `executor` 是 `agent` 或 `human`，见 [executor.md](executor.md)）。
+`kind` 为空就是**不用跑**（那几条的 `executor` 是 `agent` 或 `human`，见 [executor.md](executor.md)）。`kind` 的取值是定义里的字段名（`path` / `absent` / `contains` / `run`），与 `RuleKind` / `Criterion` 的变体一一对应——线上只出现字段名。
 
 ```rust
 use quanttide_work::criterion::{criterion_of, items_of, read_criterion, Criterion, RuleItem, RuleKind};

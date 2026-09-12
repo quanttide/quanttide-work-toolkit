@@ -27,15 +27,19 @@ pub fn items_of(criteria: &[Criterion]) -> Vec<RuleItem> {
         .map(|criterion| {
             let description = criterion.text();
             let (kind, args) = match criterion {
-                Criterion::PathExists { path, .. } => (Some(RuleKind::Path), vec![path.clone()]),
+                Criterion::PathExists { path, .. } => {
+                    (Some(RuleKind::PathExists), vec![path.clone()])
+                }
                 Criterion::PathAbsent { absent, .. } => {
-                    (Some(RuleKind::Absent), vec![absent.clone()])
+                    (Some(RuleKind::PathAbsent), vec![absent.clone()])
                 }
                 Criterion::FileContains { file, contains, .. } => (
-                    Some(RuleKind::Contains),
+                    Some(RuleKind::FileContains),
                     vec![file.clone(), contains.clone()],
                 ),
-                Criterion::CommandRun { run, .. } => (Some(RuleKind::Run), vec![run.clone()]),
+                Criterion::CommandRun { run, .. } => {
+                    (Some(RuleKind::CommandRun), vec![run.clone()])
+                }
                 Criterion::AgentJudgement { .. } | Criterion::HumanGate { .. } => {
                     (None, Vec::new())
                 }

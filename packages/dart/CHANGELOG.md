@@ -2,6 +2,7 @@
 
 ### Changed
 
+- **破坏性**：`RuleKind` 枚举值与 `Criterion` 子类型同名（`path` → `pathExists`、`absent` → `pathAbsent`、`contains` → `fileContains`、`run` → `commandRun`）；线上写法走新增的 `wire`（字段名），契约不变
 - **破坏性**：`Outcome` 改为不可变——字段全 `final`，`withFirst` / `withData` 返回新的一份（与 Rust 侧值语义一致，原先原地改）；`data` 放宽成任意 JSON（`Object?`，原先只收 `Map`）；`dataJson` 改名 `toOutputJson`
 - **破坏性**：`check` 不再静默跳过含运行时占位的判据：四个占位都跳过并各出一条 `Finding`，其 `ok` 为 `null`（未核）；`Finding.ok` 由 `bool` 改成 `bool?`。契约向量补 `check-skip`（第 12 份）
 - **破坏性**：`Workflow.of` / `Task.of` 不再收名字，改从 `name` 字段读；`check` 第一参数由 `String` 换成 `RunContext`

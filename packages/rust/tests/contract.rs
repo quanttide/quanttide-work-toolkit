@@ -139,7 +139,7 @@ fn contract() {
                     .map(|item| {
                         json!({
                             "description": item.description,
-                            "kind": item.kind.map(|kind| format!("{kind:?}").to_lowercase()),
+                            "kind": item.kind.map(|kind| kind.as_str()),
                             "args": item.args,
                         })
                     })

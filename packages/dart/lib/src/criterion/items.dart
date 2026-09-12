@@ -18,19 +18,19 @@ List<RuleItem> itemsOf(Iterable<Criterion> criteria) {
     final description = criterion.text;
     switch (criterion) {
       case PathExists(:final path):
-        items.add(RuleItem(description, kind: RuleKind.path, args: [path]));
+        items.add(RuleItem(description, kind: RuleKind.pathExists, args: [path]));
       case PathAbsent(:final absent):
-        items.add(RuleItem(description, kind: RuleKind.absent, args: [absent]));
+        items.add(RuleItem(description, kind: RuleKind.pathAbsent, args: [absent]));
       case FileContains(:final file, :final contains):
         items.add(
           RuleItem(
             description,
-            kind: RuleKind.contains,
+            kind: RuleKind.fileContains,
             args: [file, contains],
           ),
         );
       case CommandRun(:final run):
-        items.add(RuleItem(description, kind: RuleKind.run, args: [run]));
+        items.add(RuleItem(description, kind: RuleKind.commandRun, args: [run]));
       case AgentJudgement() || HumanGate():
         items.add(RuleItem(description));
     }

@@ -8,12 +8,26 @@
 use crate::executor::{AGENT, HUMAN, RULE};
 use serde_yaml::{Mapping, Value as Yaml};
 
+/// 判据的种类：四种机械核对。名字与 [`Criterion`] 的四个变体一致；
+/// 线值（[`RuleKind::as_str`]）是定义里的字段名，不随变体名变。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RuleKind {
-    Path,
-    Absent,
-    Contains,
-    Run,
+    PathExists,
+    PathAbsent,
+    FileContains,
+    CommandRun,
+}
+
+impl RuleKind {
+    /// 线上写法：判据里的字段名（`path` / `absent` / `contains` / `run`）。
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            RuleKind::PathExists => "path",
+            RuleKind::PathAbsent => "absent",
+            RuleKind::FileContains => "contains",
+            RuleKind::CommandRun => "run",
+        }
+    }
 }
 
 /// 一条判据：谁判、怎么判、说明。

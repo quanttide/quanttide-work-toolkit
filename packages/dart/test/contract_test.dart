@@ -83,7 +83,7 @@ void main() {
               .map(
                 (item) => {
                   'description': item.description,
-                  'kind': item.kind?.name,
+                  'kind': item.kind?.wire,
                   'args': item.args,
                 },
               )

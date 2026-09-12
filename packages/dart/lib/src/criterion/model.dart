@@ -7,7 +7,19 @@ import '../executor.dart';
 /// 工具箱只把判据翻成「要跑什么」——真去跑（文件系统、起进程）是各自包的事。
 ///
 /// 读字段、认取值、报错在 `read.dart`（与模型同处）。
-enum RuleKind { path, absent, contains, run }
+/// 判据的种类：四种机械核对。枚举名与 [Criterion] 的四个子类型一致；
+/// 线值（[wire]）是定义里的字段名，不随枚举名变。
+enum RuleKind {
+  pathExists('path'),
+  pathAbsent('absent'),
+  fileContains('contains'),
+  commandRun('run');
+
+  const RuleKind(this.wire);
+
+  /// 线上写法：判据里的字段名。
+  final String wire;
+}
 
 /// 一条判据：谁判、怎么判、说明。
 ///

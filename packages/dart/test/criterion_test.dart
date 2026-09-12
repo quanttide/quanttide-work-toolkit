@@ -144,7 +144,7 @@ void main() {
 
   group('RuleItem', () {
     test('machine：有 kind 才要端侧跑', () {
-      expect(RuleItem('存在：a', kind: RuleKind.path).machine, isTrue);
+      expect(RuleItem('存在：a', kind: RuleKind.pathExists).machine, isTrue);
       expect(RuleItem('写干净了').machine, isFalse);
       expect(RuleItem('写干净了').kind, isNull);
       expect(RuleItem('写干净了').args, isEmpty);

@@ -398,7 +398,7 @@ fn items_of_rule_carries_kind_and_args() {
     )]);
     assert_eq!(items.len(), 1);
     assert_eq!(items[0].description, "含「第二大脑」：a.md");
-    assert_eq!(items[0].kind, Some(RuleKind::Contains));
+    assert_eq!(items[0].kind, Some(RuleKind::FileContains));
     assert_eq!(items[0].args, vec!["a.md", "第二大脑"]);
     assert!(items[0].machine());
 }
@@ -431,9 +431,9 @@ fn items_of_keeps_the_order_and_names_every_kind() {
     assert_eq!(
         kinds,
         vec![
-            Some(RuleKind::Path),
-            Some(RuleKind::Absent),
-            Some(RuleKind::Run)
+            Some(RuleKind::PathExists),
+            Some(RuleKind::PathAbsent),
+            Some(RuleKind::CommandRun)
         ]
     );
 }
