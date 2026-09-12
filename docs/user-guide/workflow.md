@@ -21,14 +21,16 @@ import 'package:quanttide_work/quanttide_work.dart';   // Workflow / Step / Defi
 **第二步「读定义」**——读进来顺带校验：
 
 ```rust
-let workflow = Workflow::from_yaml(&payload, "pre-release.md")?;   // 不合法当场 Err
+let workflow = Workflow::from_yaml(&payload, "code-implement.yaml")?;   // 不合法当场 Err
 ```
 
 ```dart
-final workflow = Workflow.fromValue(payload, file: 'pre-release.md');  // 不合法当场抛
+final workflow = Workflow.fromValue(payload, file: 'code-implement.yaml');  // 不合法当场抛
 ```
 
 端侧只负责**把文件读成值**（YAML 怎么读写是各包的事）；**校验是工具箱的事**。
+
+**第二个参数只是话头**——传这份定义的文件名（如 `code-implement.yaml`），只用在报错文字里（`code-implement.yaml 少了 steps`）。**它不是"要读的文件"**：工具箱不碰文件系统。命令行那份就是这么做的——端侧读文件、解成值，再把文件名交给工具箱校验。
 
 **定义核对**（`workflow --check` 那一类）：
 
