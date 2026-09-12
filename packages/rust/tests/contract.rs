@@ -98,7 +98,7 @@ fn contract() {
                 let criteria: Vec<Value> = vector["input"].as_array().cloned().unwrap_or_default();
                 let criteria: Vec<criterion::Criterion> = criteria
                     .iter()
-                    .map(|value| workflow::criterion_of(&as_yaml(value)))
+                    .map(|value| criterion::criterion_of(&as_yaml(value)))
                     .collect();
                 let got: Vec<Value> = criterion::items_of(&criteria)
                     .into_iter()
@@ -163,7 +163,7 @@ fn contract() {
                 let data = vector["data"].as_str().unwrap_or("");
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
                     let input = case["input"].as_str().unwrap_or("");
-                    let got = workflow::expand_placeholders(input, data);
+                    let got = task::expand_placeholders(input, data);
                     assert_eq!(json!(got), case["expect"], "{name}：{input} 展开得不对");
                 }
             }

@@ -20,7 +20,7 @@ cd ../.. && sh scripts/contract.sh      # 11 份向量，Dart 与 Rust 两侧必
 
 - 搬：`criterionOf`（第 301 行）、`readCriterion`（第 320 行）——YAML → `Criterion` 的翻译与校验
 - 留：`workflow.dart` 只管工作流定义（`Step`、`Workflow`、整体语法校验）
-- 判据：`grep -rn "criterionOf\|readCriterion" lib/src/` 只命中 `criterion/`；`workflow/` 里不再有判据字段解析
+- 判据：`criterionOf` / `readCriterion` 的**定义**只在 `criterion/`（工作流里仍会**调用**它们——`Step` 怎么读判据是工作流的事，不算违规）
 
 **1.2** `criterion` 立目录，与 `itemsOf`（判据翻成「要跑什么」）同处
 

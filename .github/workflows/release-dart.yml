@@ -45,6 +45,12 @@ jobs:
       - run: dart pub get
       - run: dart analyze lib/ test/
       - run: dart test
+
+      # 契约：两侧（Dart 与 Rust）跑同一批向量，结论必须一样——一侧绿不算过
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: contract（两侧向量一致）
+        run: sh ../../scripts/contract.sh
+
       - run: dart pub publish --dry-run
 
   publish:

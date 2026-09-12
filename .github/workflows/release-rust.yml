@@ -48,6 +48,14 @@ jobs:
       - run: cargo fmt --check
       - run: cargo test --locked
       - run: cargo clippy --locked --all-targets -- -D warnings
+
+      # 契约：两侧（Rust 与 Dart）跑同一批向量，结论必须一样——一侧绿不算过
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: contract（两侧向量一致）
+        run: sh ../../scripts/contract.sh
+
       - run: cargo publish --dry-run --locked --registry crates-io
 
   publish:

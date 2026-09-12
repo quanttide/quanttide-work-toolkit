@@ -96,7 +96,22 @@ cd ../.. && sh scripts/contract.sh
 
 ## 现在在哪
 
-段一未开始。基线已量：`sh scripts/contract.sh` **两侧一致（绿）**——重构就是把这个绿保持到最后。
+**段一~段五已完成**（2026-09-12，pi 执行 + Hermes 复核）：
+
+- 判据归位：读法（`criterion_of` / `read_criterion`）进 `criterion/`，与模型、`items_of` 同处
+- `workflow.rs` 516 行 → `workflow/{model,validate,check}`；`task.rs` 292 行 → `task/{model,journal,context}`；**最长文件 195 行**（全部 ≤250）
+- 三件寄居物各归其主：`Finding` + `looks_like_section` → `workflow/check`，`expand_placeholders` → `task/model`
+- 与 Dart 侧**九个分件逐个对位**（`criterion/{model,items,read}`、`task/{model,journal,context}`、`workflow/{model,validate,check}`）
+- 约定立在 `src/CONVENTIONS.md`；`AGENTS.md` 结构块已改对
+- 门禁：`fmt` / `clippy` / `test` 全绿；`sh scripts/contract.sh` **11 份向量、两侧一致**
+- CHANGELOG 已记 `[Unreleased]`：三条公共路径迁移属**破坏性变更**（下游 cli 与 studio 经查均未用到，无需改动）
+
+**剩下两件**：
+
+- **段六 6.1 版本对齐——等你拍板**：Rust `0.1.0-beta.4` 与 Dart `0.1.0-beta.5` 要合成一个号（端侧 cli / studio 也跟着引同一号）。**版本号由你定，我不擅自改**
+- 段六 6.2 已做：`sh scripts/contract.sh` 已挂进 `release-rust.yml` 与 `release-dart.yml` 的门禁（两侧一起跑，一侧绿不算过）
+
+**一处与原文的偏差（已改齐）**：约定文件落在 `src/CONVENTIONS.md`（与 cli 同路子），TODO 原先写的是包根
 
 ## 边界外（越界但相关，需要你拍板）
 

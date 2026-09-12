@@ -105,7 +105,21 @@ cd ../.. && sh scripts/contract.sh
 
 ## 现在在哪
 
-段一未开始。基线已量：`sh scripts/contract.sh` **两侧一致（绿）**。
+**段一~段五已完成**（2026-09-12，pi 执行 + Hermes 复核）：
+
+- 判据归位：读法（`criterionOf` / `readCriterion`）进 `criterion/`，与模型、`itemsOf` 同处
+- `workflow.dart` 405 行 → `workflow/{model,validate,check}`；`task.dart` 216 行 → `task/{model,journal,context}`；**最长文件 169 行**（全部 ≤250）
+- 三件寄居物各归其主：`Finding` + `looksLikeSection` → `workflow/check`，`expandPlaceholders` → `task/model`
+- 与 Rust 侧**九个分件逐个对位**；桶文件仍是一处导入（`import 'package:quanttide_work/quanttide_work.dart'`）
+- 新增两个扩展名：`TaskJournal`、`WorkflowCheck`（Dart 不能跨文件写实现，用扩展承接分件；调用写法不变）
+- 补建了 `AGENTS.md`（原先没有）、约定立在 `lib/CONVENTIONS.md`（与 Rust 侧那份互为对照）
+- 门禁：`dart analyze` 无问题、`dart test` 全绿；`sh scripts/contract.sh` **11 份向量、两侧一致**
+- CHANGELOG 已记 `[Unreleased]`：桶文件导入方式不变，**端侧 studio 无感**
+
+**剩下两件**：
+
+- **段六 6.1 版本对齐——等你拍板**：Dart `0.1.0-beta.5` 与 Rust `0.1.0-beta.4` 要合成一个号（端侧 studio / cli 也跟着引同一号）。**版本号由你定，我不擅自改**
+- 段六 6.2 已做：`sh scripts/contract.sh` 已挂进两条发布工作流的门禁（两侧一起跑）
 
 ## 边界外（越界但相关，需要你拍板）
 

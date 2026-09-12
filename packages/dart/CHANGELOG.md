@@ -1,3 +1,14 @@
+## [Unreleased]
+
+### Changed
+
+- 判据的读法归位：`criterionOf` / `readCriterion` 从 `workflow` 搬到 `criterion`（桶文件导入方式不变，端侧无感）
+- 文件按「一件事一件」重排：`workflow.dart`（405 行）与 `task.dart`（216 行）各拆成一个目录多件，最长 169 行（`criterion/model.dart`）；`Finding` 与 `looksLikeSection` 归 `workflow/check`、占位展开归 `task/model`
+
+### Added
+
+- 两个扩展：`TaskJournal`（`doneSteps` / `nextStep` / `stateLine`）、`WorkflowCheck`（`check`）——Dart 不能跨文件写实现，用扩展承接分件；调用写法不变（`task.doneSteps(...)`、`workflow.check(...)`）
+
 ## [0.1.0-beta.5] - 2026-09-12
 
 ### Changed

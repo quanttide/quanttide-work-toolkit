@@ -4,14 +4,21 @@
 
 ```
 packages/rust/
-├── AGENTS.md       # 本文件
-├── CHANGELOG.md    # 版本变更记录
-├── Cargo.toml      # Rust 包配置
-├── README.md       # 项目说明
+├── AGENTS.md          # 本文件
+├── CHANGELOG.md       # 版本变更记录
+├── Cargo.toml         # Rust 包配置
+├── README.md          # 项目说明
 ├── src/
-│   └── lib.rs      # 库入口
+│   ├── CONVENTIONS.md # 代码约定（横切约束）
+│   ├── lib.rs         # 出口：五个模型对外
+│   ├── executor.rs    # 执行者常量
+│   ├── outcome.rs     # 结果信封
+│   ├── criterion/     # 判据：模型 + 读法 + 翻成要跑什么
+│   ├── task/          # 任务：模型 + 流水 + 运行上下文
+│   └── workflow/      # 工作流：模型 + 语法校验 + 定义核对
 └── tests/
-    └── package.rs  # 集成测试
+    ├── contract.rs    # 契约：跑共用向量
+    └── package.rs     # 集成测试
 ```
 
 ## 事实源

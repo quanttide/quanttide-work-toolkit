@@ -2,6 +2,8 @@
 
 体检日 2026-09-12。这份只管 `packages/dart/`；与 Rust 侧的镜像、五语言的事见 [ROADMAP.md](ROADMAP.md)。
 
+> **本表是整理前的体检**。段一~段五已完成（判据归位、两个大文件拆成目录），整理后的现状见 [ROADMAP.md](ROADMAP.md) 的「现在在哪」。
+
 契约出处：结构契约与阶段条款在 [契约原型](../../../../../quanttide-code/data/insight/code-agent/contract.md)（code 域洞察）；本库的分界规矩在 `lib/quanttide_work.dart` 头注释。
 
 ## 规模

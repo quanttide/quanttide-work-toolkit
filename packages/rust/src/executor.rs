@@ -2,6 +2,7 @@
 //!
 //! 三个取值由规范定死，不因平台而变。步骤上只能写 [`AGENT`] 或 [`HUMAN`]；
 //! 判据上还能写 [`RULE`]（机械核对，不用智能体）。
+//! 出处：`docs/specification/process/workflow.md`·语法（executor 取值）。
 
 /// 智能体。
 pub const AGENT: &str = "agent";

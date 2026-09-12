@@ -18,7 +18,7 @@ cd ../.. && sh scripts/contract.sh      # 11 份向量，Rust 与 Dart 两侧必
 
 - 搬：`criterion_of`、`read_criterion`（YAML → `Criterion` 的翻译与校验）
 - 留：`workflow.rs` 只管工作流的定义（`Step`、`Workflow`、整体语法校验）
-- 判据：`grep -rn "fn criterion_of\|fn read_criterion" src/` 只命中 `criterion/`；`workflow/` 里不再有判据的字段解析
+- 判据：`criterion_of` / `read_criterion` 的**定义**只在 `criterion/`（工作流里仍会**调用**它们——`Step` 怎么读判据是工作流的事，这不算违规；2026-09-12 修正：原判据写成「grep 只命中 criterion/」，把调用也算成了违规）
 - 收益：改判据的取法只动一处，不必翻工作流文件
 
 **1.2** `criterion` 立目录，`items_of`（判据翻成「要跑什么」）与模型同处
@@ -52,7 +52,7 @@ cd ../.. && sh scripts/contract.sh      # 11 份向量，Rust 与 Dart 两侧必
 
 ## 段五 · 约定与文档
 
-**5.1** 立 `packages/rust/CONVENTIONS.md`（与 cli 的同名文件一个路子），写死：一个模型一个目录、单文件 ≤250、一件事只写一处、说法与文案不进库、收进来的每一样要有规范出处
+**5.1** 立 `src/CONVENTIONS.md`（与 cli 的同名文件一个路子；TODO 原先写的是包根，2026-09-12 按实现改齐），写死：一个模型一个目录、单文件 ≤250、一件事只写一处、说法与文案不进库、收进来的每一样要有规范出处
 
 **5.2** `packages/rust/AGENTS.md` 的「项目结构」块改成实际结构（现在只写 `src/lib.rs`）
 
