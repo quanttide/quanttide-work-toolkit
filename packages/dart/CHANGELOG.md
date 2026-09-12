@@ -1,3 +1,9 @@
+## [0.1.0-beta.4] - 2026-09-12
+
+### Changed
+
+- `Outcome` 的四个字段改成可写、`lines` / `columns` / `rows` 缺省给能增的列表：答复是边算边拼的（`lines.add(...)` 直接能用），`withFirst` / `withData` 就地添上再返回自己
+
 ## [0.1.0-beta.3] - 2026-09-12
 
 ### Added

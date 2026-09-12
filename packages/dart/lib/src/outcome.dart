@@ -7,21 +7,24 @@ import 'dart:convert';
 /// `columns` 与 `rows` 同一份表格、`data` 给界面的那一栏）与编解码；话怎么拼、
 /// 路径怎么显示、退出码怎么定，留各自的平台。
 ///
-/// 不可变：[withFirst] / [withData] 返回新的结果。
+/// 答复边算边拼：`lines` / `columns` / `rows` 是能增的列表，`data` 能后补；
+/// [withFirst] / [withData] 就地添上再返回自己（跟 Rust 那侧一样）。
 class Outcome {
-  const Outcome(
+  Outcome(
     this.ok, {
-    this.lines = const [],
-    this.columns = const [],
-    this.rows = const [],
+    List<String>? lines,
+    List<String>? columns,
+    List<List<String>>? rows,
     this.data,
-  });
+  }) : lines = lines ?? <String>[],
+       columns = columns ?? <String>[],
+       rows = rows ?? <List<String>>[];
 
   /// 不成：只带话。
-  const Outcome.failed(this.lines)
+  Outcome.failed(this.lines)
     : ok = false,
-      columns = const [],
-      rows = const [],
+      columns = <String>[],
+      rows = <List<String>>[],
       data = null;
 
   /// 从信封装回来。缺样按空算。
@@ -29,9 +32,7 @@ class Outcome {
     json['ok'] == true,
     lines: _strings(json['lines']),
     columns: _strings(json['columns']),
-    rows: (json['rows'] as List? ?? const [])
-        .map(_strings)
-        .toList(growable: false),
+    rows: (json['rows'] as List? ?? const []).map(_strings).toList(),
     data: (json['data'] as Map?)?.cast<String, Object?>(),
   );
 
@@ -39,25 +40,29 @@ class Outcome {
   factory Outcome.fromStdout(String stdout) =>
       Outcome.fromJson(jsonDecode(stdout) as Map<String, dynamic>);
 
-  final bool ok;
+  bool ok;
 
   /// 给人看的话，一行一句。
-  final List<String> lines;
+  List<String> lines;
 
   /// 同一份表格：表头与行，命令行与窗口共用。
-  final List<String> columns;
-  final List<List<String>> rows;
+  List<String> columns;
+  List<List<String>> rows;
 
   /// 给窗口与脚本的那一栏（要交原文就托在这里）。
-  final Map<String, Object?>? data;
+  Map<String, Object?>? data;
 
   /// 往话的开头添一句。
-  Outcome withFirst(String line) =>
-      Outcome(ok, lines: [line, ...lines], columns: columns, rows: rows, data: data);
+  Outcome withFirst(String line) {
+    lines.insert(0, line);
+    return this;
+  }
 
   /// 托上给界面的那一栏。
-  Outcome withData(Map<String, Object?> data) =>
-      Outcome(ok, lines: lines, columns: columns, rows: rows, data: data);
+  Outcome withData(Map<String, Object?> data) {
+    this.data = data;
+    return this;
+  }
 
   /// 信封：四样，`data` 有才写。
   Map<String, Object?> toJson() => {
@@ -73,5 +78,5 @@ class Outcome {
 
   /// 一栏字符串：不是数组按空算，元素照原样写成文字。
   static List<String> _strings(Object? value) =>
-      (value as List? ?? const []).map((item) => '$item').toList(growable: false);
+      (value as List? ?? const []).map((item) => '$item').toList();
 }
