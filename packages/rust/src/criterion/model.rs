@@ -6,6 +6,7 @@
 //! 出处：`docs/specification/process/workflow.md`·语法（判据三个字段）。
 
 use crate::executor::{AGENT, HUMAN, RULE};
+use crate::paths::Placeholders;
 use serde_yaml::{Mapping, Value as Yaml};
 
 /// 判据的种类：四种机械核对。名字与 [`Criterion`] 的四个变体一致；
@@ -161,18 +162,9 @@ impl Criterion {
         Yaml::Mapping(map)
     }
 
-    /// 占位展开：每个字段里的 `{{…}}` 交给 `expand` 换掉。
-    pub fn expanded<F>(&self, expand: F) -> Criterion
-    where
-        F: Fn(&str) -> String,
-    {
-        let ex = |value: &str| {
-            if value.contains("{{") {
-                expand(value)
-            } else {
-                value.to_string()
-            }
-        };
+    /// 占位展开：每个字段里的 `{{…}}` 按占位表换掉。
+    pub fn expanded(&self, placeholders: &Placeholders) -> Criterion {
+        let ex = |value: &str| placeholders.expand(value);
         match self {
             Criterion::PathExists { path, description } => Criterion::PathExists {
                 path: ex(path),

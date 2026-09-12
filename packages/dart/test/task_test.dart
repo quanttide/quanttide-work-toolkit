@@ -123,16 +123,5 @@ void main() {
       expect(task.declared('journal'), 'report/j.md');
       expect(task.declared('missing'), isNull);
     });
-
-    test('expandPlaceholders：四个占位各展开到目录基准', () {
-      expect(
-        expandPlaceholders(
-          '{{artifacts}}/a {{report}}/b {{journal}} {{log}}/c',
-          '/d',
-        ),
-        '/d/artifacts/a /d/artifacts/report/b /d/artifacts/journal /d/tasks/c',
-      );
-      expect(expandPlaceholders('没有占位', '/d'), '没有占位');
-    });
   });
 }

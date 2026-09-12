@@ -1,6 +1,5 @@
-//! 任务：模型与流水、占位展开。
+//! 任务：模型与流水。
 
-use quanttide_work::paths::expand_placeholders;
 use quanttide_work::task::{JournalEvent, Task};
 use serde_json::{Value as Json, json};
 use serde_yaml::Value as Yaml;
@@ -128,23 +127,4 @@ fn with_gates_skips_duplicates() {
     let after = task.with_gates(&["甲项".into(), "乙项".into()]);
     assert_eq!(after.gates, vec!["甲项", "乙项"]);
     assert_eq!(task.gates, vec!["甲项"], "原标题不变");
-}
-
-#[test]
-fn expand_placeholders_knows_four_and_leaves_the_rest() {
-    assert_eq!(
-        expand_placeholders("{{report}}/清单.md", "/d"),
-        "/d/artifacts/report/清单.md"
-    );
-    assert_eq!(
-        expand_placeholders("{{journal}}", "/d"),
-        "/d/artifacts/journal"
-    );
-    assert_eq!(expand_placeholders("{{log}}", "/d"), "/d/tasks");
-    assert_eq!(
-        expand_placeholders("{{artifacts}}/y", "/d"),
-        "/d/artifacts/y"
-    );
-    assert_eq!(expand_placeholders("没有占位", "/d"), "没有占位");
-    assert_eq!(expand_placeholders("{{unknown}}", "/d"), "{{unknown}}");
 }

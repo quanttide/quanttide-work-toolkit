@@ -5,7 +5,7 @@
 //! 出处：`docs/specification/process/task.md`·语法（落点）。
 
 use super::model::Workspace;
-use crate::paths::join;
+use crate::paths::{Placeholders, join};
 use crate::task::Task;
 
 /// 流水这种产物的种类名。
@@ -27,5 +27,18 @@ impl Workspace {
             };
         }
         join(base, &format!("artifacts/{kind}/{}.md", task.name))
+    }
+
+    /// 本次任务的占位表：四个占位各换成哪个落点（规范 `process/workflow.md`·语法）。
+    ///
+    /// `{{report}}` / `{{journal}}` / `{{log}}` 换的是产物的落点，`{{artifacts}}` 换产物目录——
+    /// 与 [`Workspace::artifact`] 同一处算，所以判据里写占位与直接写落点等价。
+    pub fn placeholders(&self, task: &Task, base: &str) -> Placeholders {
+        Placeholders {
+            artifacts: join(base, "artifacts"),
+            report: self.artifact(task, "report", base),
+            journal: self.artifact(task, "journal", base),
+            log: self.artifact(task, "log", base),
+        }
     }
 }

@@ -122,10 +122,11 @@ void main() {
     })], [task]);
 
     final place = workspace.artifact(task, 'report', '/d');
-    final text = expandPlaceholders('{{report}}/清单.md', '/d');
+    final tab = workspace.placeholders(task, '/d');
+    final text = tab.expand('见 {{report}}');
 
     expect(place, '/d/artifacts/report/甲.md');
-    expect(text, '/d/artifacts/report/清单.md');
+    expect(text, '见 /d/artifacts/report/甲.md');
   });
 
   test('文档：workspace.md #3——定义核对', () {
@@ -143,7 +144,7 @@ void main() {
     });
     final workspace = Workspace.of([workflow], [Task(name: '甲', workflowName: 'demo')]);
 
-    final findings = workspace.check(workflow, '/d', (path) => File(path).existsSync());
+    final findings = workspace.check(workflow, (path) => File(path).existsSync());
 
     expect(findings, hasLength(1));
     expect(findings.single.where, '核对·docs/index.md');

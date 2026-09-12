@@ -1,6 +1,7 @@
 import '../error.dart';
 import '../executor.dart';
 import '../fields.dart';
+import '../paths.dart';
 import 'model.dart';
 
 /// 从定义里的字段认出一条判据（不校验）。
@@ -69,6 +70,18 @@ Criterion readCriterion(Object? value, int step, int order) {
     if (given.isNotEmpty) {
       throw DefinitionError(at, NoRuleFields(kind, given));
     }
+  }
+  // 路径里只认四个占位；写别的（如 `{{foo}}`）算不合语法（规范 `process/workflow.md`·语法）。
+  final unknown = <String>[];
+  for (final field in ['path', 'absent', 'file']) {
+    for (final name in placeholdersIn(textOf(value, field))) {
+      if (!placeholderNames.contains(name) && !unknown.contains(name)) {
+        unknown.add(name);
+      }
+    }
+  }
+  if (unknown.isNotEmpty) {
+    throw DefinitionError(at, UnknownPlaceholder(unknown));
   }
   return criterionOf(value);
 }

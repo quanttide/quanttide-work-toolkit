@@ -65,7 +65,6 @@ void main() {
 
       final findings = const Workspace().check(
         flow,
-        '/w/data',
         (path) => path == '/w/data/artifacts/report/甲.md',
       );
 
@@ -99,7 +98,7 @@ void main() {
           },
         ],
       });
-      expect(const Workspace().check(flow, '/w/data', (path) => true), isEmpty);
+      expect(const Workspace().check(flow, (path) => true), isEmpty);
     });
   });
 
@@ -122,6 +121,32 @@ void main() {
         '/elsewhere/甲.md',
         reason: '绝对路径原样',
       );
+    });
+
+    test('占位表与落点同源：四个占位各换成哪条路径', () {
+      final task = taskOf('甲', const {});
+      final tab = const Workspace().placeholders(task, '/d');
+      expect(tab.pathOf('report'), '/d/artifacts/report/甲.md');
+      expect(tab.pathOf('journal'), '/d/artifacts/journal/甲.md');
+      expect(tab.pathOf('log'), '/d/tasks/甲.yaml');
+      expect(tab.pathOf('artifacts'), '/d/artifacts');
+      expect(tab.pathOf('foo'), isNull, reason: '不认识的占位不给路径');
+      expect(
+        tab.expand('{{report}} 里写 {{artifacts}} 的清单'),
+        '/d/artifacts/report/甲.md 里写 /d/artifacts 的清单',
+      );
+      expect(tab.expand('没有占位'), '没有占位');
+      expect(tab.expand('{{foo}}'), '{{foo}}', reason: '不认识的占位原样留着');
+      expect(tab.expand('没闭合的 {{report'), '没闭合的 {{report');
+    });
+
+    test('占位表跟着声明走', () {
+      final task = taskOf('甲', {
+        'artifacts': {'report': 'report/甲.md'},
+      });
+      final tab = const Workspace().placeholders(task, '/d');
+      expect(tab.expand('{{report}}'), '/d/report/甲.md');
+      expect(tab.expand('{{journal}}'), '/d/artifacts/journal/甲.md');
     });
   });
 

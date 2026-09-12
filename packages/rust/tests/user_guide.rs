@@ -7,7 +7,6 @@ use quanttide_work::criterion::{RuleKind, criterion_of, items_of};
 use quanttide_work::error::DefinitionError;
 use quanttide_work::executor::AGENT;
 use quanttide_work::outcome::Outcome;
-use quanttide_work::paths::expand_placeholders;
 use quanttide_work::task::{JournalEvent, Task};
 use quanttide_work::workflow::{Step, Workflow};
 use quanttide_work::workspace::{Finding, Workspace, looks_like_section};
@@ -197,9 +196,10 @@ fn doc_workspace_2() {
     let task = task_of("甲", json!({"workflow": "code-implement"}));
     let workspace = Workspace::of(vec![code_implement()], vec![task.clone()]);
     let place = workspace.artifact(&task, "report", "/d"); // 声明了按声明的，没声明落默认处
-    let text = expand_placeholders("{{report}}/清单.md", "/d"); // 占位展开
+    let tab = workspace.placeholders(&task, "/d"); // 四个占位各换哪个落点
+    let text = tab.expand("见 {{report}}"); // 换掉一条里的占位
     assert_eq!(place, "/d/artifacts/report/甲.md");
-    assert_eq!(text, "/d/artifacts/report/清单.md");
+    assert_eq!(text, "见 /d/artifacts/report/甲.md");
 }
 
 // 文档：workspace.md #3
@@ -215,7 +215,7 @@ fn doc_workspace_3() {
     .expect("合法定义");
     let task = task_of("甲", json!({"workflow": "w"}));
     let workspace = Workspace::of(vec![workflow.clone()], vec![task]);
-    let findings = workspace.check(&workflow, "/d", |path| std::path::Path::new(path).exists());
+    let findings = workspace.check(&workflow, |path| std::path::Path::new(path).exists());
     assert_eq!(findings.len(), 1);
     assert_eq!(
         findings[0].where_,

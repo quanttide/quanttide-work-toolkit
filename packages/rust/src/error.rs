@@ -5,6 +5,7 @@
 
 use crate::executor::{CRITERION_TYPES, EXECUTORS};
 use crate::fields::{CRITERION_FIELDS, STEP_FIELDS, TOP_FIELDS};
+use crate::paths::PLACEHOLDER_NAMES;
 
 /// 定义里的位置。
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -67,6 +68,8 @@ pub enum Fault {
     NeedsDescription { kind: String },
     /// 判据是 agent / human，却带了 rule 的字段。
     NoRuleFields { kind: String, given: Vec<String> },
+    /// 判据的路径里写了不认识的占位。
+    UnknownPlaceholder(Vec<String>),
 }
 
 impl Fault {
@@ -114,6 +117,20 @@ impl Fault {
             }
             Fault::NoRuleFields { kind, given } => {
                 format!("是 {kind}，不该带 {}（那是 rule 的字段）", given.join("、"))
+            }
+            Fault::UnknownPlaceholder(unknown) => {
+                let wrap = |names: Vec<String>| {
+                    names
+                        .into_iter()
+                        .map(|name| format!("{{{{{name}}}}}"))
+                        .collect::<Vec<_>>()
+                        .join(" / ")
+                };
+                format!(
+                    "的路径里有不认识的占位：{}（只认 {}）",
+                    wrap(unknown.clone()),
+                    wrap(PLACEHOLDER_NAMES.iter().map(|n| n.to_string()).collect())
+                )
             }
         }
     }

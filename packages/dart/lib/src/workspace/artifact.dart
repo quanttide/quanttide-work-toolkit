@@ -23,4 +23,15 @@ extension WorkspaceArtifact on Workspace {
     }
     return join(base, 'artifacts/$kind/${task.name}.md');
   }
+
+  /// 本次任务的占位表：四个占位各换成哪个落点（规范 `process/workflow.md`·语法）。
+  ///
+  /// `{{report}}` / `{{journal}}` / `{{log}}` 换的是产物的落点，`{{artifacts}}` 换产物目录——
+  /// 与 [artifact] 同一处算，所以判据里写占位与直接写落点等价。
+  Placeholders placeholders(Task task, String base) => Placeholders(
+    artifacts: join(base, 'artifacts'),
+    report: artifact(task, 'report', base),
+    journal: artifact(task, 'journal', base),
+    log: artifact(task, 'log', base),
+  );
 }

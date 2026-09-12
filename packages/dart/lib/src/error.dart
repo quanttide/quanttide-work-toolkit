@@ -6,6 +6,7 @@ library;
 
 import 'executor.dart';
 import 'fields.dart';
+import 'paths.dart';
 
 /// 定义里的位置。
 sealed class Position {
@@ -203,6 +204,20 @@ class NoRuleFields extends Fault {
 
   @override
   String text() => '是 $kind，不该带 ${given.join('、')}（那是 rule 的字段）';
+}
+
+/// 判据的路径里写了不认识的占位。
+class UnknownPlaceholder extends Fault {
+  const UnknownPlaceholder(this.unknown);
+
+  final List<String> unknown;
+
+  @override
+  String text() {
+    String wrap(Iterable<String> names) => names.map((n) => '{{$n}}').join(' / ');
+    return '的路径里有不认识的占位：${wrap(unknown)}'
+        '（只认 ${wrap(placeholderNames)}）';
+  }
 }
 
 /// 一份定义读不通。

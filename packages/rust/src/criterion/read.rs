@@ -8,6 +8,7 @@ use super::model::Criterion;
 use crate::error::{DefinitionError, Fault, Position};
 use crate::executor::{AGENT, CRITERION_TYPES, HUMAN, RULE};
 use crate::fields::{CRITERION_FIELDS, text_of, unknown_fields};
+use crate::paths::{PLACEHOLDER_NAMES, placeholders_in};
 use serde_yaml::Value as Yaml;
 
 /// 从定义里的字段认出一条判据（不校验）。
@@ -109,6 +110,21 @@ pub fn read_criterion(
                 },
             ));
         }
+    }
+    // 路径里只认四个占位；写别的（如 `{{foo}}`）算不合语法（规范 `process/workflow.md`·语法）。
+    let mut unknown: Vec<String> = Vec::new();
+    for field in ["path", "absent", "file"] {
+        for name in placeholders_in(&text_of(value, field)) {
+            if !PLACEHOLDER_NAMES.contains(&name.as_str()) && !unknown.contains(&name) {
+                unknown.push(name);
+            }
+        }
+    }
+    if !unknown.is_empty() {
+        return Err(DefinitionError::new(
+            at(),
+            Fault::UnknownPlaceholder(unknown),
+        ));
     }
     Ok(criterion_of(value))
 }

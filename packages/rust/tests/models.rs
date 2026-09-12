@@ -7,6 +7,7 @@ use quanttide_work::criterion::{
 };
 use quanttide_work::executor::{AGENT, CRITERION_TYPES, EXECUTORS, HUMAN, RULE};
 use quanttide_work::outcome::Outcome;
+use quanttide_work::paths::Placeholders;
 use serde_json::{Value as Json, json};
 use serde_yaml::Value as Yaml;
 
@@ -162,58 +163,57 @@ fn to_yaml_keeps_written_descriptions_for_rule_kinds() {
     }
 }
 
+/// 一份占位表：四个占位各换一条。
+fn placeholders() -> Placeholders {
+    Placeholders {
+        artifacts: "/d/artifacts".into(),
+        report: "/d/artifacts/report/甲.md".into(),
+        journal: "/d/artifacts/journal/甲.md".into(),
+        log: "/d/tasks/甲.yaml".into(),
+    }
+}
+
 #[test]
-fn expanded_only_calls_out_for_placeholders() {
+fn expanded_leaves_a_criterion_without_placeholders_alone() {
     let plain = Criterion::PathExists {
         path: "docs/index.md".into(),
         description: String::new(),
     };
-    let calls = std::cell::Cell::new(0);
-    let same = plain.expanded(|_| {
-        calls.set(calls.get() + 1);
-        String::new()
-    });
-    assert_eq!(same, plain);
-    assert_eq!(calls.get(), 0, "每条字段都没有占位，就不该调用展开");
+    assert_eq!(plain.expanded(&placeholders()), plain);
 }
 
 #[test]
-fn expanded_replaces_every_field_with_placeholders() {
-    let expand = |value: &str| {
-        value
-            .replace("{{report}}", "/d/artifacts/report")
-            .replace("{{name}}", "甲")
-    };
+fn expanded_replaces_every_field_carrying_a_placeholder() {
     let cases = [
         (
             Criterion::PathExists {
-                path: "{{report}}/x.md".into(),
-                description: "看{{name}}".into(),
+                path: "{{report}}".into(),
+                description: "写进 {{journal}}".into(),
             },
             Criterion::PathExists {
-                path: "/d/artifacts/report/x.md".into(),
-                description: "看甲".into(),
+                path: "/d/artifacts/report/甲.md".into(),
+                description: "写进 /d/artifacts/journal/甲.md".into(),
             },
         ),
         (
             Criterion::PathAbsent {
-                absent: "{{report}}/gone.md".into(),
+                absent: "{{log}}".into(),
                 description: String::new(),
             },
             Criterion::PathAbsent {
-                absent: "/d/artifacts/report/gone.md".into(),
+                absent: "/d/tasks/甲.yaml".into(),
                 description: String::new(),
             },
         ),
         (
             Criterion::FileContains {
-                file: "{{report}}/x.md".into(),
-                contains: "{{name}}".into(),
+                file: "{{report}}".into(),
+                contains: "{{artifacts}}".into(),
                 description: String::new(),
             },
             Criterion::FileContains {
-                file: "/d/artifacts/report/x.md".into(),
-                contains: "甲".into(),
+                file: "/d/artifacts/report/甲.md".into(),
+                contains: "/d/artifacts".into(),
                 description: String::new(),
             },
         ),
@@ -223,30 +223,46 @@ fn expanded_replaces_every_field_with_placeholders() {
                 description: String::new(),
             },
             Criterion::CommandRun {
-                run: "cat /d/artifacts/report".into(),
+                run: "cat /d/artifacts/report/甲.md".into(),
                 description: String::new(),
             },
         ),
         (
             Criterion::AgentJudgement {
-                description: "{{name}}写干净了".into(),
+                description: "{{report}} 写完没".into(),
             },
             Criterion::AgentJudgement {
-                description: "甲写干净了".into(),
+                description: "/d/artifacts/report/甲.md 写完没".into(),
             },
         ),
         (
             Criterion::HumanGate {
-                description: "{{name}}拍板".into(),
+                description: "{{artifacts}} 里的要人拍板".into(),
             },
             Criterion::HumanGate {
-                description: "甲拍板".into(),
+                description: "/d/artifacts 里的要人拍板".into(),
             },
         ),
     ];
     for (input, want) in cases {
-        assert_eq!(input.expanded(expand), want);
+        assert_eq!(input.expanded(&placeholders()), want);
     }
+}
+
+#[test]
+fn expanded_leaves_an_unknown_placeholder_as_written() {
+    // 读定义时已经拦过；这里只是不把不认识的占位吞掉。
+    let criterion = Criterion::PathExists {
+        path: "{{report}}/{{name}}.md".into(),
+        description: String::new(),
+    };
+    assert_eq!(
+        criterion.expanded(&placeholders()),
+        Criterion::PathExists {
+            path: "/d/artifacts/report/甲.md/{{name}}.md".into(),
+            description: String::new(),
+        }
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -384,6 +400,35 @@ fn read_human_needs_description_and_rejects_rule_fields() {
     assert_eq!(
         read_err(json!({"executor": "human", "description": "人拍板", "path": "a"})),
         "demo.yaml 第 1 个步骤第 1 条判据是 human，不该带 path（那是 rule 的字段）"
+    );
+}
+
+#[test]
+fn read_rejects_placeholders_outside_the_four() {
+    assert_eq!(
+        read_err(json!({"executor": "rule", "path": "{{foo}}/x.md"})),
+        "demo.yaml 第 1 个步骤第 1 条判据的路径里有不认识的占位：{{foo}}（只认 {{artifacts}} / {{report}} / {{journal}} / {{log}}）"
+    );
+    assert_eq!(
+        read_err(json!({"executor": "rule", "file": "{{bogus}}.md", "contains": "x"})),
+        "demo.yaml 第 1 个步骤第 1 条判据的路径里有不认识的占位：{{bogus}}（只认 {{artifacts}} / {{report}} / {{journal}} / {{log}}）",
+        "file 也算路径"
+    );
+    // 只扫 path / absent / file；run 里的 `{{` 不当占位看。
+    assert_eq!(
+        read(json!({"executor": "rule", "run": "echo '{{foo}}'"})),
+        Criterion::CommandRun {
+            run: "echo '{{foo}}'".into(),
+            description: String::new(),
+        }
+    );
+    // 没闭合的 `{{` 不算占位，原样留着。
+    assert_eq!(
+        read(json!({"executor": "rule", "path": "{{report"})),
+        Criterion::PathExists {
+            path: "{{report".into(),
+            description: String::new(),
+        }
     );
 }
 

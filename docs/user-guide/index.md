@@ -8,7 +8,7 @@
 
 1. **只读对齐**——模型不可变：读进来顺带校验（`from_value` / `fromValue`），改动用 `with_*` 拿新值，**落盘由端侧做**（工具箱不碰文件）
 2. **工具箱翻单，端侧跑腿**——工具箱把判据翻成「要跑什么」，**真去跑**（查文件、起进程）是端侧的事；**说法**（拼句、退出码、路径怎么显示）与**文案**（提示词）也都留在端侧
-3. **一份正本**——不 fork、不复制模型；端侧向同一批**契约向量**（`tests/contract/*.json`，12 份）对齐
+3. **一份正本**——不 fork、不复制模型；端侧向同一批**契约向量**（`tests/contract/*.json`，13 份）对齐
 
 界限一句话：**能两处一致的，进工具箱；只能一处有的，留端侧。**
 
@@ -23,7 +23,7 @@
 | 结果 | `quanttide_work::outcome` | `outcome` | 结果信封（`ok` / `lines` / `columns` / `rows` / `data`） | [outcome.md](outcome.md) |
 | 执行者 | `quanttide_work::executor` | `executor` | 三个取值常量 | [executor.md](executor.md) |
 
-目录里的**分件**（`model` / `read` / `items` / `journal` / `check` / `artifact` / `progress`）是内部结构；横切的 `error`（`DefinitionError`）与 `paths`（`expand_placeholders`）另立中立模块，接入者用到时按名字取。
+目录里的**分件**（`model` / `read` / `items` / `journal` / `check` / `artifact` / `progress`）是内部结构；横切的 `error`（`DefinitionError`）与 `paths`（`Placeholders`，占位表）另立中立模块，接入者用到时按名字取。
 
 ## 各语言速查
 

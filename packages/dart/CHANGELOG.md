@@ -6,6 +6,10 @@
 
 ### Changed
 
+- **破坏性**：占位展开收敛成一套——删掉 `expandPlaceholders`，改由 `Placeholders`（占位表）承担：`Workspace.placeholders(task, base)` 按任务声明与默认处算好四条落点，`Criterion.expanded(Placeholders)` 逐字段换（原先收闭包）
+- **破坏性**：占位换的是**落点**（`{{report}}` / `{{journal}}` / `{{log}}` 是产物文件，`{{artifacts}}` 是产物目录），与 `Workspace.artifact` 同一处算——原先 `expandPlaceholders` 把前三个也换成目录，与规范 `process/task.md`·落点对不上
+- **破坏性**：`check` 去掉 `base` 参数——判据路径带占位时本来就跳过，`base` 是空转（改由端侧的 `exists` 定相对基准）
+- 判据路径里的占位只认四个；写别的（如 `{{foo}}`）算定义错误（`UnknownPlaceholder`）；小工具 `runtimePlaceholder` 删除（改用 `placeholdersIn`）。契约向量补 `validate-unknown-placeholder`（第 13 份）
 - **破坏性**：删掉 `RunContext`（`src/context.dart`，桶文件不再导出）。位置不进模型：落点与核对要用的目录基准改由平台当参数传进来
 - **破坏性**：`WorkflowCheck.check` 与 `looksLikeSection` 从 `workflow/` 搬到 `workspace/`；`Task.doneSteps` / `nextStep` / `stateLine` / `artifact` 从 `task/` 搬到 `workspace/`——落点与流水判定要拿工作区里装载的定义，不是任务自己能算的
 - **破坏性**：`check(workflow, base, exists)` 与 `artifact(task, kind, base)` 都多一个 `base`（平台给的目录基准）；`Task` 不再持 `context`，`toMap()` 也不再写 `root` / `data` / `workflows`

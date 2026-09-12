@@ -1,4 +1,5 @@
 import '../executor.dart';
+import '../paths.dart';
 
 /// 判据：规则引擎那几种机械核对。
 ///
@@ -40,9 +41,9 @@ sealed class Criterion {
   /// 写回定义里的字段形状。
   Map<String, Object?> toMap();
 
-  /// 占位展开：每个字段里的 `{{…}}` 交给 [expand] 换掉。
-  Criterion expanded(String Function(String) expand) {
-    String ex(String value) => value.contains('{{') ? expand(value) : value;
+  /// 占位展开：每个字段里的 `{{…}}` 按占位表换掉。
+  Criterion expanded(Placeholders placeholders) {
+    String ex(String value) => placeholders.expand(value);
     return switch (this) {
       PathExists(:final path, :final description) => PathExists(
         ex(path),

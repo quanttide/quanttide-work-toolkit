@@ -1,0 +1,21 @@
+{
+  "kind": "validate",
+  "file": "demo.yaml",
+  "input": {
+    "name": "x",
+    "steps": [
+      {
+        "name": "甲",
+        "criteria": [
+          {
+            "executor": "rule",
+            "path": "{{foo}}/x.md"
+          }
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "error": "demo.yaml 第 1 个步骤第 1 条判据的路径里有不认识的占位：{{foo}}（只认 {{artifacts}} / {{report}} / {{journal}} / {{log}}）"
+  }
+}

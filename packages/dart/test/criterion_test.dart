@@ -90,55 +90,55 @@ void main() {
   });
 
   group('占位展开', () {
-    test('六种判据都换掉字段里的 {{…}}', () {
-      String expand(String value) => value
-          .replaceAll('{{artifacts}}', '/d/artifacts')
-          .replaceAll('{{report}}', '/d/artifacts/report');
+    const tab = Placeholders(
+      artifacts: '/d/artifacts',
+      report: '/d/artifacts/report/甲.md',
+      journal: '/d/artifacts/journal/甲.md',
+      log: '/d/tasks/甲.yaml',
+    );
 
+    test('六种判据都换掉字段里的 {{…}}', () {
       final path = const PathExists('{{artifacts}}/index.md', description: '看 {{report}}')
-          .expanded(expand);
+          .expanded(tab);
       expect(path, isA<PathExists>());
       expect((path as PathExists).path, '/d/artifacts/index.md');
-      expect(path.description, '看 /d/artifacts/report');
+      expect(path.description, '看 /d/artifacts/report/甲.md');
 
       final absent = const PathAbsent('{{artifacts}}/gone.md', description: '清 {{report}}')
-          .expanded(expand);
+          .expanded(tab);
       expect(absent, isA<PathAbsent>());
       expect((absent as PathAbsent).absent, '/d/artifacts/gone.md');
-      expect(absent.description, '清 /d/artifacts/report');
+      expect(absent.description, '清 /d/artifacts/report/甲.md');
 
-      final file = const FileContains('{{report}}/x.md', '{{artifacts}}', description: '含 {{report}}')
-          .expanded(expand);
+      final file = const FileContains('{{report}}', '{{artifacts}}', description: '含 {{log}}')
+          .expanded(tab);
       expect(file, isA<FileContains>());
-      expect((file as FileContains).file, '/d/artifacts/report/x.md');
+      expect((file as FileContains).file, '/d/artifacts/report/甲.md');
       expect(file.contains, '/d/artifacts');
-      expect(file.description, '含 /d/artifacts/report');
+      expect(file.description, '含 /d/tasks/甲.yaml');
 
       final run = const CommandRun('cat {{report}}', description: '跑 {{artifacts}}')
-          .expanded(expand);
+          .expanded(tab);
       expect(run, isA<CommandRun>());
-      expect((run as CommandRun).run, 'cat /d/artifacts/report');
+      expect((run as CommandRun).run, 'cat /d/artifacts/report/甲.md');
       expect(run.description, '跑 /d/artifacts');
 
-      final judgement = const AgentJudgement('看 {{report}} 写完没').expanded(expand);
+      final judgement = const AgentJudgement('看 {{report}} 写完没').expanded(tab);
       expect(judgement, isA<AgentJudgement>());
-      expect(judgement.description, '看 /d/artifacts/report 写完没');
+      expect(judgement.description, '看 /d/artifacts/report/甲.md 写完没');
 
-      final gate = const HumanGate('{{artifacts}} 里的要人拍板').expanded(expand);
+      final gate = const HumanGate('{{artifacts}} 里的要人拍板').expanded(tab);
       expect(gate, isA<HumanGate>());
       expect(gate.description, '/d/artifacts 里的要人拍板');
     });
 
-    test('字段里没有 {{ 时不调展开函数', () {
-      var called = 0;
-      final plain = const PathExists('/w/docs', description: '就这点')
-          .expanded((value) {
-        called++;
-        return value;
-      });
+    test('没有占位就原样，不认识的占位也原样', () {
+      final plain = const PathExists('/w/docs', description: '就这点').expanded(tab);
       expect((plain as PathExists).path, '/w/docs');
       expect(plain.description, '就这点');
-      expect(called, 0);
+
+      final unknown = const PathExists('{{foo}}/x.md').expanded(tab);
+      expect((unknown as PathExists).path, '{{foo}}/x.md');
     });
   });
 
@@ -251,6 +251,24 @@ void main() {
       expect(
         () => readCriterion({'executor': 'agent'}, 1, 1),
         defError('d.yaml 第 1 个步骤第 1 条判据是 agent，必须写 description（判准 / 要人拍板的事）'),
+      );
+    });
+
+    test('路径里写了不认识的占位：报错列全四个', () {
+      expect(
+        () => readCriterion({'executor': 'rule', 'path': '{{foo}}/x.md'}, 1, 1),
+        defError('d.yaml 第 1 个步骤第 1 条判据的路径里有不认识的占位：{{foo}}'
+            '（只认 {{artifacts}} / {{report}} / {{journal}} / {{log}}）'),
+      );
+      // 只扫 path / absent / file；run 里的 `{{` 不当占位看。
+      expect(
+        readCriterion({'executor': 'rule', 'run': "echo '{{foo}}'"}, 1, 1),
+        isA<CommandRun>(),
+      );
+      // 没闭合的 `{{` 不算占位。
+      expect(
+        readCriterion({'executor': 'rule', 'path': '{{report'}, 1, 1),
+        isA<PathExists>(),
       );
     });
   });

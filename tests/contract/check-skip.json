@@ -1,6 +1,5 @@
 {
   "kind": "check",
-  "base": "/w/data",
   "workflow": {
     "name": "demo",
     "steps": [

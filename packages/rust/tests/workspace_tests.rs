@@ -103,7 +103,7 @@ fn check_reports_paths_and_sections() {
     })))
     .expect("合法定义");
 
-    let findings = Workspace::default().check(&workflow, "/w", |path| path == "/w/seen.md");
+    let findings = Workspace::default().check(&workflow, |path| path == "/w/seen.md");
 
     let path_finding = findings
         .iter()
@@ -145,7 +145,7 @@ fn check_marks_runtime_placeholders_unchecked() {
     })))
     .expect("合法定义");
 
-    let findings = Workspace::default().check(&workflow, "/d", |_| true);
+    let findings = Workspace::default().check(&workflow, |_| true);
     assert_eq!(
         findings.len(),
         4,
@@ -177,7 +177,7 @@ fn check_dedupes_section_mentions_and_ignores_unclosed_ones() {
         })))
     .expect("合法定义");
 
-    let findings = Workspace::default().check(&workflow, "/d", |_| true);
+    let findings = Workspace::default().check(&workflow, |_| true);
     assert_eq!(section_ok(&findings, "结论"), Some(true));
     assert_eq!(section_ok(&findings, "收尾"), Some(false));
     assert_eq!(section_ok(&findings, "半句和"), None, "没闭合的「不往后认");
@@ -223,6 +223,48 @@ fn artifact_follows_the_declaration_and_the_default() {
         workspace.artifact(&declared, "logs", "/d"),
         "/elsewhere/甲.md",
         "绝对路径原样"
+    );
+}
+
+#[test]
+fn placeholders_point_at_the_same_landings_as_artifact() {
+    let workspace = Workspace::default();
+    let task = task_of("甲", json!({}));
+    let tab = workspace.placeholders(&task, "/d");
+
+    assert_eq!(tab.path_of("report"), Some("/d/artifacts/report/甲.md"));
+    assert_eq!(tab.path_of("journal"), Some("/d/artifacts/journal/甲.md"));
+    assert_eq!(tab.path_of("log"), Some("/d/tasks/甲.yaml"));
+    assert_eq!(tab.path_of("artifacts"), Some("/d/artifacts"));
+    assert_eq!(tab.path_of("foo"), None, "不认识的占位不给路径");
+
+    assert_eq!(
+        tab.expand("{{report}} 里写 {{artifacts}} 的清单"),
+        "/d/artifacts/report/甲.md 里写 /d/artifacts 的清单"
+    );
+    assert_eq!(tab.expand("没有占位"), "没有占位");
+    assert_eq!(tab.expand("{{name}}"), "{{name}}", "不认识的占位原样留着");
+    assert_eq!(
+        tab.expand("没闭合的 {{report"),
+        "没闭合的 {{report",
+        "没闭合的占位不吞后面的字"
+    );
+}
+
+#[test]
+fn placeholders_follow_the_declaration() {
+    let workspace = Workspace::default();
+    let task = task_of("甲", json!({"artifacts": {"report": "report/甲.md"}}));
+    let tab = workspace.placeholders(&task, "/d");
+    assert_eq!(
+        tab.expand("{{report}}"),
+        "/d/report/甲.md",
+        "声明了报告往哪写，占位就换成它"
+    );
+    assert_eq!(
+        tab.expand("{{journal}}"),
+        "/d/artifacts/journal/甲.md",
+        "没声明的仍落默认处"
     );
 }
 
