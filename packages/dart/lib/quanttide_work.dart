@@ -12,9 +12,7 @@
 library;
 
 export 'src/criterion.dart';
-export 'src/envelope.dart';
 export 'src/executor.dart';
-export 'src/fields.dart' show DefinitionError;
 export 'src/task.dart';
 export 'src/workflow.dart';
 

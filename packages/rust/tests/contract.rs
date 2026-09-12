@@ -4,7 +4,7 @@
 
 use quanttide_work::executor::AGENT;
 use quanttide_work::workflow::Step;
-use quanttide_work::{criterion, envelope, task, workflow};
+use quanttide_work::{criterion, task, workflow};
 use serde_json::{Value, json};
 use serde_yaml::{Mapping, Value as Yaml};
 use std::fs;
@@ -98,7 +98,7 @@ fn contract() {
                 let criteria: Vec<Value> = vector["input"].as_array().cloned().unwrap_or_default();
                 let criteria: Vec<criterion::Criterion> = criteria
                     .iter()
-                    .map(|value| criterion::Criterion::from_yaml(&as_yaml(value)))
+                    .map(|value| workflow::criterion_of(&as_yaml(value)))
                     .collect();
                 let got: Vec<Value> = criterion::items_of(&criteria)
                     .into_iter()
@@ -135,40 +135,9 @@ fn contract() {
                     assert_eq!(json!(got), case["expect"], "{name}：{input} 展开得不对");
                 }
             }
-            "envelope" => {
-                let input = &vector["input"];
-                let outcome = envelope::Outcome {
-                    ok: input["ok"].as_bool().unwrap_or(false),
-                    lines: string_list(&input["lines"]),
-                    columns: string_list(&input["columns"]),
-                    rows: input["rows"]
-                        .as_array()
-                        .cloned()
-                        .unwrap_or_default()
-                        .iter()
-                        .map(string_list)
-                        .collect(),
-                    payload: None,
-                };
-                assert_eq!(
-                    outcome.to_json(),
-                    vector["expect"],
-                    "{name}：信封的 JSON 不一样"
-                );
-            }
             other => panic!("{name}：不认得的向量类型 {other}"),
         }
     }
-    assert!(vectors.len() >= 10, "向量太少：{}", vectors.len());
+    assert!(vectors.len() >= 9, "向量太少：{}", vectors.len());
     println!("契约：{} 份向量，两侧一致", vectors.len());
-}
-
-fn string_list(value: &Value) -> Vec<String> {
-    value
-        .as_array()
-        .cloned()
-        .unwrap_or_default()
-        .iter()
-        .map(|item| item.as_str().unwrap_or("").to_string())
-        .collect()
 }

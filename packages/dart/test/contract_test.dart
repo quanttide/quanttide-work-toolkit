@@ -67,7 +67,7 @@ void main() {
           }
         case 'items':
           final got = itemsOf(
-            (vector['input'] as List).cast<Map>().map(Criterion.fromMap),
+            (vector['input'] as List).cast<Map>().map(criterionOf),
           )
               .map(
                 (item) => {
@@ -104,25 +104,10 @@ void main() {
               reason: '$name：${c['input']} 展开得不对',
             );
           }
-        case 'envelope':
-          final input = vector['input'] as Map;
-          final outcome = Outcome(
-            input['ok'] as bool,
-            lines: (input['lines'] as List).cast<String>(),
-            columns: (input['columns'] as List).cast<String>(),
-            rows: (input['rows'] as List)
-                .map((r) => (r as List).cast<String>())
-                .toList(),
-          );
-          expect(
-            outcome.toJson(),
-            vector['expect'],
-            reason: '$name：信封的 JSON 不一样',
-          );
         default:
           fail('$name：不认得的向量类型 ${vector['kind']}');
       }
     }
-    expect(all.length, greaterThanOrEqualTo(10), reason: '向量太少');
+    expect(all.length, greaterThanOrEqualTo(9), reason: '向量太少');
   });
 }

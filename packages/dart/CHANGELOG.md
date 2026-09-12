@@ -1,14 +1,12 @@
-# Changelog
-
 ## [Unreleased]
 
 ### Changed
 
-- 改成按领域模型分文件：`workflow`（工作流聚合：工作流 + 步骤 + 语法与不变量 + 定义核对）、`task`（任务聚合：流水 + 闸门 + 落点 + 运行上下文 + 走过 / 下一步 / 状态行）、`criterion`（判据）、`executor`（执行者）；删掉 `schema` / `definition` / `tasklog`
-- `Finding` 收进 `workflow`，不再单列；定义核对的拼句与退出码（`describeFindings` / `allOk`）移出工具箱
-- `prompts`（含 `Facts` / `criteriaText`）移出工具箱，回各自的平台
-- `validateDefinition(payload, file)` → `Workflow.fromValue(value, file:)`；`checkWorkflow(flow, data, exists)` → `flow.check(data, exists)`；`tasklog.done / nextStep / stateLine` → `Task.doneSteps / nextStep / stateLine`
-- 字段表不再进公开面（`topFields` / `stepFields` / `criterionFields` / `textOf` / `unknownFields`）；`DefinitionError` 仍导出
+- 改成按领域模型分文件，一个模型一个文件：`workflow`（工作流聚合：工作流 + 步骤 + 定义的语法与不变量 + 定义核对）、`task`（任务聚合：流水 + 闸门 + 落点 + 运行上下文 + 走过 / 下一步 / 状态行）、`criterion`（判据）、`executor`（执行者）
+- 定义的语法（字段表、读字段、`DefinitionError`）并进 `workflow`；`Finding` 收进 `workflow`，不单列
+- `validateDefinition(payload, file)` → `Workflow.fromValue`；`checkWorkflow` → `flow.check`；`tasklog.done / nextStep / stateLine` → `Task.doneSteps / nextStep / stateLine`；`Criterion.fromMap` → `criterionOf`
+- 移出工具箱、回各自的平台：提示词（`prompts`）、定义核对的拼句与退出码（`describeFindings` / `allOk`）、信封（`envelope`）
+- 契约向量去掉 `envelope-json`：信封不再是工具箱的东西
 
 ### Added
 

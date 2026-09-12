@@ -6,9 +6,8 @@
 //! 模型不可变：[`Workflow::from_yaml`] 读进来顺带校验，[`Workflow::of`] 读已经校验过的，
 //! [`Workflow::to_yaml`] 写成同样的字段形状。YAML 怎么读写是各自包的事。
 
-use crate::criterion::{Criterion, read_criterion};
-use crate::executor::{AGENT, EXECUTORS, HUMAN, RULE};
-use crate::fields::{DefinitionError, text_of, unknown_fields};
+use crate::criterion::Criterion;
+use crate::executor::{AGENT, CRITERION_TYPES, EXECUTORS, HUMAN, RULE};
 use serde_yaml::{Mapping, Value as Yaml};
 
 /// 定义顶层认得的字段。
@@ -16,6 +15,152 @@ const TOP_FIELDS: [&str; 3] = ["name", "description", "steps"];
 
 /// 步骤认得的字段。
 const STEP_FIELDS: [&str; 4] = ["name", "description", "executor", "criteria"];
+
+/// 一条判据认得的字段。
+const CRITERION_FIELDS: [&str; 7] = [
+    "executor",
+    "description",
+    "path",
+    "absent",
+    "file",
+    "contains",
+    "run",
+];
+
+/// 一份定义读不通：字段缺了、取值越界、有不认识的字段。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DefinitionError(pub String);
+
+impl std::fmt::Display for DefinitionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for DefinitionError {}
+
+/// 取一个字符串字段，去掉两侧空白；不是字符串就当没写。
+pub fn text_of(value: &Yaml, key: &str) -> String {
+    value
+        .get(key)
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .trim()
+        .to_string()
+}
+
+/// 这次给的字段里，哪些是不认识的。
+pub fn unknown_fields(mapping: &Mapping, allowed: &[&str]) -> Vec<String> {
+    mapping
+        .keys()
+        .filter_map(|key| key.as_str())
+        .filter(|key| !allowed.contains(key))
+        .map(|key| key.to_string())
+        .collect()
+}
+
+/// 从定义里的字段认出一条判据（不校验）。
+pub fn criterion_of(value: &Yaml) -> Criterion {
+    let description = text_of(value, "description");
+    let kind = text_of(value, "executor");
+    if kind == AGENT {
+        return Criterion::AgentJudgement { description };
+    }
+    if kind == HUMAN {
+        return Criterion::HumanGate { description };
+    }
+    let path = text_of(value, "path");
+    if !path.is_empty() {
+        return Criterion::PathExists { path, description };
+    }
+    let absent = text_of(value, "absent");
+    if !absent.is_empty() {
+        return Criterion::PathAbsent {
+            absent,
+            description,
+        };
+    }
+    let file = text_of(value, "file");
+    if !file.is_empty() {
+        return Criterion::FileContains {
+            file,
+            contains: text_of(value, "contains"),
+            description,
+        };
+    }
+    Criterion::CommandRun {
+        run: text_of(value, "run"),
+        description,
+    }
+}
+
+/// 读一条判据：取值不对、缺该有的字段，当场报错。
+///
+/// `file` 与 `place` 只用来说话；返回的是认好的值对象。
+pub fn read_criterion(value: &Yaml, file: &str, place: &str) -> Result<Criterion, DefinitionError> {
+    let kind = text_of(value, "executor");
+    if !CRITERION_TYPES.contains(&kind.as_str()) {
+        return Err(DefinitionError(format!(
+            "{file} {place}的 executor 只能是 {}（谁判：规则引擎 / 智能体 / 人）",
+            CRITERION_TYPES.join(" / ")
+        )));
+    }
+    let criterion_map = value
+        .as_mapping()
+        .ok_or_else(|| DefinitionError(format!("{file} {place}不是映射")))?;
+    let odd = unknown_fields(criterion_map, &CRITERION_FIELDS);
+    if !odd.is_empty() {
+        return Err(DefinitionError(format!(
+            "{file} {place}有不认识的字段：{}（只认 {}）",
+            odd.join("、"),
+            CRITERION_FIELDS.join("、")
+        )));
+    }
+    let given: Vec<&str> = ["path", "absent", "file", "contains", "run"]
+        .into_iter()
+        .filter(|name| value.get(*name).is_some())
+        .collect();
+    if kind == RULE {
+        if given.is_empty() {
+            return Err(DefinitionError(format!(
+                "{file} {place}是 rule，得写一条判法（path / absent / file+contains / run）"
+            )));
+        }
+        if given.contains(&"contains") && !given.contains(&"file") {
+            return Err(DefinitionError(format!(
+                "{file} {place}写了 contains，还得写 file"
+            )));
+        }
+        if given.contains(&"file") && !given.contains(&"contains") {
+            return Err(DefinitionError(format!(
+                "{file} {place}写了 file，还得写 contains"
+            )));
+        }
+        let others: Vec<&str> = given
+            .iter()
+            .copied()
+            .filter(|name| *name != "file" && *name != "contains")
+            .collect();
+        if others.len() > 1 || (!others.is_empty() && given.contains(&"file")) {
+            return Err(DefinitionError(format!(
+                "{file} {place}的判法只能一种：path / absent / file+contains / run"
+            )));
+        }
+    } else {
+        if text_of(value, "description").is_empty() {
+            return Err(DefinitionError(format!(
+                "{file} {place}是 {kind}，必须写 description（判准 / 要人拍板的事）"
+            )));
+        }
+        if !given.is_empty() {
+            return Err(DefinitionError(format!(
+                "{file} {place}是 {kind}，不该带 {}（那是 rule 的字段）",
+                given.join("、")
+            )));
+        }
+    }
+    Ok(criterion_of(value))
+}
 
 /// 读一份定义：不是映射、缺字段、取值不对，当场报错。`file` 只用来说话。
 pub fn validate(payload: &Yaml, file: &str) -> Result<(), DefinitionError> {
@@ -37,7 +182,7 @@ impl Step {
         let criteria = value
             .get("criteria")
             .and_then(|v| v.as_sequence())
-            .map(|items| items.iter().map(Criterion::from_yaml).collect())
+            .map(|items| items.iter().map(criterion_of).collect())
             .unwrap_or_default();
         let mut executor = text_of(value, "executor");
         if executor.is_empty() {

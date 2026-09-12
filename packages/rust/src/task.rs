@@ -8,8 +8,8 @@
 
 use std::collections::BTreeMap;
 
-use crate::fields::text_of;
 use crate::workflow::Workflow;
+use crate::workflow::text_of;
 use serde_yaml::{Mapping, Value as Yaml};
 
 /// 流水里的一条：什么时候、哪一步、一句话、过没过。

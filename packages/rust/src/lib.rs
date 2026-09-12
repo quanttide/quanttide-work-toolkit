@@ -17,8 +17,6 @@ pub const DOMAIN: &str = "knowledge-work";
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod criterion;
-pub mod envelope;
 pub mod executor;
-pub mod fields;
 pub mod task;
 pub mod workflow;

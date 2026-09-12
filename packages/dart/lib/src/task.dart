@@ -1,4 +1,4 @@
-import 'fields.dart';
+
 import 'workflow.dart';
 
 /// 任务聚合：工作流的一次执行实例。

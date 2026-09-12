@@ -1,14 +1,12 @@
-# Changelog
-
 ## [Unreleased]
 
 ### Changed
 
-- 改成按领域模型分文件：`workflow`（工作流聚合：工作流 + 步骤 + 语法与不变量 + 定义核对）、`task`（任务聚合：流水 + 闸门 + 落点 + 运行上下文 + 走过 / 下一步 / 状态行）、`criterion`（判据）、`executor`（执行者）；删掉 `schema` / `definition` / `tasklog`
-- `Finding` 收进 `workflow`，不再单列；定义核对的拼句与退出码（`describe` / `all_ok`）移出工具箱
-- `prompts`（含 `Facts` / `criteria_text`）移出工具箱，回各自的平台
-- `validate(payload, file)` 不变；`check(flow, data, exists)` → `Workflow::check`；`tasklog::done / next_step / state_line` → `Task::done_steps / next_step / state_line`
-- 字段表不再进公开面（`TOP_FIELDS` / `STEP_FIELDS` / `CRITERION_FIELDS` / `text_of` / `unknown_fields`）；`DefinitionError` 仍导出
+- 改成按领域模型分文件，一个模型一个文件：`workflow`（工作流聚合：工作流 + 步骤 + 定义的语法与不变量 + 定义核对）、`task`（任务聚合：流水 + 闸门 + 落点 + 运行上下文 + 走过 / 下一步 / 状态行）、`criterion`（判据）、`executor`（执行者）
+- 定义的语法（字段表、读字段、`DefinitionError`）并进 `workflow`；`Finding` 收进 `workflow`，不单列
+- `check` → `Workflow::check`；`tasklog::done / next_step / state_line` → `Task::done_steps / next_step / state_line`；`Criterion::from_yaml` → `criterion_of`；`validate` 不变
+- 移出工具箱、回各自的平台：提示词（`prompts`）、定义核对的拼句与退出码（`describe` / `all_ok`）、信封（`envelope`）
+- 契约向量去掉 `envelope-json`：信封不再是工具箱的东西
 
 ### Added
 
