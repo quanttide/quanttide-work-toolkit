@@ -2,8 +2,27 @@ import '../workflow/validate.dart';
 import 'context.dart';
 import 'journal.dart';
 
-/// 去掉尾巴上的斜杠，拼路径不出双斜杠。
-String _trim(String path) => path.endsWith('/') ? path.substring(0, path.length - 1) : path;
+/// 拼目录与剩下的路径：末尾斜杠忽略、重复斜杠折叠（`/` 与空串等价——都落在根）。
+///
+/// 规矩的出处是 `docs/specification/process/task.md`·落点。落点只有这一处拼法。
+String _join(String dir, String rest) {
+  final clean = StringBuffer();
+  var lastWasSlash = false;
+  for (final ch in dir.split('')) {
+    if (ch == '/') {
+      if (lastWasSlash) continue;
+      lastWasSlash = true;
+    } else {
+      lastWasSlash = false;
+    }
+    clean.write(ch);
+  }
+  var head = clean.toString();
+  while (head.endsWith('/')) {
+    head = head.substring(0, head.length - 1);
+  }
+  return '$head/$rest';
+}
 
 /// 任务聚合：工作流的一次执行实例。
 ///
@@ -68,13 +87,12 @@ class Task {
   /// 声明了按声明的（相对工作区根）；没声明落数据仓的
   /// `artifacts/<种类>/<任务名>.md`；流水是任务文件本身。
   String artifact(String kind, RunContext context) {
-    final data = _trim(context.data);
-    if (kind == 'log') return '$data/tasks/$name.yaml';
+    if (kind == 'log') return _join(context.data, 'tasks/$name.yaml');
     final written = declared(kind);
     if (written != null) {
-      return written.startsWith('/') ? written : '${_trim(context.root)}/$written';
+      return written.startsWith('/') ? written : _join(context.root, written);
     }
-    return '$data/artifacts/$kind/$name.md';
+    return _join(context.data, 'artifacts/$kind/$name.md');
   }
 
   /// 记一笔流水：流水只增不改，所以返回新的任务。
@@ -126,7 +144,7 @@ class Task {
 
 /// 判据里的占位先按数据仓展开（够核对用）。
 String expandPlaceholders(String value, String data) => value
-    .replaceAll('{{artifacts}}', '$data/artifacts')
-    .replaceAll('{{report}}', '$data/artifacts/report')
-    .replaceAll('{{journal}}', '$data/artifacts/journal')
-    .replaceAll('{{log}}', '$data/tasks');
+    .replaceAll('{{artifacts}}', _join(data, 'artifacts'))
+    .replaceAll('{{report}}', _join(data, 'artifacts/report'))
+    .replaceAll('{{journal}}', _join(data, 'artifacts/journal'))
+    .replaceAll('{{log}}', _join(data, 'tasks'));

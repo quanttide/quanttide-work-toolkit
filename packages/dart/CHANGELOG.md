@@ -12,6 +12,7 @@
 ### Fixed
 
 - 判据不是映射时不再指错方向：原先 `readCriterion` 先校验 `executor`，非映射的值会报「executor 只能是 rule / agent / human」；现在先判是不是映射，报「不是映射」
+- 落点拼接按规范收口：末尾斜杠忽略、重复斜杠折叠（`/w/data/`、`/w/data//` 都当 `/w/data`）——原先 `artifact` 只去掉一个尾斜杠、`expandPlaceholders` 完全不处理，同一件事两处两种做法；现在都走同一个 `_join`（规范 `process/task.md`·落点）。契约向量 `artifact-location`、`expand-placeholders` 各补了边界格（含空串与相对目录）
 
 ## [0.1.0-beta.5] - 2026-09-12
 

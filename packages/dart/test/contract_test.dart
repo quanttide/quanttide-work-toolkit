@@ -94,11 +94,12 @@ void main() {
             );
           }
         case 'artifact':
-          final context = RunContext(
-            root: vector['root'] as String,
-            data: vector['data'] as String,
-          );
+          // 每一格可以自带 root / data（换目录的那几格）；不写就按向量顶层的。
           for (final c in (vector['cases'] as List).cast<Map>()) {
+            final context = RunContext(
+              root: (c['root'] ?? vector['root']) as String,
+              data: (c['data'] ?? vector['data']) as String,
+            );
             final task = Task.of('${c['name']}', {'artifacts': c['artifacts']});
             expect(
               task.artifact('${c['artifact']}', context),
@@ -121,7 +122,8 @@ void main() {
             expect(
               expandPlaceholders(
                 c['input'] as String,
-                vector['data'] as String,
+                // 每一格可以自带 data（换目录的那几格）；不写就按向量顶层的。
+                (c['data'] ?? vector['data']) as String,
               ),
               c['expect'],
               reason: '$name：${c['input']} 展开得不对',

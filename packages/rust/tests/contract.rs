@@ -128,12 +128,15 @@ fn contract() {
                 }
             }
             "artifact" => {
-                let context = task::RunContext {
-                    root: vector["root"].as_str().unwrap_or("").to_string(),
-                    data: vector["data"].as_str().unwrap_or("").to_string(),
-                    workflows: String::new(),
-                };
+                // 每一格可以自带 root / data（换目录的那几格）；不写就按向量顶层的。
+                let raw_root = vector["root"].as_str().unwrap_or("").to_string();
+                let raw_data = vector["data"].as_str().unwrap_or("").to_string();
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
+                    let context = task::RunContext {
+                        root: case["root"].as_str().unwrap_or(&raw_root).to_string(),
+                        data: case["data"].as_str().unwrap_or(&raw_data).to_string(),
+                        workflows: String::new(),
+                    };
                     let mut payload = Mapping::new();
                     payload.insert(
                         Yaml::String("artifacts".into()),
@@ -160,9 +163,11 @@ fn contract() {
                 }
             }
             "expand" => {
-                let data = vector["data"].as_str().unwrap_or("");
+                let fallback = vector["data"].as_str().unwrap_or("");
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
                     let input = case["input"].as_str().unwrap_or("");
+                    // 每一格可以自带 data（换目录的那几格）；不写就按向量顶层的。
+                    let data = case["data"].as_str().unwrap_or(fallback);
                     let got = task::expand_placeholders(input, data);
                     assert_eq!(json!(got), case["expect"], "{name}：{input} 展开得不对");
                 }

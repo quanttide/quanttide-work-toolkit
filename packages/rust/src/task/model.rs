@@ -15,9 +15,24 @@ use crate::workflow::text_of;
 use serde_yaml::{Mapping, Value as Yaml};
 use std::collections::BTreeMap;
 
-/// 去掉尾巴上的斜杠，拼路径不出双斜杠。
-fn trim(path: &str) -> &str {
-    path.strip_suffix('/').unwrap_or(path)
+/// 拼目录与剩下的路径：末尾斜杠忽略、重复斜杠折叠（`/` 与空串等价——都落在根）。
+///
+/// 规矩的出处是 `docs/specification/process/task.md`·落点。落点只有这一处拼法。
+fn join(dir: &str, rest: &str) -> String {
+    let mut clean = String::with_capacity(dir.len() + rest.len() + 1);
+    let mut last_was_slash = false;
+    for ch in dir.chars() {
+        if ch == '/' {
+            if last_was_slash {
+                continue;
+            }
+            last_was_slash = true;
+        } else {
+            last_was_slash = false;
+        }
+        clean.push(ch);
+    }
+    format!("{}/{rest}", clean.trim_end_matches('/'))
 }
 
 /// 任务聚合。
@@ -90,18 +105,17 @@ impl Task {
     /// 声明了按声明的（相对工作区根）；没声明落数据仓的
     /// `artifacts/<种类>/<任务名>.md`；流水是任务文件本身。
     pub fn artifact(&self, kind: &str, context: &RunContext) -> String {
-        let data = trim(&context.data);
         if kind == "log" {
-            return format!("{data}/tasks/{}.yaml", self.name);
+            return join(&context.data, &format!("tasks/{}.yaml", self.name));
         }
         if let Some(written) = self.declared(kind) {
             return if written.starts_with('/') {
                 written
             } else {
-                format!("{}/{written}", trim(&context.root))
+                join(&context.root, &written)
             };
         }
-        format!("{data}/artifacts/{kind}/{}.md", self.name)
+        join(&context.data, &format!("artifacts/{kind}/{}.md", self.name))
     }
 
     /// 记一笔流水：流水只增不改，所以返回新的任务。
@@ -169,8 +183,8 @@ impl Task {
 /// 判据里的占位先按数据仓展开（够核对用）。
 pub fn expand_placeholders(value: &str, data: &str) -> String {
     value
-        .replace("{{artifacts}}", &format!("{data}/artifacts"))
-        .replace("{{report}}", &format!("{data}/artifacts/report"))
-        .replace("{{journal}}", &format!("{data}/artifacts/journal"))
-        .replace("{{log}}", &format!("{data}/tasks"))
+        .replace("{{artifacts}}", &join(data, "artifacts"))
+        .replace("{{report}}", &join(data, "artifacts/report"))
+        .replace("{{journal}}", &join(data, "artifacts/journal"))
+        .replace("{{log}}", &join(data, "tasks"))
 }

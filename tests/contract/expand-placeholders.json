@@ -17,6 +17,26 @@
     {
       "input": "{{artifacts}}/y",
       "expect": "/d/artifacts/y"
+    },
+    {
+      "data": "/d/",
+      "input": "{{report}}/x.md",
+      "expect": "/d/artifacts/report/x.md"
+    },
+    {
+      "data": "/d//",
+      "input": "{{journal}}",
+      "expect": "/d/artifacts/journal"
+    },
+    {
+      "data": "",
+      "input": "{{log}}",
+      "expect": "/tasks"
+    },
+    {
+      "data": "rel",
+      "input": "{{log}}",
+      "expect": "rel/tasks"
     }
   ]
 }

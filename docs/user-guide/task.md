@@ -49,6 +49,8 @@ final text = expandPlaceholders('{{report}}/清单.md', context.data);
 
 占位只有四个：`{{artifacts}}`、`{{report}}`、`{{journal}}`、`{{log}}`；第二个参数给的是**数据目录**（`context.data`），展开成 `<数据目录>/artifacts/...`。
 
+目录怎么写都行——**末尾斜杠与重复斜杠不用管**：`/d/`、`/d//` 都当 `/d` 用（相对目录按原样接，空串与 `/` 等价）。这是规范定的，工具箱在**拼的那一处**统一处理（`docs/specification/process/task.md`·落点），你不需要在端侧自己 trim。
+
 ## 只读对齐（这条最容易踩）
 
 模型不可变：改动一律**拿新值**，**落盘由端侧做**——工具箱不碰文件，它只交给你一个新对象。

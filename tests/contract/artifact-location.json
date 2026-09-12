@@ -45,6 +45,30 @@
       "artifacts": { "report": "  " },
       "artifact": "report",
       "expect": "/w/data/artifacts/report/甲.md"
+    },
+    {
+      "note": "数据目录带尾斜杠：同一个落点",
+      "data": "/w/data/",
+      "name": "甲",
+      "artifacts": {},
+      "artifact": "report",
+      "expect": "/w/data/artifacts/report/甲.md"
+    },
+    {
+      "note": "数据目录重复斜杠：折叠后同一个落点",
+      "data": "/w/data//",
+      "name": "甲",
+      "artifacts": {},
+      "artifact": "report",
+      "expect": "/w/data/artifacts/report/甲.md"
+    },
+    {
+      "note": "工作区根带尾斜杠：声明的相对路径仍接得对",
+      "root": "/w/",
+      "name": "甲",
+      "artifacts": { "report": "data/report/甲.md" },
+      "artifact": "report",
+      "expect": "/w/data/report/甲.md"
     }
   ]
 }
