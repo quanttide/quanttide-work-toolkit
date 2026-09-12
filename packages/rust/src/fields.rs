@@ -1,26 +1,10 @@
-//! 定义的 schema：字段名、取值、判据种类，以及读字段、挑陌生字段的小工具。
+//! 读字段、挑陌生字段的小工具，以及定义读不通时报的错。
 //!
-//! 定义要有固定的意义，所以这些都定死。这一层不认模型，只认已经解析好的 YAML 值。
+//! 内部用：只认已经解析好的 YAML 值。怎么读写是各自包的事。
 
 use serde_yaml::{Mapping, Value as Yaml};
 
-pub const AGENT: &str = "agent";
-pub const HUMAN: &str = "human";
-pub const RULE: &str = "rule";
-pub const EXECUTORS: [&str; 2] = [AGENT, HUMAN];
-pub const TYPES: [&str; 3] = [RULE, AGENT, HUMAN];
-pub const TOP_FIELDS: [&str; 3] = ["name", "description", "steps"];
-pub const STEP_FIELDS: [&str; 4] = ["name", "description", "executor", "criteria"];
-pub const CRITERION_FIELDS: [&str; 7] = [
-    "executor",
-    "description",
-    "path",
-    "absent",
-    "file",
-    "contains",
-    "run",
-];
-
+/// 一份定义（或一件任务）读不通：字段缺了、取值越界、有不认识的字段。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DefinitionError(pub String);
 
@@ -32,6 +16,7 @@ impl std::fmt::Display for DefinitionError {
 
 impl std::error::Error for DefinitionError {}
 
+/// 取一个字符串字段，去掉两侧空白；不是字符串就当没写。
 pub fn text_of(value: &Yaml, key: &str) -> String {
     value
         .get(key)
@@ -41,6 +26,7 @@ pub fn text_of(value: &Yaml, key: &str) -> String {
         .to_string()
 }
 
+/// 这次给的字段里，哪些是不认识的。
 pub fn unknown_fields(mapping: &Mapping, allowed: &[&str]) -> Vec<String> {
     mapping
         .keys()

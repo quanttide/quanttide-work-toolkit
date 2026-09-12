@@ -2,13 +2,16 @@
 //!
 //! 向量是两侧**共用**的同一批文件——契约写在向量里，不写在各自的测试代码里。
 
-use quanttide_work::{criteria, definition, envelope, tasklog};
+use quanttide_work::executor::AGENT;
+use quanttide_work::workflow::Step;
+use quanttide_work::{criterion, envelope, task, workflow};
 use serde_json::{Value, json};
+use serde_yaml::{Mapping, Value as Yaml};
 use std::fs;
 
 /// 向量文件是 JSON（夹具），工具箱的模型吃 YAML 值——JSON 本来就是合法的 YAML。
-fn as_yaml(value: &Value) -> serde_yaml::Value {
-    serde_yaml::to_value(value).unwrap_or(serde_yaml::Value::Null)
+fn as_yaml(value: &Value) -> Yaml {
+    serde_yaml::to_value(value).unwrap_or(Yaml::Null)
 }
 
 fn vectors() -> Vec<(String, Value)> {
@@ -31,6 +34,45 @@ fn vectors() -> Vec<(String, Value)> {
     found
 }
 
+/// 向量里的步骤名串成一条工作流（判出「走过哪几步」够用）。
+fn workflow_of(steps: &Value) -> workflow::Workflow {
+    workflow::Workflow {
+        name: "v".to_string(),
+        description: String::new(),
+        steps: steps
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+            .iter()
+            .filter_map(|value| value.as_str())
+            .map(|name| Step {
+                name: name.to_string(),
+                description: String::new(),
+                executor: AGENT.to_string(),
+                criteria: Vec::new(),
+            })
+            .collect(),
+    }
+}
+
+/// 向量里的流水装成一件任务。
+fn task_of(events: &Value) -> task::Task {
+    let mut payload = Mapping::new();
+    payload.insert(
+        Yaml::String("log".into()),
+        Yaml::Sequence(
+            events
+                .as_array()
+                .cloned()
+                .unwrap_or_default()
+                .iter()
+                .map(as_yaml)
+                .collect(),
+        ),
+    );
+    task::Task::of("v", &Yaml::Mapping(payload))
+}
+
 #[test]
 fn contract() {
     let vectors = vectors();
@@ -39,7 +81,7 @@ fn contract() {
         match kind {
             "validate" => {
                 let file = vector["file"].as_str().unwrap_or("");
-                let got = definition::validate(&as_yaml(&vector["input"]), file);
+                let got = workflow::validate(&as_yaml(&vector["input"]), file);
                 match vector["expect"].get("error") {
                     Some(Value::String(wanted)) => match got {
                         Ok(()) => panic!("{name}：期望报错，却通过了"),
@@ -54,11 +96,11 @@ fn contract() {
             }
             "items" => {
                 let criteria: Vec<Value> = vector["input"].as_array().cloned().unwrap_or_default();
-                let criteria: Vec<criteria::Criterion> = criteria
+                let criteria: Vec<criterion::Criterion> = criteria
                     .iter()
-                    .map(|value| criteria::Criterion::from_yaml(&as_yaml(value)))
+                    .map(|value| criterion::Criterion::from_yaml(&as_yaml(value)))
                     .collect();
-                let got: Vec<Value> = criteria::items_of(&criteria)
+                let got: Vec<Value> = criterion::items_of(&criteria)
                     .into_iter()
                     .map(|item| {
                         json!({
@@ -75,22 +117,13 @@ fn contract() {
                 );
             }
             "done" => {
-                let steps: Vec<String> = vector["steps"]
-                    .as_array()
-                    .cloned()
-                    .unwrap_or_default()
-                    .iter()
-                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                    .collect();
-                let events: Vec<Value> = vector["events"].as_array().cloned().unwrap_or_default();
-                let events: Vec<serde_yaml::Value> = events.iter().map(as_yaml).collect();
-                let got = json!(tasklog::done(&steps, &events));
-                assert_eq!(got, vector["expect"], "{name}：走过哪几步不一样");
+                let got = task_of(&vector["events"]).done_steps(&workflow_of(&vector["steps"]));
+                assert_eq!(json!(got), vector["expect"], "{name}：走过哪几步不一样");
             }
             "section" => {
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
                     let input = case["input"].as_str().unwrap_or("");
-                    let got = definition::looks_like_section(input);
+                    let got = workflow::looks_like_section(input);
                     assert_eq!(json!(got), case["expect"], "{name}：{input} 算不算小节名");
                 }
             }
@@ -98,7 +131,7 @@ fn contract() {
                 let data = vector["data"].as_str().unwrap_or("");
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
                     let input = case["input"].as_str().unwrap_or("");
-                    let got = definition::expand_placeholders(input, data);
+                    let got = workflow::expand_placeholders(input, data);
                     assert_eq!(json!(got), case["expect"], "{name}：{input} 展开得不对");
                 }
             }

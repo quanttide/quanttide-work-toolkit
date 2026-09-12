@@ -27,6 +27,21 @@ List<(String, Map<String, Object?>)> vectors() {
   return found;
 }
 
+/// 向量里的步骤名串成一条工作流（判出「走过哪几步」够用）。
+Workflow workflowOf(Object? steps) => Workflow(
+  name: 'v',
+  steps: [for (final name in (steps as List).cast<String>()) Step(name: name)],
+);
+
+/// 向量里的流水装成一件任务。
+Task taskOf(Object? events) => Task(
+  name: 'v',
+  workflowName: 'v',
+  journal: [
+    for (final event in (events as List).cast<Map>()) JournalEvent.of(event),
+  ],
+);
+
 void main() {
   test('契约：同一批向量，两侧同一个结论', () {
     final all = vectors();
@@ -37,7 +52,7 @@ void main() {
           final want = vector['expect'] as Map;
           if (want['error'] != null) {
             expect(
-              () => validateDefinition(input, vector['file'] as String),
+              () => Workflow.fromValue(input, file: vector['file'] as String),
               throwsA(
                 isA<DefinitionError>().having(
                   (e) => e.message,
@@ -48,7 +63,7 @@ void main() {
               reason: '$name：报错文字不一样',
             );
           } else {
-            validateDefinition(input, vector['file'] as String);
+            Workflow.fromValue(input, file: vector['file'] as String);
           }
         case 'items':
           final got = itemsOf(
@@ -64,10 +79,9 @@ void main() {
               .toList();
           expect(got, vector['expect'], reason: '$name：判据翻出来的不一样');
         case 'done':
-          final steps = (vector['steps'] as List).cast<String>();
-          final events = (vector['events'] as List).cast<Map>();
+          final task = taskOf(vector['events']);
           expect(
-            done(steps, events),
+            task.doneSteps(workflowOf(vector['steps'])),
             vector['expect'],
             reason: '$name：走过哪几步不一样',
           );

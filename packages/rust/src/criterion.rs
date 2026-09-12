@@ -4,10 +4,20 @@
 //! `file` + `contains` 含这段文字、`run` 这条命令退出码为零。
 //! 工具箱只把判据翻成「要跑什么」——真去跑（文件系统、起进程）是各自包的事。
 
-use crate::schema::{
-    AGENT, CRITERION_FIELDS, DefinitionError, HUMAN, RULE, TYPES, text_of, unknown_fields,
-};
+use crate::executor::{AGENT, CRITERION_TYPES, HUMAN, RULE};
+use crate::fields::{DefinitionError, text_of, unknown_fields};
 use serde_yaml::{Mapping, Value as Yaml};
+
+/// 一条判据认得的字段。
+const CRITERION_FIELDS: [&str; 7] = [
+    "executor",
+    "description",
+    "path",
+    "absent",
+    "file",
+    "contains",
+    "run",
+];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RuleKind {
@@ -235,10 +245,10 @@ impl Criterion {
 /// `file` 与 `place` 只用来说话；返回的是认好的值对象。
 pub fn read_criterion(value: &Yaml, file: &str, place: &str) -> Result<Criterion, DefinitionError> {
     let kind = text_of(value, "executor");
-    if !TYPES.contains(&kind.as_str()) {
+    if !CRITERION_TYPES.contains(&kind.as_str()) {
         return Err(DefinitionError(format!(
             "{file} {place}的 executor 只能是 {}（谁判：规则引擎 / 智能体 / 人）",
-            TYPES.join(" / ")
+            CRITERION_TYPES.join(" / ")
         )));
     }
     let criterion_map = value

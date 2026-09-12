@@ -2,9 +2,18 @@
 
 ## [Unreleased]
 
+### Changed
+
+- 改成按领域模型分文件：`workflow`（工作流聚合：工作流 + 步骤 + 语法与不变量 + 定义核对）、`task`（任务聚合：流水 + 闸门 + 落点 + 运行上下文 + 走过 / 下一步 / 状态行）、`criterion`（判据）、`executor`（执行者）；删掉 `schema` / `definition` / `tasklog`
+- `Finding` 收进 `workflow`，不再单列；定义核对的拼句与退出码（`describeFindings` / `allOk`）移出工具箱
+- `prompts`（含 `Facts` / `criteriaText`）移出工具箱，回各自的平台
+- `validateDefinition(payload, file)` → `Workflow.fromValue(value, file:)`；`checkWorkflow(flow, data, exists)` → `flow.check(data, exists)`；`tasklog.done / nextStep / stateLine` → `Task.doneSteps / nextStep / stateLine`
+- 字段表不再进公开面（`topFields` / `stepFields` / `criterionFields` / `textOf` / `unknownFields`）；`DefinitionError` 仍导出
+
 ### Added
 
-- `Criterion.expanded(f)`：判据各字段里的占位一次换掉（Rust 侧 beta.1 已有，Dart 侧下一版带上）
+- `Task` 聚合（不可变：`recorded` / `withGates` 返回新的）、`JournalEvent`、`RunContext`
+- `Criterion.expanded(f)`：判据各字段里的占位一次换掉（Rust 侧 beta.1 已有）
 
 ## [0.1.0-beta.1] - 2026-09-12
 

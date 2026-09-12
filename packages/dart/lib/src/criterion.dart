@@ -1,4 +1,5 @@
-import 'schema.dart';
+import 'executor.dart';
+import 'fields.dart';
 
 /// 判据：规则引擎那几种机械核对。
 ///
@@ -6,6 +7,17 @@ import 'schema.dart';
 /// `file` + `contains` 含这段文字、`run` 这条命令退出码为零。
 /// 工具箱只把判据翻成「要跑什么」——真去跑（文件系统、起进程）是各自包的事。
 enum RuleKind { path, absent, contains, run }
+
+/// 一条判据认得的字段。
+const List<String> _criterionFields = [
+  'executor',
+  'description',
+  'path',
+  'absent',
+  'file',
+  'contains',
+  'run',
+];
 
 /// 一条判据：谁判、怎么判、说明。
 ///
@@ -88,10 +100,10 @@ Criterion readCriterion(
   if (value is! Map) {
     throw DefinitionError('$file $place不是映射');
   }
-  final odd = unknownFields(value, criterionFields);
+  final odd = unknownFields(value, _criterionFields);
   if (odd.isNotEmpty) {
     throw DefinitionError(
-      '$file $place有不认识的字段：${odd.join('、')}（只认 ${criterionFields.join('、')}）',
+      '$file $place有不认识的字段：${odd.join('、')}（只认 ${_criterionFields.join('、')}）',
     );
   }
   final given = [

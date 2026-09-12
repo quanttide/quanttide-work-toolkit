@@ -1,19 +1,22 @@
 /// 量潮知识工作工具箱 Dart 包。
 ///
-/// 知识工作领域里，命令行与 studio 两侧**意义相同**的那几样东西抽在这里：
-/// 信封、工作流定义（字段表、校验、视图、核对）、机械判据、任务流水与「走过」的算法、
-/// 给智能体的两段话。
+/// 这一份是**不变的核心逻辑**：把知识工作的规范（`docs/specification`）里
+/// 不因平台而变的那部分，封成一套可执行的正本——定义的语法与不变量、
+/// 判据的取值、任务流水的语义与「走过」的判定、落点与占位的展开。
 ///
-/// 抽的是**纯逻辑**：从已经解析好的 Map / List 进、从值出。文件读写、YAML 解析与序列化、
-/// 起进程，各语言各自的库去管——那些不进工具箱。
+/// 分成一个一个领域模型（工作流 / 任务 / 判据 / 执行者），一个模型一个文件。
+/// 各实现（命令行、工作台、后来的语言）向它对齐，不各写一份；传输（信封）、
+/// 说法（拼句、退出码）与文案（提示词）留在各自的平台，不进这里。
+///
+/// 收进来的每一样，都要能在规范里找到出处；规范里没有的，先补规范。
 library;
 
-export 'src/criteria.dart';
-export 'src/definition.dart';
+export 'src/criterion.dart';
 export 'src/envelope.dart';
-export 'src/prompts.dart';
-export 'src/schema.dart';
-export 'src/tasklog.dart';
+export 'src/executor.dart';
+export 'src/fields.dart' show DefinitionError;
+export 'src/task.dart';
+export 'src/workflow.dart';
 
 /// 领域英文名。
 const String domain = 'knowledge-work';
