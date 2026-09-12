@@ -1,7 +1,8 @@
 /// 工作流定义：一串有序的步骤。
 ///
-/// 字段名、取值、判据种类由 [schema] 定死，不认识的字段直接报错。
-/// 这一层只管**已经解析好的 Map / List**；YAML 怎么读进来，各语言各自的库去管。
+/// 字段名、取值、判据种类由 `schema.dart` 定死，不认识的字段直接报错。
+/// 模型是不可变的值：从已经解析好的 Map / List 读进来（`fromValue`），
+/// 出去写成同样的字段形状（`toMap`）。YAML 怎么读写，各语言各自的库去管。
 library;
 
 import 'criteria.dart';
@@ -9,139 +10,92 @@ import 'schema.dart';
 
 /// 读一份定义：不是映射、缺字段、取值不对，当场报错。[file] 只用来说话。
 void validateDefinition(Object? payload, String file) {
-  if (payload is! Map) {
-    throw DefinitionError('$file 的顶层不是映射（name / steps）');
-  }
-  if (textOf(payload, 'name').isEmpty) {
-    throw DefinitionError('$file 少了 name');
-  }
-  final steps = payload['steps'];
-  if (steps is! List || steps.isEmpty) {
-    throw DefinitionError('$file 少了 steps（至少一个步骤）');
-  }
-  final unknown = unknownFields(payload, topFields);
-  if (unknown.isNotEmpty) {
-    throw DefinitionError(
-      '$file 顶层有不认识的字段：${unknown.join('、')}（只认 ${topFields.join('、')}）',
+  Workflow.fromValue(payload, file: file);
+}
+
+/// 一个工作步骤：叫什么、做什么、谁执行、怎么算完。
+class Step {
+  const Step({
+    required this.name,
+    this.description = '',
+    this.executor = agent,
+    this.criteria = const [],
+  });
+
+  /// 从定义里的字段读出（不校验）。用在已经校验过的定义上。
+  factory Step.of(Map value) {
+    final executor = textOf(value, 'executor');
+    return Step(
+      name: textOf(value, 'name'),
+      description: textOf(value, 'description'),
+      executor: executor.isEmpty ? agent : executor,
+      criteria:
+          (value['criteria'] as List?)
+              ?.cast<Map>()
+              .map(Criterion.fromMap)
+              .toList(growable: false) ??
+          const [],
     );
   }
-  for (var index = 0; index < steps.length; index++) {
-    final position = index + 1;
-    final step = steps[index];
-    if (step is! Map) {
+
+  /// 从定义里的字段读出，顺带校验。
+  factory Step.fromValue(
+    Object? value, {
+    required String file,
+    required int position,
+  }) {
+    if (value is! Map) {
       throw DefinitionError('$file 第 $position 个步骤少了 name');
     }
-    if (textOf(step, 'name').isEmpty) {
+    if (textOf(value, 'name').isEmpty) {
       throw DefinitionError('$file 第 $position 个步骤少了 name');
     }
-    final extra = unknownFields(step, stepFields);
+    final extra = unknownFields(value, stepFields);
     if (extra.isNotEmpty) {
       throw DefinitionError(
         '$file 第 $position 个步骤有不认识的字段：${extra.join('、')}（只认 ${stepFields.join('、')}）',
       );
     }
-    var executor = textOf(step, 'executor');
+    var executor = textOf(value, 'executor');
     if (executor.isEmpty) executor = agent;
     if (!executors.contains(executor)) {
       throw DefinitionError(
         '$file 第 $position 个步骤的 executor 只能是 ${executors.join(' 或 ')}，实得 $executor',
       );
     }
-    final rawCriteria = step['criteria'];
-    final List criteria;
-    if (rawCriteria == null) {
-      criteria = const [];
-    } else if (rawCriteria is List) {
-      criteria = rawCriteria;
+    final raw = value['criteria'];
+    final List items;
+    if (raw == null) {
+      items = const [];
+    } else if (raw is List) {
+      items = raw;
     } else {
       throw DefinitionError('$file 第 $position 个步骤的 criteria 应当是列表');
     }
-    for (var order = 0; order < criteria.length; order++) {
-      final place = '第 $position 个步骤第 ${order + 1} 条判据';
-      final criterion = criteria[order];
-      final kind = textOf(criterion, 'executor');
-      if (!criterionTypes.contains(kind)) {
-        throw DefinitionError(
-          '$file $place的 executor 只能是 ${criterionTypes.join(' / ')}（谁判：规则引擎 / 智能体 / 人）',
-        );
-      }
-      if (criterion is! Map) {
-        throw DefinitionError('$file $place不是映射');
-      }
-      final odd = unknownFields(criterion, criterionFields);
-      if (odd.isNotEmpty) {
-        throw DefinitionError(
-          '$file $place有不认识的字段：${odd.join('、')}（只认 ${criterionFields.join('、')}）',
-        );
-      }
-      final given = [
-        'path',
-        'absent',
-        'file',
-        'contains',
-        'run',
-      ].where((name) => criterion[name] != null).toList();
-      if (kind == rule) {
-        if (given.isEmpty) {
-          throw DefinitionError(
-            '$file $place是 rule，得写一条判法（path / absent / file+contains / run）',
-          );
-        }
-        if (given.contains('contains') && !given.contains('file')) {
-          throw DefinitionError('$file $place写了 contains，还得写 file');
-        }
-        if (given.contains('file') && !given.contains('contains')) {
-          throw DefinitionError('$file $place写了 file，还得写 contains');
-        }
-        final others = given
-            .where((name) => name != 'file' && name != 'contains')
-            .toList();
-        if (others.length > 1 ||
-            (others.isNotEmpty && given.contains('file'))) {
-          throw DefinitionError(
-            '$file $place的判法只能一种：path / absent / file+contains / run',
-          );
-        }
-      } else {
-        if (textOf(criterion, 'description').isEmpty) {
-          throw DefinitionError(
-            '$file $place是 $kind，必须写 description（判准 / 要人拍板的事）',
-          );
-        }
-        if (given.isNotEmpty) {
-          throw DefinitionError(
-            '$file $place是 $kind，不该带 ${given.join('、')}（那是 rule 的字段）',
-          );
-        }
-      }
+    final parsed = <Criterion>[];
+    for (var order = 0; order < items.length; order++) {
+      parsed.add(
+        readCriterion(
+          items[order],
+          file: file,
+          place: '第 $position 个步骤第 ${order + 1} 条判据',
+        ),
+      );
     }
+    return Step(
+      name: textOf(value, 'name'),
+      description: textOf(value, 'description'),
+      executor: executor,
+      criteria: parsed,
+    );
   }
-}
 
-/// 一个工作步骤：叫什么、做什么、谁执行、怎么算完。
-class Step {
-  Step(this.payload);
-
-  final Map payload;
-
-  String get name => textOf(payload, 'name');
-
-  String get description => textOf(payload, 'description');
-
-  String get executor {
-    final value = textOf(payload, 'executor');
-    return value.isEmpty ? agent : value;
-  }
+  final String name;
+  final String description;
+  final String executor;
+  final List<Criterion> criteria;
 
   bool get isHuman => executor == human;
-
-  /// 判据：从定义里的字段读出。定义已经校验过，这里只管认。
-  List<Criterion> get criteria =>
-      (payload['criteria'] as List?)
-          ?.cast<Map>()
-          .map(Criterion.fromMap)
-          .toList(growable: false) ??
-      const [];
 
   List<Criterion> _ofKind(String kind) =>
       criteria.where((item) => item.executor == kind).toList(growable: false);
@@ -149,21 +103,69 @@ class Step {
   List<Criterion> get rules => _ofKind(rule);
   List<Criterion> get agents => _ofKind(agent);
   List<Criterion> get gates => _ofKind(human);
+
+  Map<String, Object?> toMap() => {
+    'name': name,
+    if (description.isNotEmpty) 'description': description,
+    'executor': executor,
+    if (criteria.isNotEmpty)
+      'criteria': [for (final criterion in criteria) criterion.toMap()],
+  };
 }
 
 /// 过程的编排定义：一串步骤（不含文件位置——那是各自包的事）。
 class Workflow {
-  Workflow({required this.name, required this.payload});
+  const Workflow({
+    required this.name,
+    this.description = '',
+    this.steps = const [],
+  });
+
+  /// 从定义里的字段读出（不校验）；[name] 由调用方给（比如文件名）。
+  factory Workflow.of(String name, Map payload) => Workflow(
+    name: name,
+    description: textOf(payload, 'description'),
+    steps:
+        (payload['steps'] as List?)
+            ?.cast<Map>()
+            .map(Step.of)
+            .toList(growable: false) ??
+        const [],
+  );
+
+  /// 从定义里的字段读出，顺带校验。
+  factory Workflow.fromValue(Object? value, {String file = '定义'}) {
+    if (value is! Map) {
+      throw DefinitionError('$file 的顶层不是映射（name / steps）');
+    }
+    if (textOf(value, 'name').isEmpty) {
+      throw DefinitionError('$file 少了 name');
+    }
+    final steps = value['steps'];
+    if (steps is! List || steps.isEmpty) {
+      throw DefinitionError('$file 少了 steps（至少一个步骤）');
+    }
+    final unknown = unknownFields(value, topFields);
+    if (unknown.isNotEmpty) {
+      throw DefinitionError(
+        '$file 顶层有不认识的字段：${unknown.join('、')}（只认 ${topFields.join('、')}）',
+      );
+    }
+    return Workflow(
+      name: textOf(value, 'name'),
+      description: textOf(value, 'description'),
+      steps: [
+        for (var index = 0; index < steps.length; index++)
+          Step.fromValue(steps[index], file: file, position: index + 1),
+      ],
+    );
+  }
 
   final String name;
-  final Map payload;
-
-  String get description => textOf(payload, 'description');
+  final String description;
 
   /// 步骤：按定义里的顺序——这就是「串联」。
-  List<Step> get steps =>
-      (payload['steps'] as List?)?.map((item) => Step(item as Map)).toList() ??
-      const [];
+  final List<Step> steps;
 
   Step? step(String name) {
     for (final item in steps) {
@@ -171,6 +173,12 @@ class Workflow {
     }
     return null;
   }
+
+  Map<String, Object?> toMap() => {
+    'name': name,
+    if (description.isNotEmpty) 'description': description,
+    'steps': [for (final step in steps) step.toMap()],
+  };
 }
 
 // ---- 定义核对 ----

@@ -1,83 +1,56 @@
 //! 工作流定义：一串有序的步骤。
 //!
-//! 定义要有固定的意义，所以字段名、取值、判据种类都由 schema 定死，不认识的字段直接报错。
-//! 这一层只管**已经解析好的 JSON 值**；YAML 怎么读进来，各语言各自的库去管。
+//! 字段名、取值、判据种类由 `schema` 定死，不认识的字段直接报错。
+//! 模型是不可变的值：从已经解析好的 YAML 读进来（`from_yaml`），
+//! 出去写成同样的字段形状（`to_yaml`）。YAML 怎么读写，各语言各自的库去管。
 
+use crate::criteria::{Criterion, read_criterion};
+use crate::schema::{DefinitionError, STEP_FIELDS, TOP_FIELDS, unknown_fields};
 use serde_yaml::{Mapping, Value as Yaml};
 
-pub const AGENT: &str = "agent";
-pub const HUMAN: &str = "human";
-pub const RULE: &str = "rule";
-pub const EXECUTORS: [&str; 2] = [AGENT, HUMAN];
-pub const TYPES: [&str; 3] = [RULE, AGENT, HUMAN];
-pub const TOP_FIELDS: [&str; 3] = ["name", "description", "steps"];
-pub const STEP_FIELDS: [&str; 4] = ["name", "description", "executor", "criteria"];
-pub const CRITERION_FIELDS: [&str; 7] = [
-    "executor",
-    "description",
-    "path",
-    "absent",
-    "file",
-    "contains",
-    "run",
-];
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DefinitionError(pub String);
-
-impl std::fmt::Display for DefinitionError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl std::error::Error for DefinitionError {}
-
-pub fn text_of(value: &Yaml, key: &str) -> String {
-    value
-        .get(key)
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .trim()
-        .to_string()
-}
-
-fn unknown_fields(mapping: &Mapping, allowed: &[&str]) -> Vec<String> {
-    mapping
-        .keys()
-        .filter_map(|key| key.as_str())
-        .filter(|key| !allowed.contains(key))
-        .map(|key| key.to_string())
-        .collect()
-}
+// 字段表与取值：一处定义、两侧共用。
+pub use crate::schema::{AGENT, CRITERION_FIELDS, EXECUTORS, HUMAN, RULE, TYPES, text_of};
 
 /// 读一份定义：不是映射、缺字段、取值不对，当场报错。`file` 只用来说话。
 pub fn validate(payload: &Yaml, file: &str) -> Result<(), DefinitionError> {
-    let top = payload
-        .as_mapping()
-        .ok_or_else(|| DefinitionError(format!("{file} 的顶层不是映射（name / steps）")))?;
-    if text_of(payload, "name").is_empty() {
-        return Err(DefinitionError(format!("{file} 少了 name")));
+    Workflow::from_yaml(payload, file).map(|_| ())
+}
+
+/// 一个工作步骤：叫什么、做什么、谁执行、怎么算完。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Step {
+    pub name: String,
+    pub description: String,
+    pub executor: String,
+    pub criteria: Vec<Criterion>,
+}
+
+impl Step {
+    /// 从定义里的字段读出（不校验）。用在已经校验过的定义上。
+    pub fn of(value: &Yaml) -> Step {
+        let criteria = value
+            .get("criteria")
+            .and_then(|v| v.as_sequence())
+            .map(|items| items.iter().map(Criterion::from_yaml).collect())
+            .unwrap_or_default();
+        let mut executor = text_of(value, "executor");
+        if executor.is_empty() {
+            executor = AGENT.to_string();
+        }
+        Step {
+            name: text_of(value, "name"),
+            description: text_of(value, "description"),
+            executor,
+            criteria,
+        }
     }
-    let steps = payload
-        .get("steps")
-        .and_then(|v| v.as_sequence())
-        .filter(|items| !items.is_empty())
-        .ok_or_else(|| DefinitionError(format!("{file} 少了 steps（至少一个步骤）")))?;
-    let unknown = unknown_fields(top, &TOP_FIELDS);
-    if !unknown.is_empty() {
-        return Err(DefinitionError(format!(
-            "{file} 顶层有不认识的字段：{}（只认 {}）",
-            unknown.join("、"),
-            TOP_FIELDS.join("、")
-        )));
-    }
-    for (index, step) in steps.iter().enumerate() {
-        let position = index + 1;
-        let step_map = step
+
+    /// 从定义里的字段读出，顺带校验。
+    pub fn from_yaml(value: &Yaml, file: &str, position: usize) -> Result<Step, DefinitionError> {
+        let step_map = value
             .as_mapping()
             .ok_or_else(|| DefinitionError(format!("{file} 第 {position} 个步骤少了 name")))?;
-        if text_of(step, "name").is_empty() {
+        if text_of(value, "name").is_empty() {
             return Err(DefinitionError(format!(
                 "{file} 第 {position} 个步骤少了 name"
             )));
@@ -90,7 +63,7 @@ pub fn validate(payload: &Yaml, file: &str) -> Result<(), DefinitionError> {
                 STEP_FIELDS.join("、")
             )));
         }
-        let mut executor = text_of(step, "executor");
+        let mut executor = text_of(value, "executor");
         if executor.is_empty() {
             executor = AGENT.to_string();
         }
@@ -100,7 +73,7 @@ pub fn validate(payload: &Yaml, file: &str) -> Result<(), DefinitionError> {
                 EXECUTORS.join(" 或 ")
             )));
         }
-        let criteria: &[Yaml] = match step.get("criteria") {
+        let criteria: &[Yaml] = match value.get("criteria") {
             None | Some(Yaml::Null) => &[],
             Some(Yaml::Sequence(items)) => items.as_slice(),
             Some(_) => {
@@ -109,162 +82,140 @@ pub fn validate(payload: &Yaml, file: &str) -> Result<(), DefinitionError> {
                 )));
             }
         };
+        let mut parsed = Vec::with_capacity(criteria.len());
         for (order, criterion) in criteria.iter().enumerate() {
             let place = format!("第 {position} 个步骤第 {} 条判据", order + 1);
-            let kind = text_of(criterion, "executor");
-            if !TYPES.contains(&kind.as_str()) {
-                return Err(DefinitionError(format!(
-                    "{file} {place}的 executor 只能是 {}（谁判：规则引擎 / 智能体 / 人）",
-                    TYPES.join(" / ")
-                )));
-            }
-            let criterion_map = criterion
-                .as_mapping()
-                .ok_or_else(|| DefinitionError(format!("{file} {place}不是映射")))?;
-            let odd = unknown_fields(criterion_map, &CRITERION_FIELDS);
-            if !odd.is_empty() {
-                return Err(DefinitionError(format!(
-                    "{file} {place}有不认识的字段：{}（只认 {}）",
-                    odd.join("、"),
-                    CRITERION_FIELDS.join("、")
-                )));
-            }
-            let given: Vec<&str> = ["path", "absent", "file", "contains", "run"]
-                .into_iter()
-                .filter(|name| criterion.get(*name).is_some())
-                .collect();
-            if kind == RULE {
-                if given.is_empty() {
-                    return Err(DefinitionError(format!(
-                        "{file} {place}是 rule，得写一条判法（path / absent / file+contains / run）"
-                    )));
-                }
-                if given.contains(&"contains") && !given.contains(&"file") {
-                    return Err(DefinitionError(format!(
-                        "{file} {place}写了 contains，还得写 file"
-                    )));
-                }
-                if given.contains(&"file") && !given.contains(&"contains") {
-                    return Err(DefinitionError(format!(
-                        "{file} {place}写了 file，还得写 contains"
-                    )));
-                }
-                let others: Vec<&str> = given
-                    .iter()
-                    .copied()
-                    .filter(|name| *name != "file" && *name != "contains")
-                    .collect();
-                if others.len() > 1 || (!others.is_empty() && given.contains(&"file")) {
-                    return Err(DefinitionError(format!(
-                        "{file} {place}的判法只能一种：path / absent / file+contains / run"
-                    )));
-                }
-            } else {
-                if text_of(criterion, "description").is_empty() {
-                    return Err(DefinitionError(format!(
-                        "{file} {place}是 {kind}，必须写 description（判准 / 要人拍板的事）"
-                    )));
-                }
-                if !given.is_empty() {
-                    return Err(DefinitionError(format!(
-                        "{file} {place}是 {kind}，不该带 {}（那是 rule 的字段）",
-                        given.join("、")
-                    )));
-                }
-            }
+            parsed.push(read_criterion(criterion, file, &place)?);
         }
-    }
-    Ok(())
-}
-
-/// 一个工作步骤：叫什么、做什么、谁执行、怎么算完。
-#[derive(Clone)]
-pub struct Step {
-    payload: Yaml,
-}
-
-impl Step {
-    pub fn of(payload: Yaml) -> Self {
-        Step { payload }
-    }
-
-    pub fn name(&self) -> String {
-        text_of(&self.payload, "name")
-    }
-
-    pub fn description(&self) -> String {
-        text_of(&self.payload, "description")
-    }
-
-    pub fn executor(&self) -> String {
-        let value = text_of(&self.payload, "executor");
-        if value.is_empty() {
-            AGENT.to_string()
-        } else {
-            value
-        }
+        Ok(Step {
+            name: text_of(value, "name"),
+            description: text_of(value, "description"),
+            executor,
+            criteria: parsed,
+        })
     }
 
     pub fn human(&self) -> bool {
-        self.executor() == HUMAN
+        self.executor == HUMAN
     }
 
-    pub fn criteria(&self) -> Vec<Yaml> {
-        self.payload
-            .get("criteria")
-            .and_then(|v| v.as_sequence())
+    pub fn rules(&self) -> Vec<Criterion> {
+        self.of_kind(RULE)
+    }
+
+    pub fn agents(&self) -> Vec<Criterion> {
+        self.of_kind(AGENT)
+    }
+
+    pub fn gates(&self) -> Vec<Criterion> {
+        self.of_kind(HUMAN)
+    }
+
+    fn of_kind(&self, kind: &str) -> Vec<Criterion> {
+        self.criteria
+            .iter()
+            .filter(|item| item.executor() == kind)
             .cloned()
-            .unwrap_or_default()
-    }
-
-    pub fn of_kind(&self, kind: &str) -> Vec<Yaml> {
-        self.criteria()
-            .into_iter()
-            .filter(|item| text_of(item, "executor") == kind)
             .collect()
     }
 
-    pub fn rules(&self) -> Vec<Yaml> {
-        self.of_kind(RULE)
-    }
-    pub fn agents(&self) -> Vec<Yaml> {
-        self.of_kind(AGENT)
-    }
-    pub fn gates(&self) -> Vec<Yaml> {
-        self.of_kind(HUMAN)
+    /// 写回定义里的字段形状。
+    pub fn to_yaml(&self) -> Yaml {
+        let mut map = Mapping::new();
+        map.insert(Yaml::String("name".into()), Yaml::String(self.name.clone()));
+        if !self.description.is_empty() {
+            map.insert(
+                Yaml::String("description".into()),
+                Yaml::String(self.description.clone()),
+            );
+        }
+        map.insert(
+            Yaml::String("executor".into()),
+            Yaml::String(self.executor.clone()),
+        );
+        if !self.criteria.is_empty() {
+            map.insert(
+                Yaml::String("criteria".into()),
+                Yaml::Sequence(self.criteria.iter().map(Criterion::to_yaml).collect()),
+            );
+        }
+        Yaml::Mapping(map)
     }
 }
 
 /// 过程的编排定义：一串步骤（不含文件位置——那是各自包的事）。
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Workflow {
     pub name: String,
-    pub payload: Yaml,
+    pub description: String,
+    pub steps: Vec<Step>,
 }
 
 impl Workflow {
-    pub fn new(name: &str, payload: Yaml) -> Self {
+    /// 从定义里的字段读出（不校验）；`name` 由调用方给（比如文件名）。
+    pub fn of(name: &str, payload: &Yaml) -> Workflow {
         Workflow {
             name: name.to_string(),
-            payload,
+            description: text_of(payload, "description"),
+            steps: payload
+                .get("steps")
+                .and_then(|v| v.as_sequence())
+                .map(|items| items.iter().map(Step::of).collect())
+                .unwrap_or_default(),
         }
     }
 
-    pub fn description(&self) -> String {
-        text_of(&self.payload, "description")
-    }
-
-    /// 步骤：按定义里的顺序——这就是「串联」。
-    pub fn steps(&self) -> Vec<Step> {
-        self.payload
+    /// 从定义里的字段读出，顺带校验。
+    pub fn from_yaml(payload: &Yaml, file: &str) -> Result<Workflow, DefinitionError> {
+        let top = payload
+            .as_mapping()
+            .ok_or_else(|| DefinitionError(format!("{file} 的顶层不是映射（name / steps）")))?;
+        if text_of(payload, "name").is_empty() {
+            return Err(DefinitionError(format!("{file} 少了 name")));
+        }
+        let steps = payload
             .get("steps")
             .and_then(|v| v.as_sequence())
-            .map(|items| items.iter().cloned().map(Step::of).collect())
-            .unwrap_or_default()
+            .filter(|items| !items.is_empty())
+            .ok_or_else(|| DefinitionError(format!("{file} 少了 steps（至少一个步骤）")))?;
+        let unknown = unknown_fields(top, &TOP_FIELDS);
+        if !unknown.is_empty() {
+            return Err(DefinitionError(format!(
+                "{file} 顶层有不认识的字段：{}（只认 {}）",
+                unknown.join("、"),
+                TOP_FIELDS.join("、")
+            )));
+        }
+        let mut parsed = Vec::with_capacity(steps.len());
+        for (index, step) in steps.iter().enumerate() {
+            parsed.push(Step::from_yaml(step, file, index + 1)?);
+        }
+        Ok(Workflow {
+            name: text_of(payload, "name"),
+            description: text_of(payload, "description"),
+            steps: parsed,
+        })
     }
 
-    pub fn step(&self, name: &str) -> Option<Step> {
-        self.steps().into_iter().find(|step| step.name() == name)
+    pub fn step(&self, name: &str) -> Option<&Step> {
+        self.steps.iter().find(|step| step.name == name)
+    }
+
+    /// 写回定义里的字段形状。
+    pub fn to_yaml(&self) -> Yaml {
+        let mut map = Mapping::new();
+        map.insert(Yaml::String("name".into()), Yaml::String(self.name.clone()));
+        if !self.description.is_empty() {
+            map.insert(
+                Yaml::String("description".into()),
+                Yaml::String(self.description.clone()),
+            );
+        }
+        map.insert(
+            Yaml::String("steps".into()),
+            Yaml::Sequence(self.steps.iter().map(Step::to_yaml).collect()),
+        );
+        Yaml::Mapping(map)
     }
 }
 
@@ -308,10 +259,11 @@ where
     F: Fn(&str) -> bool,
 {
     let mut found: Vec<Finding> = Vec::new();
-    for step in flow.steps() {
+    for step in &flow.steps {
         for criterion in step.rules() {
-            let literal = match criterion.get("path").or_else(|| criterion.get("file")) {
-                Some(Yaml::String(text)) => text.clone(),
+            let literal = match &criterion {
+                Criterion::PathExists { path, .. } => path.clone(),
+                Criterion::FileContains { file, .. } => file.clone(),
                 _ => continue,
             };
             if literal.contains("{{report}}")
@@ -322,7 +274,7 @@ where
             }
             let written = expand_placeholders(&literal, data);
             found.push(Finding {
-                where_: format!("{}·{}", step.name(), literal),
+                where_: format!("{}·{}", step.name, literal),
                 what: format!("判据里的路径在不在：{written}"),
                 ok: exists(&written),
             });
@@ -330,19 +282,17 @@ where
     }
 
     let covered: Vec<String> = flow
-        .steps()
-        .into_iter()
+        .steps
+        .iter()
         .flat_map(|step| step.rules())
-        .filter_map(|criterion| {
-            criterion
-                .get("contains")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string())
+        .filter_map(|criterion| match criterion {
+            Criterion::FileContains { contains, .. } => Some(contains),
+            _ => None,
         })
         .collect();
     let mut mentioned: Vec<String> = Vec::new();
-    for step in flow.steps() {
-        let text = step.description();
+    for step in &flow.steps {
+        let text = step.description.clone();
         for piece in text.split("## ").skip(1) {
             let name = piece
                 .split(|ch: char| ch.is_whitespace() || ch == '`' || ch == '」')

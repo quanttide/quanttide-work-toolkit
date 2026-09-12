@@ -17,4 +17,5 @@ pub mod criteria;
 pub mod definition;
 pub mod envelope;
 pub mod prompts;
+pub mod schema;
 pub mod tasklog;

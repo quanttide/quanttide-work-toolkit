@@ -5,14 +5,8 @@
 
 use serde_yaml::Value as Yaml;
 
-pub fn text_of(value: &Yaml, key: &str) -> String {
-    value
-        .get(key)
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .trim()
-        .to_string()
-}
+// 读字段的工具在 schema 一处。
+pub use crate::schema::text_of;
 
 /// 哪些步骤走过了。`steps` 是工作流上的步骤名，按定义顺序。
 pub fn done(steps: &[String], events: &[Yaml]) -> Vec<String> {

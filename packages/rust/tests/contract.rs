@@ -54,7 +54,10 @@ fn contract() {
             }
             "items" => {
                 let criteria: Vec<Value> = vector["input"].as_array().cloned().unwrap_or_default();
-                let criteria: Vec<serde_yaml::Value> = criteria.iter().map(as_yaml).collect();
+                let criteria: Vec<criteria::Criterion> = criteria
+                    .iter()
+                    .map(|value| criteria::Criterion::from_yaml(&as_yaml(value)))
+                    .collect();
                 let got: Vec<Value> = criteria::items_of(&criteria)
                     .into_iter()
                     .map(|item| {
@@ -112,7 +115,6 @@ fn contract() {
                         .iter()
                         .map(string_list)
                         .collect(),
-                    payload: None,
                 };
                 assert_eq!(
                     outcome.to_json(),

@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Changed
+
+- 判据改密封类型：`Criterion` 枚举六变体（`PathExists` / `PathAbsent` / `FileContains` / `CommandRun` / `AgentJudgement` / `HumanGate`），定义的字段形状不变
+- `Step` / `Workflow` 改成不可变值：`Workflow::from_yaml` 校验并建模型、`Workflow::of` 读已校验的定义、`to_yaml` 写回字段形状；`Step.criteria` 是 `Vec<Criterion>`
+- 信封 `Outcome` 删掉没人用的 `payload`，`to_json` 只出 `ok / lines / columns / rows`
+- `prompts` 的判据入参改 `&[Criterion]`
+
+### Added
+
+- `schema.rs`：字段名、取值、判据种类与 `text_of` / `unknown_fields` 单列；消掉 `definition.rs` 与 `tasklog.rs` 重复的 `text_of`
+
 ## [0.1.0-alpha.6] - 2026-09-12
 
 ### Changed

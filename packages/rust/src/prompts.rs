@@ -2,20 +2,13 @@
 //!
 //! 这两段话是产品的一部分——说什么、不说什么是定死的，所以抽出来两侧共用。
 
+use crate::criteria::Criterion;
+
 /// 这一步的判据清单：每条一行「谁判：说明」。
-pub fn criteria_text(criteria: &[Yaml]) -> String {
+pub fn criteria_text(criteria: &[Criterion]) -> String {
     let lines: Vec<String> = criteria
         .iter()
-        .map(|criterion| {
-            let executor = criterion
-                .get("executor")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
-            format!(
-                "- {executor}：{}",
-                crate::criteria::description_of(criterion)
-            )
-        })
+        .map(|criterion| format!("- {}：{}", criterion.executor(), criterion.text()))
         .collect();
     if lines.is_empty() {
         "（这一步没有判据）".to_string()
@@ -23,8 +16,6 @@ pub fn criteria_text(criteria: &[Yaml]) -> String {
         lines.join("\n")
     }
 }
-
-use serde_yaml::Value as Yaml;
 
 /// 走一步那件事的现场：任务与这一步的已知事实（路径由各自包算好递进来）。
 pub struct Facts {
@@ -44,7 +35,7 @@ pub struct Facts {
 }
 
 /// 交给 AI 的那一段话。
-pub fn prompt_for(facts: &Facts, criteria: &[Yaml]) -> String {
+pub fn prompt_for(facts: &Facts, criteria: &[Criterion]) -> String {
     format!(
         "你在按一条工作流走一步。只做这一步，做完就停。\n\n\
          工作区：{root}\n\
@@ -78,20 +69,11 @@ pub fn prompt_for(facts: &Facts, criteria: &[Yaml]) -> String {
 }
 
 /// 交给智能体审的那一段话：产物 + 判准，逐条回答。
-pub fn judge_prompt(facts: &Facts, criteria: &[Yaml]) -> String {
+pub fn judge_prompt(facts: &Facts, criteria: &[Criterion]) -> String {
     let listed = criteria
         .iter()
         .enumerate()
-        .map(|(index, criterion)| {
-            format!(
-                "{}. {}",
-                index + 1,
-                criterion
-                    .get("description")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-            )
-        })
+        .map(|(index, criterion)| format!("{}. {}", index + 1, criterion.text()))
         .collect::<Vec<_>>()
         .join("\n");
     format!(

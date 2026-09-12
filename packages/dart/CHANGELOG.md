@@ -5,7 +5,9 @@
 ### Changed
 
 - 判据改密封类型：`path` / `absent` / `file`+`contains` / `run` 各一个子类型，`agent` / `human` 各一个；定义的字段形状不变
-- `Step.criteria` / `rules` / `agents` / `gates` 交出 `Criterion`，不再是原始 Map；`itemsOf` 吃 `Iterable<Criterion>`；`prompts` 的判据入参同步
+- `Workflow` / `Step` 改成不可变值：`Workflow.fromValue` 校验并建模型、`Workflow.of` 读已校验的定义、`toMap` 写回字段形状；`Step.criteria` 是 `List<Criterion>`
+- 信封 `Outcome` 删掉没人用的 `payload`，`toJson` 只出 `ok / lines / columns / rows`
+- `itemsOf` 吃 `Iterable<Criterion>`；`prompts` 的判据入参同步
 
 ### Added
 
