@@ -1,6 +1,6 @@
 [package]
 name = "quanttide-work"
-version = "0.1.0-beta.2"
+version = "0.1.0-beta.3"
 edition = "2024"
 description = "知识工作领域 Rust 语言工具包"
 license = "CC-BY-4.0"

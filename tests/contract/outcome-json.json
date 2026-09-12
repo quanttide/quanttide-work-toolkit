@@ -1,0 +1,54 @@
+{
+  "kind": "outcome",
+  "note": "信封的形状：四样（ok / lines / columns / rows），data 有才写。两侧编解码同一个结果。",
+  "cases": [
+    {
+      "note": "只有话：四样齐，data 不写",
+      "input": { "ok": false, "lines": ["给一条命令。`help` 看有哪些。"], "columns": [], "rows": [] },
+      "expect": { "ok": false, "lines": ["给一条命令。`help` 看有哪些。"], "columns": [], "rows": [] }
+    },
+    {
+      "note": "表：columns 与 rows 一起报",
+      "input": {
+        "ok": true,
+        "lines": ["走过 2 步"],
+        "columns": ["步骤", "状态"],
+        "rows": [["甲", "走过"], ["乙", "没走"]]
+      },
+      "expect": {
+        "ok": true,
+        "lines": ["走过 2 步"],
+        "columns": ["步骤", "状态"],
+        "rows": [["甲", "走过"], ["乙", "没走"]]
+      }
+    },
+    {
+      "note": "要交原文就托在 data 里（审计、资产目录、材料）",
+      "input": {
+        "ok": true,
+        "lines": [],
+        "columns": [],
+        "rows": [],
+        "data": {
+          "payload": { "name": "x", "workflow": "y" },
+          "products": { "report": "artifacts/report/x.md" }
+        }
+      },
+      "expect": {
+        "ok": true,
+        "lines": [],
+        "columns": [],
+        "rows": [],
+        "data": {
+          "payload": { "name": "x", "workflow": "y" },
+          "products": { "report": "artifacts/report/x.md" }
+        }
+      }
+    },
+    {
+      "note": "缺样按空算：只有 ok 也算一份结果",
+      "input": { "ok": true },
+      "expect": { "ok": true, "lines": [], "columns": [], "rows": [] }
+    }
+  ]
+}

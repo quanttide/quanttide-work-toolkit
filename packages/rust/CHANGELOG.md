@@ -1,3 +1,14 @@
+## [0.1.0-beta.3] - 2026-09-12
+
+### Added
+
+- `outcome`（结果）：规范「过程 / 结果」那一节结成的模型——`ok` 通不通、`lines` 话、`columns` 与 `rows` 同一份表格、`data` 给界面的那一栏；`to_json`（信封）、`data_json`（原文，`--out` 落的）、`from_json`（缺样按空算）、`with_first` / `with_data`
+
+### Changed
+
+- 结果与它的编解码收进工具箱（原先两侧各写一份）：话怎么拼、路径怎么显示、`ok` 怎么定退出码，仍留各自的平台
+- 契约向量加回 `outcome-json`（第 10 份）：四样的字段名与「`data` 有才写」两侧一致
+
 ## [0.1.0-beta.2] - 2026-09-12
 
 ### Changed

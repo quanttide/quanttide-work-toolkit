@@ -93,6 +93,16 @@ void main() {
               reason: '$name：${c['input']} 算不算小节名',
             );
           }
+        case 'outcome':
+          for (final c in (vector['cases'] as List).cast<Map>()) {
+            expect(
+              Outcome.fromJson(
+                (c['input'] as Map).cast<String, dynamic>(),
+              ).toJson(),
+              c['expect'],
+              reason: '$name：${c['note']} 编解码不一样',
+            );
+          }
         case 'expand':
           for (final c in (vector['cases'] as List).cast<Map>()) {
             expect(
@@ -108,6 +118,6 @@ void main() {
           fail('$name：不认得的向量类型 ${vector['kind']}');
       }
     }
-    expect(all.length, greaterThanOrEqualTo(9), reason: '向量太少');
+    expect(all.length, greaterThanOrEqualTo(10), reason: '向量太少');
   });
 }

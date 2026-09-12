@@ -4,7 +4,7 @@
 
 use quanttide_work::executor::AGENT;
 use quanttide_work::workflow::Step;
-use quanttide_work::{criterion, task, workflow};
+use quanttide_work::{criterion, outcome, task, workflow};
 use serde_json::{Value, json};
 use serde_yaml::{Mapping, Value as Yaml};
 use std::fs;
@@ -127,6 +127,13 @@ fn contract() {
                     assert_eq!(json!(got), case["expect"], "{name}：{input} 算不算小节名");
                 }
             }
+            "outcome" => {
+                for case in vector["cases"].as_array().cloned().unwrap_or_default() {
+                    let got = outcome::Outcome::from_json(&case["input"]).to_json();
+                    let note = case["note"].as_str().unwrap_or("");
+                    assert_eq!(got, case["expect"], "{name}：{note} 编解码不一样");
+                }
+            }
             "expand" => {
                 let data = vector["data"].as_str().unwrap_or("");
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
@@ -138,6 +145,6 @@ fn contract() {
             other => panic!("{name}：不认得的向量类型 {other}"),
         }
     }
-    assert!(vectors.len() >= 9, "向量太少：{}", vectors.len());
+    assert!(vectors.len() >= 10, "向量太少：{}", vectors.len());
     println!("契约：{} 份向量，两侧一致", vectors.len());
 }
