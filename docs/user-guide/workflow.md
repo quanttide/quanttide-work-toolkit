@@ -28,7 +28,7 @@ let workflow = Workflow::from_yaml(&payload, "code-implement.yaml")?;   // 定�
 final workflow = Workflow.fromValue(payload, file: 'code-implement.yaml');  // 定义不合法时抛出异常
 ```
 
-端侧负责将文件读取并解析为值，YAML 的读写方式由各语言包实现；校验由工具箱完成。
+`payload` 是端侧解析 YAML 得到的值（Rust 为 `serde_yaml::Value`，Dart 为 `Map`），顶层是映射。它既不是文件路径，也不是文件内容的字符串；端侧负责读取文件并解析为值，YAML 的读写方式由各语言包实现。工具箱只接收这个值，校验由工具箱完成。
 
 第二个参数是定义的文件名（例如 `code-implement.yaml`），仅用于构造报错信息（如 `code-implement.yaml 少了 steps`），并不表示工具箱要读取该文件：工具箱不访问文件系统。命令行工具即采用这一方式：由端侧读取文件、解析为值，再把文件名交给工具箱校验。
 
@@ -44,7 +44,7 @@ let findings = workflow.check(&context.data, |path| std::path::Path::new(path).e
 final findings = workflow.check(data, (path) => File(path).existsSync());
 ```
 
-两个参数均由端侧提供：第一个是数据目录，用于将 `{{report}}` 一类占位符展开为实际路径；第二个是「该路径是否存在」的判断结果。工具箱不访问文件系统，仅依据端侧提供的判断结果核对定义。
+`check` 接收两个参数，均由端侧提供。第一个 `data` 是数据仓路径，即运行上下文 `RunContext` 的 `data` 字段（示例中为 `context.data`）；它用于把 `{{artifacts}}`、`{{report}}`、`{{journal}}`、`{{log}}` 展开成数据仓内的实际路径。第二个 `exists` 是「该路径是否存在」的判断函数，由端侧针对真实文件系统实现。工具箱不访问文件系统，仅依据端侧给出的判断结果核对定义。
 
 ## 端侧不做什么
 
