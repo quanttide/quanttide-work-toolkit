@@ -102,15 +102,10 @@ void main() {
             );
           }
         case 'artifact':
-          // 每一格可以自带 base（换目录的那几格）；不写就按向量顶层的。
           for (final c in (vector['cases'] as List).cast<Map>()) {
             final task = Task.of({'name': c['name'], 'artifacts': c['artifacts']});
             expect(
-              const Workspace().artifact(
-                task,
-                '${c['artifact']}',
-                (c['base'] ?? vector['base']) as String,
-              ),
+              const Workspace().artifact(task, '${c['artifact']}'),
               c['expect'],
               reason: '$name：${c['note']} 落点算得不对',
             );
@@ -126,19 +121,19 @@ void main() {
             );
           }
         case 'expand':
-          // 每一格可以自带 base / artifacts（换目录、换声明的几格）；不写就按向量顶层的。
-          final fallbackBase = vector['base'] as String? ?? '';
+          // 每一格可以自带 artifacts（换声明的几格）；不写就按向量顶层的。
           final fixture = vector['task'] as Map;
           for (final c in (vector['cases'] as List).cast<Map>()) {
             final task = Task.of({
               'name': fixture['name'],
               'artifacts': c['artifacts'] ?? fixture['artifacts'] ?? const {},
             });
-            final base = (c['base'] ?? fallbackBase) as String;
+            final expanded = const Workspace().expanded(
+              PathExists(c['input'] as String),
+              task,
+            );
             expect(
-              const Workspace()
-                  .placeholders(task, base)
-                  .expand(c['input'] as String),
+              (expanded as PathExists).path,
               c['expect'],
               reason: '$name：${c['input']} 展开得不对',
             );

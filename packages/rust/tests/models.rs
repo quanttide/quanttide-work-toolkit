@@ -7,7 +7,6 @@ use quanttide_work::criterion::{
 };
 use quanttide_work::executor::{AGENT, CRITERION_TYPES, EXECUTORS, HUMAN, RULE};
 use quanttide_work::outcome::Outcome;
-use quanttide_work::paths::Placeholders;
 use serde_json::{Value as Json, json};
 use serde_yaml::Value as Yaml;
 
@@ -163,13 +162,14 @@ fn to_yaml_keeps_written_descriptions_for_rule_kinds() {
     }
 }
 
-/// 一份占位表：四个占位各换一条。
-fn placeholders() -> Placeholders {
-    Placeholders {
-        artifacts: "/d/artifacts".into(),
-        report: "/d/artifacts/report/甲.md".into(),
-        journal: "/d/artifacts/journal/甲.md".into(),
-        log: "/d/tasks/甲.yaml".into(),
+/// 四个占位各换成哪条路径（按名字）；这里只当判据的夹具。
+fn resolve(name: &str) -> Option<String> {
+    match name {
+        "artifacts" => Some("/d/artifacts".into()),
+        "report" => Some("/d/artifacts/report/甲.md".into()),
+        "journal" => Some("/d/artifacts/journal/甲.md".into()),
+        "log" => Some("/d/tasks/甲.yaml".into()),
+        _ => None,
     }
 }
 
@@ -179,7 +179,7 @@ fn expanded_leaves_a_criterion_without_placeholders_alone() {
         path: "docs/index.md".into(),
         description: String::new(),
     };
-    assert_eq!(plain.expanded(&placeholders()), plain);
+    assert_eq!(plain.expanded(resolve), plain);
 }
 
 #[test]
@@ -245,7 +245,7 @@ fn expanded_replaces_every_field_carrying_a_placeholder() {
         ),
     ];
     for (input, want) in cases {
-        assert_eq!(input.expanded(&placeholders()), want);
+        assert_eq!(input.expanded(resolve), want);
     }
 }
 
@@ -257,7 +257,7 @@ fn expanded_leaves_an_unknown_placeholder_as_written() {
         description: String::new(),
     };
     assert_eq!(
-        criterion.expanded(&placeholders()),
+        criterion.expanded(resolve),
         Criterion::PathExists {
             path: "/d/artifacts/report/甲.md/{{name}}.md".into(),
             description: String::new(),

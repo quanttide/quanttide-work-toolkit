@@ -21,6 +21,12 @@ Workspace workspace(List<String> steps) =>
 bool? sectionOk(List<Finding> findings, String name) =>
     findings.firstWhere((finding) => finding.what.endsWith(name)).ok;
 
+/// 展开一条只有 path 的判据，取回展开后的 path。
+String expandedPath(String path, Task task) {
+  final criterion = const Workspace().expanded(PathExists(path), task);
+  return (criterion as PathExists).path;
+}
+
 void main() {
   group('工作区模型', () {
     test('按名字取定义与任务', () {
@@ -106,47 +112,40 @@ void main() {
     test('声明了按声明的，没声明落默认处', () {
       final task = taskOf('甲', const {});
       expect(
-        const Workspace().artifact(task, 'report', '/d/'),
-        '/d/artifacts/report/甲.md',
-        reason: '目录尾斜杠忽略',
+        const Workspace().artifact(task, 'report'),
+        'artifacts/report/甲.md',
+        reason: '相对工作区根',
       );
-      expect(const Workspace().artifact(task, 'log', '/d/'), '/d/tasks/甲.yaml');
+      expect(const Workspace().artifact(task, 'log'), 'tasks/甲.yaml');
 
       final declared = taskOf('甲', {
         'artifacts': {'report': 'report/甲.md', 'logs': '/elsewhere/甲.md'},
       });
-      expect(const Workspace().artifact(declared, 'report', '/d'), '/d/report/甲.md');
+      expect(const Workspace().artifact(declared, 'report'), 'report/甲.md');
       expect(
-        const Workspace().artifact(declared, 'logs', '/d'),
+        const Workspace().artifact(declared, 'logs'),
         '/elsewhere/甲.md',
         reason: '绝对路径原样',
       );
     });
 
-    test('占位表与落点同源：四个占位各换成哪条路径', () {
+    test('占位与落点同源：判据里的占位换成本次任务的落点', () {
       final task = taskOf('甲', const {});
-      final tab = const Workspace().placeholders(task, '/d');
-      expect(tab.pathOf('report'), '/d/artifacts/report/甲.md');
-      expect(tab.pathOf('journal'), '/d/artifacts/journal/甲.md');
-      expect(tab.pathOf('log'), '/d/tasks/甲.yaml');
-      expect(tab.pathOf('artifacts'), '/d/artifacts');
-      expect(tab.pathOf('foo'), isNull, reason: '不认识的占位不给路径');
       expect(
-        tab.expand('{{report}} 里写 {{artifacts}} 的清单'),
-        '/d/artifacts/report/甲.md 里写 /d/artifacts 的清单',
+        expandedPath('{{report}} 里写 {{artifacts}} 的清单', task),
+        'artifacts/report/甲.md 里写 artifacts 的清单',
       );
-      expect(tab.expand('没有占位'), '没有占位');
-      expect(tab.expand('{{foo}}'), '{{foo}}', reason: '不认识的占位原样留着');
-      expect(tab.expand('没闭合的 {{report'), '没闭合的 {{report');
+      expect(expandedPath('没有占位', task), '没有占位');
+      expect(expandedPath('{{foo}}', task), '{{foo}}', reason: '不认识的占位原样留着');
+      expect(expandedPath('没闭合的 {{report', task), '没闭合的 {{report');
     });
 
-    test('占位表跟着声明走', () {
+    test('占位跟着声明走', () {
       final task = taskOf('甲', {
         'artifacts': {'report': 'report/甲.md'},
       });
-      final tab = const Workspace().placeholders(task, '/d');
-      expect(tab.expand('{{report}}'), '/d/report/甲.md');
-      expect(tab.expand('{{journal}}'), '/d/artifacts/journal/甲.md');
+      expect(expandedPath('{{report}}', task), 'report/甲.md');
+      expect(expandedPath('{{journal}}', task), 'artifacts/journal/甲.md');
     });
   });
 

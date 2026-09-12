@@ -3,7 +3,7 @@
 //! 示例里的调用原样保留；这里只补它需要的夹具（真工作流定义、任务文件、目录基准）。
 //! 编号按各文件里 ```rust 代码块的出现次序。
 
-use quanttide_work::criterion::{RuleKind, criterion_of, items_of};
+use quanttide_work::criterion::{Criterion, RuleKind, criterion_of, items_of};
 use quanttide_work::error::DefinitionError;
 use quanttide_work::executor::AGENT;
 use quanttide_work::outcome::Outcome;
@@ -195,11 +195,17 @@ fn doc_workspace_1() {
 fn doc_workspace_2() {
     let task = task_of("甲", json!({"workflow": "code-implement"}));
     let workspace = Workspace::of(vec![code_implement()], vec![task.clone()]);
-    let place = workspace.artifact(&task, "report", "/d"); // 声明了按声明的，没声明落默认处
-    let tab = workspace.placeholders(&task, "/d"); // 四个占位各换哪个落点
-    let text = tab.expand("见 {{report}}"); // 换掉一条里的占位
-    assert_eq!(place, "/d/artifacts/report/甲.md");
-    assert_eq!(text, "见 /d/artifacts/report/甲.md");
+    let criterion = Criterion::PathExists {
+        path: "{{report}}".into(),
+        description: String::new(),
+    };
+    let place = workspace.artifact(&task, "report"); // 声明了按声明的，没声明落默认处
+    let expanded = workspace.expanded(&criterion, &task); // 判据里的占位换成本次任务的落点
+    assert_eq!(place, "artifacts/report/甲.md");
+    match expanded {
+        Criterion::PathExists { path, .. } => assert_eq!(path, "artifacts/report/甲.md"),
+        _ => panic!("展开一条 PathExists 还给 PathExists"),
+    }
 }
 
 // 文档：workspace.md #3

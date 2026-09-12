@@ -160,10 +160,7 @@ fn contract() {
                 }
             }
             "artifact" => {
-                // 每一格可以自带 base（换目录的那几格）；不写就按向量顶层的。
-                let fallback = vector["base"].as_str().unwrap_or("").to_string();
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
-                    let base = case["base"].as_str().unwrap_or(&fallback);
                     let mut payload = Mapping::new();
                     payload.insert(
                         Yaml::String("name".into()),
@@ -177,7 +174,7 @@ fn contract() {
                     let kind = case["artifact"].as_str().unwrap_or("");
                     let note = case["note"].as_str().unwrap_or("");
                     assert_eq!(
-                        workspace::Workspace::default().artifact(&task, kind, base),
+                        workspace::Workspace::default().artifact(&task, kind),
                         case["expect"].as_str().unwrap_or(""),
                         "{name}：{note} 落点算得不对"
                     );
@@ -191,13 +188,11 @@ fn contract() {
                 }
             }
             "expand" => {
-                // 每一格可以自带 base / artifacts（换目录、换声明的几格）；不写就按向量顶层的。
-                let fallback_base = vector["base"].as_str().unwrap_or("");
+                // 每一格可以自带 artifacts（换声明的几格）；不写就按向量顶层的。
                 let fallback_artifacts = vector["task"]["artifacts"].clone();
                 let name = vector["task"]["name"].as_str().unwrap_or("");
                 for case in vector["cases"].as_array().cloned().unwrap_or_default() {
                     let input = case["input"].as_str().unwrap_or("");
-                    let base = case["base"].as_str().unwrap_or(fallback_base);
                     let artifacts = case
                         .get("artifacts")
                         .cloned()
@@ -206,9 +201,14 @@ fn contract() {
                     payload.insert(Yaml::String("name".into()), Yaml::String(name.to_string()));
                     payload.insert(Yaml::String("artifacts".into()), as_yaml(&artifacts));
                     let task = task::Task::of(&Yaml::Mapping(payload));
-                    let got = workspace::Workspace::default()
-                        .placeholders(&task, base)
-                        .expand(input);
+                    let criterion = criterion::Criterion::PathExists {
+                        path: input.to_string(),
+                        description: String::new(),
+                    };
+                    let got = match workspace::Workspace::default().expanded(&criterion, &task) {
+                        criterion::Criterion::PathExists { path, .. } => path,
+                        _ => unreachable!("展开一条 PathExists 还给 PathExists"),
+                    };
                     assert_eq!(json!(got), case["expect"], "{name}：{input} 展开得不对");
                 }
             }

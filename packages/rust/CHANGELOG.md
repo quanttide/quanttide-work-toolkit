@@ -6,9 +6,10 @@
 
 ### Changed
 
-- **破坏性**：占位展开收敛成一套——删掉 `paths::expand_placeholders`，改由 `paths::Placeholders`（占位表）承担：`Workspace::placeholders(&task, base)` 按任务声明与默认处算好四条落点，`Criterion::expanded(&Placeholders)` 逐字段换（原先收闭包）
-- **破坏性**：占位换的是**落点**（`{{report}}` / `{{journal}}` / `{{log}}` 是产物文件，`{{artifacts}}` 是产物目录），与 `Workspace::artifact` 同一处算——原先 `expand_placeholders` 把前三个也换成目录，与规范 `process/task.md`·落点对不上
-- **破坏性**：`Workspace::check` 去掉 `base` 参数——判据路径带占位时本来就跳过，`base` 是空转（改由端侧的 `exists` 定相对基准）
+- **破坏性**：落点不再拼目录——`artifact` / `expanded` 只给**相对工作区根的路径**（声明成绝对路径就原样），目录由平台接；`paths::join` 与它的斜杠规范化随之下线（规范 `process/task.md`·落点）
+- **破坏性**：占位展开收敛成一套——删掉 `paths::expand_placeholders` 与 `paths::Placeholders`（占位表只是 `artifact` 的四个名字），改用 `Workspace::expanded(&criterion, &task)` 把判据里的占位换成本次任务的落点；`Criterion::expanded` 改收「名字 → 路径」的解析函数
+- **破坏性**：占位换的是**落点**（`{{report}}` / `{{journal}}` / `{{log}}` 是产物文件，`{{artifacts}}` 是产物目录），与 `Workspace::artifact` 同一处算——原先 `expand_placeholders` 把前三个也换成目录，与规范对不上
+- **破坏性**：`Workspace::check` 去掉 `base` 参数——判据路径带占位时本来就跳过，`base` 是空转（相对基准由端侧的 `exists` 定）
 - 判据路径里的占位只认四个；写别的（如 `{{foo}}`）算定义错误（`Fault::UnknownPlaceholder`）。契约向量补 `validate-unknown-placeholder`（第 13 份）
 - **破坏性**：删掉 `RunContext`（`quanttide_work::context`）。位置不进模型：落点与核对要用的目录基准改由平台当参数传进来
 - **破坏性**：`Workflow::check` 与 `looks_like_section` 从 `workflow` 搬到 `workspace`；`Task::artifact` / `Task::done_steps` / `Task::next_step` / `Task::state_line` 从 `task` 搬到 `workspace`——落点与流水判定要拿工作区里装载的定义，不是任务自己能算的

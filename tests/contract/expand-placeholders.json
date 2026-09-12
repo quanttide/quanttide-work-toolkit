@@ -1,7 +1,6 @@
 {
   "kind": "expand",
   "note": "占位换成本次任务的落点：与 artifact 同一处算（声明了按声明的，没声明落默认处）。",
-  "base": "/d",
   "task": {
     "name": "甲",
     "artifacts": {}
@@ -9,19 +8,19 @@
   "cases": [
     {
       "input": "见 {{report}}",
-      "expect": "见 /d/artifacts/report/甲.md"
+      "expect": "见 artifacts/report/甲.md"
     },
     {
       "input": "{{journal}}",
-      "expect": "/d/artifacts/journal/甲.md"
+      "expect": "artifacts/journal/甲.md"
     },
     {
       "input": "{{log}}",
-      "expect": "/d/tasks/甲.yaml"
+      "expect": "tasks/甲.yaml"
     },
     {
       "input": "{{artifacts}}/y",
-      "expect": "/d/artifacts/y"
+      "expect": "artifacts/y"
     },
     {
       "input": "没有占位",
@@ -33,32 +32,10 @@
       "note": "不认识的占位原样留着（读定义时已经拦过）"
     },
     {
-      "base": "/d/",
-      "input": "{{report}}",
-      "expect": "/d/artifacts/report/甲.md"
-    },
-    {
-      "base": "/d//",
-      "input": "{{journal}}",
-      "expect": "/d/artifacts/journal/甲.md"
-    },
-    {
-      "base": "",
-      "input": "{{report}}",
-      "expect": "/artifacts/report/甲.md"
-    },
-    {
-      "base": "rel",
-      "input": "{{log}}",
-      "expect": "rel/tasks/甲.yaml"
-    },
-    {
       "note": "声明了就用声明的",
-      "artifacts": {
-        "report": "report/甲.md"
-      },
+      "artifacts": { "report": "report/甲.md" },
       "input": "{{report}}",
-      "expect": "/d/report/甲.md"
+      "expect": "report/甲.md"
     }
   ]
 }

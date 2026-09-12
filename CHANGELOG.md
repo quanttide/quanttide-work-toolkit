@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- 占位展开收敛成一套（`Placeholders` 占位表）：占位换的是落点，与 `artifact` 同源；不认识的占位算定义错误；`check` 去掉空转的 `base`
+- 落点不再拼目录（只给相对工作区根的路径），占位展开收敛成 `Workspace::expanded`；不认识的占位算定义错误；`check` 去掉空转的 `base`
 - 发布工作流补上 GitHub Release：`release-rust.yml` / `release-dart.yml` 在注册表发布成功后建 Release（自动生成变更说明，alpha / beta / rc 标预发布）；补齐历史 tag 缺的 Releases（rust `beta.1~4`、dart `beta.1~5`），alpha 系列一并改标预发布
 - 新增工作区（`workspace`）聚合，Rust 与 Dart 两侧同构：按规范三轴补上「场所」，`RunContext` 退出工具箱（位置不进模型）
 - 初始化工具箱仓库：Python 包骨架（`packages/python`）与验证工作流。

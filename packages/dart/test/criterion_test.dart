@@ -90,54 +90,55 @@ void main() {
   });
 
   group('占位展开', () {
-    const tab = Placeholders(
-      artifacts: '/d/artifacts',
-      report: '/d/artifacts/report/甲.md',
-      journal: '/d/artifacts/journal/甲.md',
-      log: '/d/tasks/甲.yaml',
-    );
+    String? resolve(String name) => switch (name) {
+      'artifacts' => '/d/artifacts',
+      'report' => '/d/artifacts/report/甲.md',
+      'journal' => '/d/artifacts/journal/甲.md',
+      'log' => '/d/tasks/甲.yaml',
+      _ => null,
+    };
 
     test('六种判据都换掉字段里的 {{…}}', () {
       final path = const PathExists('{{artifacts}}/index.md', description: '看 {{report}}')
-          .expanded(tab);
+          .expanded(resolve);
       expect(path, isA<PathExists>());
       expect((path as PathExists).path, '/d/artifacts/index.md');
       expect(path.description, '看 /d/artifacts/report/甲.md');
 
       final absent = const PathAbsent('{{artifacts}}/gone.md', description: '清 {{report}}')
-          .expanded(tab);
+          .expanded(resolve);
       expect(absent, isA<PathAbsent>());
       expect((absent as PathAbsent).absent, '/d/artifacts/gone.md');
       expect(absent.description, '清 /d/artifacts/report/甲.md');
 
       final file = const FileContains('{{report}}', '{{artifacts}}', description: '含 {{log}}')
-          .expanded(tab);
+          .expanded(resolve);
       expect(file, isA<FileContains>());
       expect((file as FileContains).file, '/d/artifacts/report/甲.md');
       expect(file.contains, '/d/artifacts');
       expect(file.description, '含 /d/tasks/甲.yaml');
 
       final run = const CommandRun('cat {{report}}', description: '跑 {{artifacts}}')
-          .expanded(tab);
+          .expanded(resolve);
       expect(run, isA<CommandRun>());
       expect((run as CommandRun).run, 'cat /d/artifacts/report/甲.md');
       expect(run.description, '跑 /d/artifacts');
 
-      final judgement = const AgentJudgement('看 {{report}} 写完没').expanded(tab);
+      final judgement = const AgentJudgement('看 {{report}} 写完没').expanded(resolve);
       expect(judgement, isA<AgentJudgement>());
       expect(judgement.description, '看 /d/artifacts/report/甲.md 写完没');
 
-      final gate = const HumanGate('{{artifacts}} 里的要人拍板').expanded(tab);
+      final gate = const HumanGate('{{artifacts}} 里的要人拍板').expanded(resolve);
       expect(gate, isA<HumanGate>());
       expect(gate.description, '/d/artifacts 里的要人拍板');
     });
 
     test('没有占位就原样，不认识的占位也原样', () {
-      final plain = const PathExists('/w/docs', description: '就这点').expanded(tab);
+      final plain = const PathExists('/w/docs', description: '就这点').expanded(resolve);
       expect((plain as PathExists).path, '/w/docs');
       expect(plain.description, '就这点');
 
-      final unknown = const PathExists('{{foo}}/x.md').expanded(tab);
+      final unknown = const PathExists('{{foo}}/x.md').expanded(resolve);
       expect((unknown as PathExists).path, '{{foo}}/x.md');
     });
   });

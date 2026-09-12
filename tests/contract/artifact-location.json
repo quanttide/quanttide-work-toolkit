@@ -1,35 +1,34 @@
 {
   "kind": "artifact",
-  "note": "产物落点：声明了按声明的（相对平台给的目录基准）；没声明落 artifacts/<种类>/<任务名>.md；流水是任务文件本身。任务不写自己在哪。",
-  "base": "/d",
+  "note": "产物落点：只给相对工作区根的路径——声明了按声明的（绝对路径原样），没声明落 artifacts/<种类>/<任务名>.md；流水是任务文件本身。拼上目录是平台的事。",
   "cases": [
     {
       "note": "没声明：报告落默认处",
       "name": "甲",
       "artifacts": {},
       "artifact": "report",
-      "expect": "/d/artifacts/report/甲.md"
+      "expect": "artifacts/report/甲.md"
     },
     {
       "note": "没声明：日志同样落默认处",
       "name": "甲",
       "artifacts": {},
       "artifact": "journal",
-      "expect": "/d/artifacts/journal/甲.md"
+      "expect": "artifacts/journal/甲.md"
     },
     {
       "note": "流水就是任务文件本身，与声明无关",
       "name": "甲",
       "artifacts": { "log": "other.md" },
       "artifact": "log",
-      "expect": "/d/tasks/甲.yaml"
+      "expect": "tasks/甲.yaml"
     },
     {
-      "note": "声明了相对路径：接在目录基准之后",
+      "note": "声明了相对路径：原样（相对工作区根）",
       "name": "甲",
       "artifacts": { "report": "report/甲.md" },
       "artifact": "report",
-      "expect": "/d/report/甲.md"
+      "expect": "report/甲.md"
     },
     {
       "note": "声明了绝对路径：原样",
@@ -43,31 +42,7 @@
       "name": "甲",
       "artifacts": { "report": "  " },
       "artifact": "report",
-      "expect": "/d/artifacts/report/甲.md"
-    },
-    {
-      "note": "目录基准带尾斜杠：同一个落点",
-      "base": "/d/",
-      "name": "甲",
-      "artifacts": {},
-      "artifact": "report",
-      "expect": "/d/artifacts/report/甲.md"
-    },
-    {
-      "note": "目录基准重复斜杠：折叠后同一个落点",
-      "base": "/d//",
-      "name": "甲",
-      "artifacts": {},
-      "artifact": "report",
-      "expect": "/d/artifacts/report/甲.md"
-    },
-    {
-      "note": "目录基准为空：拼出来是绝对路径",
-      "base": "",
-      "name": "甲",
-      "artifacts": {},
-      "artifact": "report",
-      "expect": "/artifacts/report/甲.md"
+      "expect": "artifacts/report/甲.md"
     }
   ]
 }

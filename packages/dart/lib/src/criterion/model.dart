@@ -41,9 +41,12 @@ sealed class Criterion {
   /// 写回定义里的字段形状。
   Map<String, Object?> toMap();
 
-  /// 占位展开：每个字段里的 `{{…}}` 按占位表换掉。
-  Criterion expanded(Placeholders placeholders) {
-    String ex(String value) => placeholders.expand(value);
+  /// 占位展开：每个字段里的 `{{name}}` 交给 [resolve] 换成哪条路径。
+  ///
+  /// [resolve] 认不得的名字原样留着。换成哪条路径是场所的事——
+  /// 见 `WorkspaceArtifact.expanded`。
+  Criterion expanded(String? Function(String name) resolve) {
+    String ex(String value) => replacePlaceholders(value, resolve);
     return switch (this) {
       PathExists(:final path, :final description) => PathExists(
         ex(path),

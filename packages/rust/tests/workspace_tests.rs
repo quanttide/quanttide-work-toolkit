@@ -1,5 +1,6 @@
 //! 工作区：装载内容、定义核对、落点、流水判定。
 
+use quanttide_work::criterion::Criterion;
 use quanttide_work::executor::AGENT;
 use quanttide_work::task::Task;
 use quanttide_work::workflow::{Step, Workflow};
@@ -9,6 +10,14 @@ use serde_yaml::Value as Yaml;
 
 fn yaml(value: Json) -> Yaml {
     serde_yaml::to_value(value).expect("JSON 装成 YAML 值")
+}
+
+/// 一条只有 path 的 rule 判据，当展开的夹具。
+fn criterion_of_path(path: &str) -> Criterion {
+    Criterion::PathExists {
+        path: path.into(),
+        description: String::new(),
+    }
 }
 
 /// 装一件任务：把名字并进 payload（任务名是文件里的 `name` 字段）。
@@ -200,13 +209,13 @@ fn artifact_follows_the_declaration_and_the_default() {
     let workspace = Workspace::default();
     let task = task_of("甲", json!({}));
     assert_eq!(
-        workspace.artifact(&task, "report", "/d/"),
-        "/d/artifacts/report/甲.md",
-        "没声明落默认处，目录尾斜杠忽略"
+        workspace.artifact(&task, "report"),
+        "artifacts/report/甲.md",
+        "没声明落默认处（相对工作区根）"
     );
     assert_eq!(
-        workspace.artifact(&task, "log", "/d/"),
-        "/d/tasks/甲.yaml",
+        workspace.artifact(&task, "log"),
+        "tasks/甲.yaml",
         "流水是任务文件本身"
     );
 
@@ -215,55 +224,57 @@ fn artifact_follows_the_declaration_and_the_default() {
         json!({"artifacts": {"report": "report/甲.md", "logs": "/elsewhere/甲.md"}}),
     );
     assert_eq!(
-        workspace.artifact(&declared, "report", "/d"),
-        "/d/report/甲.md",
-        "声明了相对平台给的目录基准"
+        workspace.artifact(&declared, "report"),
+        "report/甲.md",
+        "声明了按声明的"
     );
     assert_eq!(
-        workspace.artifact(&declared, "logs", "/d"),
+        workspace.artifact(&declared, "logs"),
         "/elsewhere/甲.md",
         "绝对路径原样"
     );
 }
 
 #[test]
-fn placeholders_point_at_the_same_landings_as_artifact() {
+fn expanded_points_at_the_same_landings_as_artifact() {
     let workspace = Workspace::default();
     let task = task_of("甲", json!({}));
-    let tab = workspace.placeholders(&task, "/d");
-
-    assert_eq!(tab.path_of("report"), Some("/d/artifacts/report/甲.md"));
-    assert_eq!(tab.path_of("journal"), Some("/d/artifacts/journal/甲.md"));
-    assert_eq!(tab.path_of("log"), Some("/d/tasks/甲.yaml"));
-    assert_eq!(tab.path_of("artifacts"), Some("/d/artifacts"));
-    assert_eq!(tab.path_of("foo"), None, "不认识的占位不给路径");
 
     assert_eq!(
-        tab.expand("{{report}} 里写 {{artifacts}} 的清单"),
-        "/d/artifacts/report/甲.md 里写 /d/artifacts 的清单"
+        workspace.expanded(
+            &criterion_of_path("{{report}} 里写 {{artifacts}} 的清单"),
+            &task
+        ),
+        criterion_of_path("artifacts/report/甲.md 里写 artifacts 的清单")
     );
-    assert_eq!(tab.expand("没有占位"), "没有占位");
-    assert_eq!(tab.expand("{{name}}"), "{{name}}", "不认识的占位原样留着");
     assert_eq!(
-        tab.expand("没闭合的 {{report"),
-        "没闭合的 {{report",
+        workspace.expanded(&criterion_of_path("没有占位"), &task),
+        criterion_of_path("没有占位")
+    );
+    assert_eq!(
+        workspace.expanded(&criterion_of_path("{{name}}"), &task),
+        criterion_of_path("{{name}}"),
+        "不认识的占位原样留着"
+    );
+    assert_eq!(
+        workspace.expanded(&criterion_of_path("没闭合的 {{report"), &task),
+        criterion_of_path("没闭合的 {{report"),
         "没闭合的占位不吞后面的字"
     );
 }
 
 #[test]
-fn placeholders_follow_the_declaration() {
+fn expanded_follows_the_declaration() {
     let workspace = Workspace::default();
     let task = task_of("甲", json!({"artifacts": {"report": "report/甲.md"}}));
-    let tab = workspace.placeholders(&task, "/d");
     assert_eq!(
-        tab.expand("{{report}}"),
-        "/d/report/甲.md",
+        workspace.expanded(&criterion_of_path("{{report}}"), &task),
+        criterion_of_path("report/甲.md"),
         "声明了报告往哪写，占位就换成它"
     );
     assert_eq!(
-        tab.expand("{{journal}}"),
-        "/d/artifacts/journal/甲.md",
+        workspace.expanded(&criterion_of_path("{{journal}}"), &task),
+        criterion_of_path("artifacts/journal/甲.md"),
         "没声明的仍落默认处"
     );
 }

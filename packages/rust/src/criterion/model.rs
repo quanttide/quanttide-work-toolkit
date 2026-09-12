@@ -6,7 +6,7 @@
 //! 出处：`docs/specification/process/workflow.md`·语法（判据三个字段）。
 
 use crate::executor::{AGENT, HUMAN, RULE};
-use crate::paths::Placeholders;
+use crate::paths::replace_placeholders;
 use serde_yaml::{Mapping, Value as Yaml};
 
 /// 判据的种类：四种机械核对。名字与 [`Criterion`] 的四个变体一致；
@@ -162,9 +162,15 @@ impl Criterion {
         Yaml::Mapping(map)
     }
 
-    /// 占位展开：每个字段里的 `{{…}}` 按占位表换掉。
-    pub fn expanded(&self, placeholders: &Placeholders) -> Criterion {
-        let ex = |value: &str| placeholders.expand(value);
+    /// 占位展开：每个字段里的 `{{name}}` 交给 `resolve` 换成哪条路径。
+    ///
+    /// `resolve` 认不得的名字原样留着。换成哪条路径是场所的事——
+    /// 见 `Workspace::expanded`。
+    pub fn expanded<F>(&self, resolve: F) -> Criterion
+    where
+        F: Fn(&str) -> Option<String>,
+    {
+        let ex = |value: &str| replace_placeholders(value, &resolve);
         match self {
             Criterion::PathExists { path, description } => Criterion::PathExists {
                 path: ex(path),

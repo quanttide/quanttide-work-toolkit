@@ -121,12 +121,12 @@ void main() {
       ],
     })], [task]);
 
-    final place = workspace.artifact(task, 'report', '/d');
-    final tab = workspace.placeholders(task, '/d');
-    final text = tab.expand('见 {{report}}');
+    final criterion = const PathExists('{{report}}');
+    final place = workspace.artifact(task, 'report');
+    final expanded = workspace.expanded(criterion, task);
 
-    expect(place, '/d/artifacts/report/甲.md');
-    expect(text, '见 /d/artifacts/report/甲.md');
+    expect(place, 'artifacts/report/甲.md');
+    expect((expanded as PathExists).path, 'artifacts/report/甲.md');
   });
 
   test('文档：workspace.md #3——定义核对', () {
