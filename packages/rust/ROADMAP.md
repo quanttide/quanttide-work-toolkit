@@ -19,7 +19,7 @@ Rust 库是**所有端侧要对齐的正本**（cli 与 studio 都引它），�
 | | |
 |---|---|
 | 现在 | 改 `workflow.rs` 任何一处，两侧只有"整体测试"，没有定向判据；「行为没变」要人自己论证 |
-| 改完 | `sh scripts/contract.sh` 一条命令：**11 份向量**，Rust 与 Dart 各跑一遍，两侧一致才算过 |
+| 改完 | `sh scripts/contract.sh` 一条命令：**12 份向量**，Rust 与 Dart 各跑一遍，两侧一致才算过 |
 | 怎么核 | 跑这一条命令。**它现在是绿的**（重构后的最低要求就是保持绿） |
 
 这是最实在的收益：重构的风险不再靠"我检查过了"承担，而是靠一条可复现的命令承担。
@@ -103,7 +103,7 @@ cd ../.. && sh scripts/contract.sh
 - 三件寄居物各归其主：`Finding` + `looks_like_section` → `workflow/check`，`expand_placeholders` → `task/model`
 - 与 Dart 侧**九个分件逐个对位**（`criterion/{model,items,read}`、`task/{model,journal,context}`、`workflow/{model,validate,check}`）
 - 约定立在 `src/CONVENTIONS.md`；`AGENTS.md` 结构块已改对
-- 门禁：`fmt` / `clippy` / `test` 全绿；`sh scripts/contract.sh` **11 份向量、两侧一致**
+- 门禁：`fmt` / `clippy` / `test` 全绿；`sh scripts/contract.sh` **12 份向量、两侧一致**
 - CHANGELOG 已记 `[Unreleased]`：三条公共路径迁移属**破坏性变更**（下游 cli 与 studio 经查均未用到，无需改动）
 
 **剩下两件**：
@@ -118,3 +118,6 @@ cd ../.. && sh scripts/contract.sh
 1. **三个空壳语言怎么办**（收益第五条）：摘掉发布线，还是补齐实现？
 2. **`packages/rust/AGENTS.md` 的结构块**过时（只写 `src/lib.rs`），段五顺手改
 3. **工具箱是否也要「服务 / 适配」两类**：本库只装"不因平台而变的核心逻辑"，没有 IO，**不需要那两类**——所以它的契约是裁剪版：**一个模型一个目录 + 单文件 ≤250 + 一处一写 + 说法不进库**。这条要写进约定，免得以后有人拿端侧的规矩来量它
+4. **校验态类型化（`Raw` / `Validated`）**：让「未校验」与「已校验」在类型上分开。Dart 没有 Rust 那样的零成本 phantom，做了要么只有 Rust 做（镜像破裂），要么 Dart 用两层类包装——除非出现「拿未校验值当已校验用」的真实事故，先不做（[issue #1](https://github.com/quanttide/quanttide-work-toolkit/issues/1)）
+5. **`exists` 回调扩展成能核内容**：`check` 的 `exists: Fn(&str) -> bool` 只能答「在不在」。「判据怎么核」该先由规范定，不宜先扩接口再补规范（同上 issue）
+6. **`RuleItem` 换成保留类型的结构**：现在是 `kind` + 位置 `args`，端侧要按顺序重新解释。等真需要更多语义时再动，避免提前抽象（同上 issue）

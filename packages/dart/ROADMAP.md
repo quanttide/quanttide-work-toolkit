@@ -21,7 +21,7 @@ Dart 库是**工作台（studio）要对齐的正本**，与 Rust 库（cli 的�
 | | |
 |---|---|
 | 现在 | 改 `workflow.dart` 任何一处，「行为没变」要靠人论证 |
-| 改完 | `sh scripts/contract.sh` 一条命令：**11 份向量**，Dart 与 Rust 各跑一遍，两侧一致才算过 |
+| 改完 | `sh scripts/contract.sh` 一条命令：**12 份向量**，Dart 与 Rust 各跑一遍，两侧一致才算过 |
 | 怎么核 | 跑这一条。**它现在是绿的**（重构的下限是保持绿） |
 
 ### 二、改判据不再翻 405 行
@@ -113,7 +113,7 @@ cd ../.. && sh scripts/contract.sh
 - 与 Rust 侧**九个分件逐个对位**；桶文件仍是一处导入（`import 'package:quanttide_work/quanttide_work.dart'`）
 - 新增两个扩展名：`TaskJournal`、`WorkflowCheck`（Dart 不能跨文件写实现，用扩展承接分件；调用写法不变）
 - 补建了 `AGENTS.md`（原先没有）、约定立在 `lib/CONVENTIONS.md`（与 Rust 侧那份互为对照）
-- 门禁：`dart analyze` 无问题、`dart test` 全绿；`sh scripts/contract.sh` **11 份向量、两侧一致**
+- 门禁：`dart analyze` 无问题、`dart test` 全绿；`sh scripts/contract.sh` **12 份向量、两侧一致**
 - CHANGELOG 已记 `[Unreleased]`：桶文件导入方式不变，**端侧 studio 无感**
 
 **剩下两件**：
@@ -126,3 +126,6 @@ cd ../.. && sh scripts/contract.sh
 1. **三个空壳语言怎么办**（收益第六条）：摘掉发布线，还是补齐实现
 2. **工具箱的契约是裁剪版**：它只装"不因平台而变的核心逻辑"，没有 IO，**不需要端侧那套「服务 / 适配」分类**；它的规矩是「一个模型一个目录 + 一个文件一件事 + 一处一写 + 说法不进库」——这条要写进约定，免得有人拿端侧的整套规矩来量它
 3. **两份 ROADMAP 最好一起执行**：单侧先做完，收益（照抄）反而是负的——所以建议同一轮把 Rust 与 Dart 一次推完
+4. **校验态类型化（`Raw` / `Validated`）**：让「未校验」与「已校验」在类型上分开。Dart 没有 Rust 那样的零成本 phantom，做了要么只有 Rust 做（镜像破裂），要么 Dart 用两层类包装——除非出现「拿未校验值当已校验用」的真实事故，先不做（[issue #1](https://github.com/quanttide/quanttide-work-toolkit/issues/1)）
+5. **`exists` 回调扩展成能核内容**：`check` 的 `exists` 只能答「在不在」。「判据怎么核」该先由规范定，不宜先扩接口再补规范（同上 issue）
+6. **`RuleItem` 换成保留类型的结构**：现在是 `kind` + 位置 `args`，端侧要按顺序重新解释。等真需要更多语义时再动，避免提前抽象（同上 issue）

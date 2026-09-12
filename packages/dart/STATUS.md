@@ -13,15 +13,15 @@
 | `lib/src/` 文件 | 5（930 行）+ 桶文件 `lib/quanttide_work.dart` 24 行——**平铺**，无目录 |
 | 各文件 | `workflow.dart` **405**、`criterion.dart` 207、`task.dart` 216、`outcome.dart` 82、`executor.dart` 20 |
 | `test/` | `contract_test.dart`（跑共用向量）、`package_test.dart` |
-| 契约向量 | `../../tests/contract/*.json` **11 份**，Dart 与 Rust 两侧共跑 |
+| 契约向量 | `../../tests/contract/*.json` **12 份**，Dart 与 Rust 两侧共跑 |
 
 ## 尺子（重构的验收判据，现在就是绿的）
 
 ```bash
-sh scripts/contract.sh     # 11 份向量，Dart 与 Rust 各跑一遍，两侧结论必须一样
+sh scripts/contract.sh     # 12 份向量，Dart 与 Rust 各跑一遍，两侧结论必须一样
 ```
 
-当前基线：**两侧一致**（Dart「All tests passed!」；Rust「契约：11 份向量，两侧一致」）。重构只要让它保持绿，就算「行为不变」。
+当前基线：**两侧一致**（Dart「All tests passed!」；Rust「契约：12 份向量，两侧一致」）。重构只要让它保持绿，就算「行为不变」。
 
 ## 结构契约
 

@@ -7,7 +7,7 @@
 ```bash
 cd packages/rust
 cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test --locked
-cd ../.. && sh scripts/contract.sh      # 11 份向量，Rust 与 Dart 两侧必须仍一致
+cd ../.. && sh scripts/contract.sh      # 12 份向量，Rust 与 Dart 两侧必须仍一致
 ```
 
 ---

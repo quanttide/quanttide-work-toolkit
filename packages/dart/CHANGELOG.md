@@ -2,6 +2,7 @@
 
 ### Changed
 
+- **破坏性**：`check` 不再静默跳过含运行时占位的判据：四个占位都跳过并各出一条 `Finding`，其 `ok` 为 `null`（未核）；`Finding.ok` 由 `bool` 改成 `bool?`。契约向量补 `check-skip`（第 12 份）
 - **破坏性**：`Workflow.of` / `Task.of` 不再收名字，改从 `name` 字段读；`check` 第一参数由 `String` 换成 `RunContext`
 - `RunContext` 搬到中立件 `src/context.dart`（桶文件照旧导出，`package:quanttide_work` 下无感）
 - **破坏性**：`Workflow.fromValue` / `Step.fromValue` / `readCriterion` / `validateWorkflow` / `validateStep` 不再收 `file` / `place`；`DefinitionError` 改成结构化（`position` + `fault`），`message(file)` 出 canonical 文案，`toString()` 给不带文件的那一句

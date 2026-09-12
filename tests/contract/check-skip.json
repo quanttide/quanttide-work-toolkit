@@ -1,0 +1,56 @@
+{
+  "kind": "check",
+  "context": {
+    "data": "/w/data"
+  },
+  "workflow": {
+    "name": "demo",
+    "steps": [
+      {
+        "name": "甲",
+        "criteria": [
+          {"executor": "rule", "path": "{{report}}/x.md"},
+          {"executor": "rule", "path": "{{journal}}/y.md"},
+          {"executor": "rule", "path": "{{log}}/z.md"},
+          {"executor": "rule", "path": "{{artifacts}}/w.md"},
+          {"executor": "rule", "path": "/w/data/seen.md"},
+          {"executor": "rule", "path": "/w/data/gone.md"},
+          {"executor": "rule", "run": "true"}
+        ]
+      }
+    ]
+  },
+  "exists": ["/w/data/seen.md"],
+  "expect": [
+    {
+      "where": "甲·{{report}}/x.md",
+      "what": "判据里的路径含 {{report}}，未核（等任务执行时再核）",
+      "ok": null
+    },
+    {
+      "where": "甲·{{journal}}/y.md",
+      "what": "判据里的路径含 {{journal}}，未核（等任务执行时再核）",
+      "ok": null
+    },
+    {
+      "where": "甲·{{log}}/z.md",
+      "what": "判据里的路径含 {{log}}，未核（等任务执行时再核）",
+      "ok": null
+    },
+    {
+      "where": "甲·{{artifacts}}/w.md",
+      "what": "判据里的路径含 {{artifacts}}，未核（等任务执行时再核）",
+      "ok": null
+    },
+    {
+      "where": "甲·/w/data/seen.md",
+      "what": "判据里的路径在不在：/w/data/seen.md",
+      "ok": true
+    },
+    {
+      "where": "甲·/w/data/gone.md",
+      "what": "判据里的路径在不在：/w/data/gone.md",
+      "ok": false
+    }
+  ]
+}

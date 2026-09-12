@@ -9,7 +9,7 @@
 ```bash
 cd packages/dart
 dart analyze lib/ test/ && dart test
-cd ../.. && sh scripts/contract.sh      # 11 份向量，Dart 与 Rust 两侧必须仍一致
+cd ../.. && sh scripts/contract.sh      # 12 份向量，Dart 与 Rust 两侧必须仍一致
 ```
 
 ---

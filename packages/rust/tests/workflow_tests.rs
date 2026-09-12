@@ -29,7 +29,7 @@ fn section_ok(findings: &[Finding], name: &str) -> Option<bool> {
     findings
         .iter()
         .find(|finding| finding.what.ends_with(name))
-        .map(|finding| finding.ok)
+        .and_then(|finding| finding.ok)
 }
 
 // ---------------------------------------------------------------------------
@@ -348,7 +348,7 @@ fn check_reports_paths_and_sections() {
         .expect("路径判据应当出一条核对");
     assert_eq!(path_finding.where_, "甲·/w/seen.md");
     assert_eq!(path_finding.what, "判据里的路径在不在：/w/seen.md");
-    assert!(path_finding.ok);
+    assert_eq!(path_finding.ok, Some(true));
 
     assert_eq!(
         section_ok(&findings, "收尾"),
@@ -363,7 +363,7 @@ fn check_reports_paths_and_sections() {
 }
 
 #[test]
-fn check_skips_placeholders_and_unchecked_kinds() {
+fn check_marks_runtime_placeholders_unchecked() {
     let workflow = Workflow::from_value(&yaml(json!({
         "name": "w",
         "steps": [{
@@ -372,6 +372,7 @@ fn check_skips_placeholders_and_unchecked_kinds() {
                 {"executor": "rule", "path": "{{report}}/x.md"},
                 {"executor": "rule", "path": "{{journal}}/y.md"},
                 {"executor": "rule", "path": "{{log}}/z.yaml"},
+                {"executor": "rule", "path": "{{artifacts}}/w.md"},
                 {"executor": "rule", "absent": "gone.md"},
                 {"executor": "rule", "run": "true"},
                 {"executor": "agent", "description": "写干净了"},
@@ -382,9 +383,18 @@ fn check_skips_placeholders_and_unchecked_kinds() {
     .expect("合法定义");
 
     let findings = workflow.check(&context("/d"), |_| true);
+    assert_eq!(
+        findings.len(),
+        4,
+        "四个运行时占位各出一条「未核」；不查的判法不出核对项：{findings:?}"
+    );
     assert!(
-        findings.is_empty(),
-        "占位路径与不查的判法都不出核对项：{findings:?}"
+        findings.iter().all(|finding| finding.ok.is_none()),
+        "运行时占位一律「未核」"
+    );
+    assert!(
+        findings.iter().all(|finding| finding.what.contains("未核")),
+        "「未核」要写在回执里，不静默丢掉：{findings:?}"
     );
 }
 

@@ -273,17 +273,19 @@ void main() {
         (path) => path == '/w/data/artifacts/report/甲.md',
       );
 
-      // 两处路径回执 + 四个小节回执。
-      expect(findings, hasLength(6));
+      // 五条路径回执（四条运行时占位「未核」+ 一条核过）+ 四个小节回执。
+      expect(findings, hasLength(9));
 
       final pathFindings = findings.where((f) => f.where.startsWith('甲·')).toList();
-      expect(pathFindings, hasLength(2));
+      expect(pathFindings, hasLength(5));
+      for (var i = 0; i < 4; i++) {
+        expect(pathFindings[i].ok, isNull, reason: '运行时占位未核');
+        expect(pathFindings[i].what, contains('未核'));
+      }
       expect(pathFindings[0].where, '甲·{{artifacts}}/report/甲.md');
-      expect(pathFindings[0].what, '判据里的路径在不在：/w/data/artifacts/report/甲.md');
-      expect(pathFindings[0].ok, isTrue);
-      expect(pathFindings[1].where, '甲·docs/index.md');
-      expect(pathFindings[1].what, '判据里的路径在不在：docs/index.md');
-      expect(pathFindings[1].ok, isFalse);
+      expect(pathFindings[4].where, '甲·docs/index.md');
+      expect(pathFindings[4].what, '判据里的路径在不在：docs/index.md');
+      expect(pathFindings[4].ok, isFalse);
 
       final sectionFindings =
           findings.where((f) => f.where == 'description').toList();
@@ -299,7 +301,7 @@ void main() {
       expect(sectionFindings.map((f) => f.ok).toList(), [false, true, false, false]);
     });
 
-    test('判据路径带 {{report}} / {{journal}} / {{log}} 的不核对（那是运行时才落的）', () {
+    test('判据路径带运行时占位的不核，给一条「未核」回执', () {
       final workflow = Workflow.fromValue({
         'name': 'demo',
         'steps': [
@@ -309,12 +311,16 @@ void main() {
               {'executor': 'rule', 'path': '{{report}}/x.md'},
               {'executor': 'rule', 'path': '{{journal}}/y.md'},
               {'executor': 'rule', 'path': '{{log}}/z.md'},
+              {'executor': 'rule', 'path': '{{artifacts}}/w.md'},
             ],
           },
         ],
       });
 
-      expect(workflow.check(const RunContext(data: '/w/data'), (path) => true), isEmpty);
+      final findings = workflow.check(const RunContext(data: '/w/data'), (path) => true);
+      expect(findings, hasLength(4));
+      expect(findings.every((f) => f.ok == null), isTrue);
+      expect(findings.every((f) => f.what.contains('未核')), isTrue);
     });
 
     test('command 判据与没有描述的工作流不产生回执', () {

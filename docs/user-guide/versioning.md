@@ -11,7 +11,7 @@
 ## 尺子
 
 ```bash
-sh scripts/contract.sh      # 11 份向量，Rust 与 Dart 各跑一遍，结论必须一样——一侧绿不算过
+sh scripts/contract.sh      # 12 份向量，Rust 与 Dart 各跑一遍，结论必须一样——一侧绿不算过
 ```
 
 这条已挂进两侧的发布工作流（`release-rust.yml` / `release-dart.yml`）：**向量不过，不许发**。

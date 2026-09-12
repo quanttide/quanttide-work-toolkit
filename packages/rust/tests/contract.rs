@@ -97,6 +97,33 @@ fn contract() {
                     }
                 }
             }
+            "check" => {
+                let parsed = workflow::Workflow::from_value(&as_yaml(&vector["workflow"]))
+                    .expect("向量里的工作流应当合法");
+                let context = task::RunContext {
+                    data: vector["context"]["data"].as_str().unwrap_or("").to_string(),
+                    ..task::RunContext::default()
+                };
+                let exists: Vec<String> = vector["exists"]
+                    .as_array()
+                    .cloned()
+                    .unwrap_or_default()
+                    .iter()
+                    .filter_map(|value| value.as_str().map(str::to_string))
+                    .collect();
+                let got: Vec<Value> = parsed
+                    .check(&context, |path| exists.iter().any(|known| known == path))
+                    .into_iter()
+                    .map(|finding| {
+                        json!({
+                            "where": finding.where_,
+                            "what": finding.what,
+                            "ok": finding.ok,
+                        })
+                    })
+                    .collect();
+                assert_eq!(Value::Array(got), vector["expect"], "{name}：核对回执不一样");
+            }
             "items" => {
                 let criteria: Vec<Value> = vector["input"].as_array().cloned().unwrap_or_default();
                 let criteria: Vec<criterion::Criterion> = criteria
@@ -179,6 +206,6 @@ fn contract() {
             other => panic!("{name}：不认得的向量类型 {other}"),
         }
     }
-    assert!(vectors.len() >= 11, "向量太少：{}", vectors.len());
+    assert!(vectors.len() >= 12, "向量太少：{}", vectors.len());
     println!("契约：{} 份向量，两侧一致", vectors.len());
 }

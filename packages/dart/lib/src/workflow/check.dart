@@ -5,14 +5,29 @@ import 'model.dart';
 
 /// 定义核对出来的一件事：在哪里、核的是什么、过没过。
 ///
-/// 它是「把这条定义对着工作区核一遍」的回执——`workflow --check` 的实现产物，
-/// 规范里还没有这一节。
+/// [ok] 为 `null` 表示没核——判据里带的运行时占位要等任务执行时才落，
+/// 核对时给一条「未核」的回执，不静默丢掉。
 class Finding {
   Finding({required this.where, required this.what, required this.ok});
 
   final String where;
   final String what;
-  final bool ok;
+
+  /// 核过的结果；没核给 `null`。
+  final bool? ok;
+}
+
+/// 路径里带的运行时占位（`{{report}}` 等）；没有给 `null`。
+String? runtimePlaceholder(String path) {
+  for (final placeholder in const [
+    '{{report}}',
+    '{{journal}}',
+    '{{log}}',
+    '{{artifacts}}',
+  ]) {
+    if (path.contains(placeholder)) return placeholder;
+  }
+  return null;
 }
 
 /// 像不像报告小节的名字：中文短词。版本号写法、占位、路径都不算。
@@ -24,7 +39,8 @@ bool looksLikeSection(String name) {
 extension WorkflowCheck on Workflow {
   /// 核对这条定义：判据里的路径在不在、描述提到的小节有没有判据覆盖。
   ///
-  /// [exists] 由调用方给——工具箱不碰文件系统。
+  /// [context] 给的是运行上下文，取它的 `data` 展开占位；[exists] 由调用方给——
+  /// 工具箱不碰文件系统。
   List<Finding> check(RunContext context, bool Function(String path) exists) {
     final found = <Finding>[];
     for (final step in steps) {
@@ -35,9 +51,15 @@ extension WorkflowCheck on Workflow {
           _ => '',
         };
         if (literal.isEmpty) continue;
-        if (literal.contains('{{report}}') ||
-            literal.contains('{{journal}}') ||
-            literal.contains('{{log}}')) {
+        final placeholder = runtimePlaceholder(literal);
+        if (placeholder != null) {
+          found.add(
+            Finding(
+              where: '${step.name}·$literal',
+              what: '判据里的路径含 $placeholder，未核（等任务执行时再核）',
+              ok: null,
+            ),
+          );
           continue;
         }
         final written = expandPlaceholders(literal, context.data);

@@ -276,5 +276,5 @@ fn doc_workflow_3() {
         findings[0].where_,
         "甲·/nonexistent-quanttide-work-tests/x.md"
     );
-    assert!(!findings[0].ok, "这个路径在本机不存在");
+    assert_eq!(findings[0].ok, Some(false), "这个路径在本机不存在");
 }

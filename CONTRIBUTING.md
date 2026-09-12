@@ -11,7 +11,7 @@
 发布前还要过三条尺子（两条 `release-*.yml` 都挂了，跑完两侧才放行）：
 
 ```bash
-sh scripts/contract.sh     # 契约：两侧跑同一批向量（11 份），结论必须一样
+sh scripts/contract.sh     # 契约：两侧跑同一批向量（12 份），结论必须一样
 sh scripts/coverage.sh     # 覆盖率：两侧行覆盖都要 ≥ 90%
 sh scripts/doc-tests.sh    # 文档示例：user-guide 里每条示例都要有测试兜
 ```

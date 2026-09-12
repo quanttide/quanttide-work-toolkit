@@ -13,15 +13,15 @@
 | `src/` 文件 | 6（1 190 行）——**平铺**，无目录 |
 | 各文件 | `criterion.rs` 237、`executor.rs` 19、`lib.rs` 23、`outcome.rs` 103、`task.rs` **292**、`workflow.rs` **516** |
 | `tests/` | `contract.rs`（跑共用向量）、`package.rs` |
-| 契约向量 | `../../tests/contract/*.json` **11 份**，Rust 与 Dart 两侧共跑 |
+| 契约向量 | `../../tests/contract/*.json` **12 份**，Rust 与 Dart 两侧共跑 |
 
 ## 尺子（重构的验收判据，现在就是绿的）
 
 ```bash
-sh scripts/contract.sh     # 11 份向量，Rust 与 Dart 各跑一遍，两侧结论必须一样
+sh scripts/contract.sh     # 12 份向量，Rust 与 Dart 各跑一遍，两侧结论必须一样
 ```
 
-当前基线：**两侧一致**（Rust「契约：11 份向量，两侧一致」；Dart「All tests passed!」）。重构只要让它保持绿，就算「行为不变」——不需要人逐行看。
+当前基线：**两侧一致**（Rust「契约：12 份向量，两侧一致」；Dart「All tests passed!」）。重构只要让它保持绿，就算「行为不变」——不需要人逐行看。
 
 ## 结构契约
 

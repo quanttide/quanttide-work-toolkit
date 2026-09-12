@@ -31,7 +31,7 @@ quanttide-work-toolkit/
 │   ├── dart/             # Dart 包（quanttide_work）
 │   └── go/               # Go 包（quanttide_work）
 ├── scripts/              # contract.sh 两侧向量一致 / coverage.sh 覆盖率 / doc-tests.sh 文档示例
-├── tests/contract/       # 契约向量（11 份，各语言共用一份正本）
+├── tests/contract/       # 契约向量（12 份，各语言共用一份正本）
 ├── AGENTS.md
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md

@@ -1,7 +1,7 @@
 //! 工作流聚合 / 定义核对：声明与判据对不对得上。
 //!
 //! 判据里的路径在不在、描述提到的报告小节有没有判据覆盖。
-//! 落点/占位在 [`crate::task`]；这里是 `workflow --check` 的模型侧。
+//! 落点/占位在 `crate::paths`；这里是 `workflow --check` 的模型侧。
 //! 模型在 [`super::model`]，语法校验在 [`super::validate`]。
 
 use super::model::Workflow;
@@ -11,13 +11,21 @@ use crate::paths::expand_placeholders;
 
 /// 定义核对出来的一件事：在哪里、核的是什么、过没过。
 ///
-/// 它是「把这条定义对着工作区核一遍」的回执——`workflow --check` 的实现产物，
-/// 规范里还没有这一节。
+/// `ok` 为 `None` 表示没核——判据里带的运行时占位要等任务执行时才落，
+/// 核对时给一条「未核」的回执，不静默丢掉。
 #[derive(Debug, Clone)]
 pub struct Finding {
     pub where_: String,
     pub what: String,
-    pub ok: bool,
+    /// 核过的结果；没核给 `None`。
+    pub ok: Option<bool>,
+}
+
+/// 路径里带的运行时占位（`{{report}}` 等）；没有给 `None`。
+fn runtime_placeholder(path: &str) -> Option<&'static str> {
+    ["{{report}}", "{{journal}}", "{{log}}", "{{artifacts}}"]
+        .into_iter()
+        .find(|placeholder| path.contains(placeholder))
 }
 
 /// 像不像报告小节的名字：中文短词。版本号写法、占位、路径都不算。
@@ -50,17 +58,19 @@ impl Workflow {
                     Criterion::FileContains { file, .. } => file.clone(),
                     _ => continue,
                 };
-                if literal.contains("{{report}}")
-                    || literal.contains("{{journal}}")
-                    || literal.contains("{{log}}")
-                {
+                if let Some(placeholder) = runtime_placeholder(&literal) {
+                    found.push(Finding {
+                        where_: format!("{}·{}", step.name, literal),
+                        what: format!("判据里的路径含 {placeholder}，未核（等任务执行时再核）"),
+                        ok: None,
+                    });
                     continue;
                 }
                 let written = expand_placeholders(&literal, &context.data);
                 found.push(Finding {
                     where_: format!("{}·{}", step.name, literal),
                     what: format!("判据里的路径在不在：{written}"),
-                    ok: exists(&written),
+                    ok: Some(exists(&written)),
                 });
             }
         }
@@ -106,7 +116,7 @@ impl Workflow {
             found.push(Finding {
                 where_: "description".to_string(),
                 what: format!("description 提到的报告小节有没有判据覆盖：{name}"),
-                ok: covered.iter().any(|value| value.contains(&name)),
+                ok: Some(covered.iter().any(|value| value.contains(&name))),
             });
         }
         found

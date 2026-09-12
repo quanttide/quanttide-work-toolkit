@@ -47,6 +47,17 @@ void main() {
     final all = vectors();
     for (final (name, vector) in all) {
       switch (vector['kind']) {
+        case 'check':
+          final parsed = Workflow.fromValue(vector['workflow']);
+          final context = RunContext(
+            data: (vector['context'] as Map)['data'] as String? ?? '',
+          );
+          final exists = (vector['exists'] as List? ?? const []).cast<String>();
+          final got = parsed
+              .check(context, (path) => exists.contains(path))
+              .map((f) => {'where': f.where, 'what': f.what, 'ok': f.ok})
+              .toList();
+          expect(got, vector['expect'], reason: '$name：核对回执不一样');
         case 'validate':
           final input = vector['input'];
           final want = vector['expect'] as Map;

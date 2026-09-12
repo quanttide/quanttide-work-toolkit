@@ -47,6 +47,8 @@ final findings = workflow.check(context, (path) => File(path).existsSync());
 
 `check` 接收两个参数，均由端侧提供。第一个 `context` 是运行上下文（`RunContext`），取它的 `data` 字段用于把 `{{artifacts}}`、`{{report}}`、`{{journal}}`、`{{log}}` 展开成数据仓内的实际路径。第二个 `exists` 是「该路径是否存在」的判断函数，由端侧针对真实文件系统实现。工具箱不访问文件系统，仅依据端侧给出的判断结果核对定义。
 
+判据里的路径带上述占位时不核——那几处要等任务执行时才落。这类回执的 `Finding.ok` 是 `None`（Dart 为 `null`），即「未核」，不静默丢掉；核过的给 `Some(true)` / `Some(false)`（Dart `true` / `false`）。
+
 ## 端侧不做什么
 
 - 不重复实现校验：缺少 `name`、存在未知顶层字段、判据未声明 `executor`、取值越界等情况的判定方式与报错文字，均与工具箱保持一致
