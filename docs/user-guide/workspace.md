@@ -49,7 +49,7 @@ final place = workspace.place(task, const Artifact.named('report'));
 final expanded = workspace.expanded(criterion, task);
 ```
 
-落点只给**相对工作区根的路径**（声明成绝对路径就原样）——拼上目录是平台的事。占位认四个，各换成同一批落点：`{{report}}` / `{{journal}}` / `{{log}}` 是这三样产物的落点，`{{artifacts}}` 是产物目录——于是判据里写占位与直接写落点等价。
+落点只给**相对工作区根的路径**（声明成绝对路径就原样）——拼上目录是平台的事。占位认四个：`{{report}}` / `{{journal}}` 是这两样产物的落点，`{{log}}` 是任务文件本身，`{{artifacts}}` 是产物目录——于是判据里写占位与直接写落点等价。
 
 ### 定义核对
 

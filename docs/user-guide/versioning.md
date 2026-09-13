@@ -18,7 +18,7 @@ sh scripts/contract.sh      # 13 份向量，Rust 与 Dart 各跑一遍，结论
 
 这条已挂进两侧的发布工作流（`release-rust.yml` / `release-dart.yml`）：**向量不过，不许发**。
 
-端侧的尺子是另一把：同一处工作区、同一条命令，两端各跑一次，比 `ok` / `columns` / `rows` / `data`——那把尺子在**领域仓 quanttide-work** 里（本工具箱是它的子模块）：`apps/qtcloud-work/src/studio/scripts/parity.sh`，24 条。改动端侧时用它验收，别只看自己那一侧。
+端侧的尺子是另一把：同一处工作区、同一条命令，两端各跑一次，比 `ok` / `columns` / `rows` / `data`——那把尺子在**领域仓 quanttide-work** 里（本工具箱是它的子模块）：`apps/qtcloud-work/src/studio/scripts/parity.sh`。改动端侧时用它验收，别只看自己那一侧。
 
 ## 现在的版本状态
 
@@ -28,4 +28,4 @@ sh scripts/contract.sh      # 13 份向量，Rust 与 Dart 各跑一遍，结论
 | Dart | `0.1.0-beta.6` | 同上 |
 | Go / Python / TypeScript | `0.1.0` | 空壳，未实现；这三条发布线留不留待定（见 `packages/{rust,dart}/ROADMAP.md`「边界外」） |
 
-**两侧同号已对齐**（2026-09-12，见两包 `CHANGELOG.md` 的 `0.1.0-beta.6`），`contract.sh` 每次都会核一遍；包**还没发**——按发布纪律等创始人放行。发完再把端侧（命令行 / 工作台）引到同一个号。
+**两侧同号已对齐并已发布**（2026-09-12，`rust/v0.1.0-beta.6`、`dart/v0.1.0-beta.6` 已在远端，crates.io 与 pub.dev 均查得到），`contract.sh` 每次都会核一遍；端侧（命令行 / 工作台）已引同一个号——`quanttide-work = "0.1.0-beta.6"`、`quanttide_work: ^0.1.0-beta.6`。
