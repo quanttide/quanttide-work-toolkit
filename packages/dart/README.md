@@ -33,4 +33,4 @@ dart test
 
 ## 许可
 
-[CC BY 4.0](../../LICENSE)
+[Apache License 2.0](../../LICENSE)

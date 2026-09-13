@@ -3,6 +3,7 @@ name = "quanttide-work"
 version = "0.1.0"
 description = "知识工作工具箱（Python 包）：知识工作领域的共享能力"
 readme = "README.md"
+license = "Apache-2.0"
 authors = [
     { name = "Guo Zhang", email = "zhangguo@quanttide.com" }
 ]

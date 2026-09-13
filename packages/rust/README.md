@@ -27,4 +27,4 @@ cargo test
 
 ## 许可
 
-CC-BY-4.0
+Apache-2.0
