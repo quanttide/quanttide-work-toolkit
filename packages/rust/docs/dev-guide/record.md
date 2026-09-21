@@ -8,8 +8,8 @@
 
 ## 模块分工
 
-- `models.rs`——账上的一笔：`WorkRecord` 七字段（`id` / `seq` / `created_at` / `order_id` / `step_id` / `description` / `is_succeeded`），读出即校验——`from_jsonl` 认 JSONL 行，构造与语法校验一次完成（字段表之外拒、必选缺失拒、类型不符拒）；`to_jsonl` 落形为单行 JSON。读出不通时返回 `Fault`（种类），位置由调用方补。
-- `errors.rs`——读不通时报什么：位置（`Position::Record`，第 n 笔）与种类（`Fault`：非法行 / 非映射 / 多字段 / 缺字段 / 坏页码 / 坏类型）；canonical 文案由 `RecordError::message(file)` 出，文件名由端侧给——与 `src/error.rs`（定义侧）同一分工。
+- `models.rs`——账上的一笔：`WorkRecord` 七字段（`id` / `seq` / `created_at` / `order_id` / `step_id` / `description` / `is_succeeded`），读出即校验——`from_jsonl` 认 JSONL 行，构造与语法校验一次完成（字段表之外拒、必选缺失拒、类型不符拒）；`to_jsonl` 落形为单行 JSON。读出不通时返回 `Fault`（种类），第几笔由调用方补。
+- `errors.rs`——读不通时报什么：第几笔（`ordinal`）与种类（`Fault`：非法行 / 非映射 / 多字段 / 缺字段 / 坏页码 / 坏类型）收成一个 `RecordError`；canonical 文案由 `RecordError::message(file)` 出，文件名由端侧给——与 `src/error.rs`（定义侧）同一分工。
 - `repos.rs`——账本长什么样：只增接口形状——追加、全量读（按 `seq` 序）、凭页码取单条、按站名筛读。接口只认 `id` 与 `seq`，不认数组下标。两套实现：`local` 落本机盘，`remote` 落对象存储（主要是 S3）——两套账本，一本纪律，都过 `services` 的对账；S3 没有追加，remote 的记账语义（整本重写或一条一件）由实现内部定，接口形状不变。
 - `services.rs`——记账的手：追加收**草稿**——`Draft` 只装提交者手里的（`order_id` / `step` / `description` / `is_succeeded`；`id` 是幂等键，自带、重放即拒），账本发的号（`seq` / `step_id` / `created_at`）在类型上不在提交者手里。追加时干三件事——分配 `seq`（末条加一）、按 `step` 查填 `step_id`、对账四纪律。
 - `events.rs`——报信：`WorkRecorded` 负载（工单名、工作区 `id`、该条的 `id` / `seq` / `step_id`、记录全文），只描述追加的那一条，不含全量流水。
@@ -45,7 +45,7 @@
 
 规格先行：权威关系与串行纪律已入 `work-record.md`，动工前提。
 
-1. `errors.rs` 与 `models.rs`：位置 + 种类 + canonical 文案；七字段、读出即校验（`from_jsonl`）、`to_jsonl` 落形；
+1. `errors.rs` 与 `models.rs`：种类 + canonical 文案（第几笔由调用方补）；七字段、读出即校验（`from_jsonl`）、`to_jsonl` 落形；
 2. `repos.rs`：接口形状（带版本参数，供条件写）与 `local` 实现——落工单文档（规格原文「不独立落盘，内嵌 `records`」），账本只有一个化身；
 3. `repos` 的 `remote` 实现（S3）：条件写保串行，测试对假 S3（容器或桩），不连真桶；
 4. `services.rs`：追加收 `Draft`，四纪律加并发控制在把守；
