@@ -1,7 +1,9 @@
 import json
 
 from quanttide_work.record.events import WorkRecorded
-from quanttide_work.record.models import read_line
+from quanttide_work.record.repos import Repo
+
+REPO = Repo()
 
 SAMPLE = (
     '{"id":"0f0e5b1a-9d0c-4c7e-8d1e-2b6a5f4e3d2c","seq":1,'
@@ -13,7 +15,7 @@ SAMPLE = (
 
 
 def recorded() -> WorkRecorded:
-    return WorkRecorded.create(read_line(SAMPLE, 1), created_at="2026-02-11T10:00:01Z")
+    return WorkRecorded.create(REPO.read_line(SAMPLE, 1), created_at="2026-02-11T10:00:01Z")
 
 
 # 一行紧凑 JSON：名称与时刻在前，其后是这条记录的凭证。
@@ -29,7 +31,7 @@ def test_identity_comes_from_the_record():
     payload = json.loads(recorded().model_dump_json())
     assert payload["name"] == "WorkRecorded"
     assert payload["created_at"] == "2026-02-11T10:00:01Z"
-    assert payload["record_id"] == read_line(SAMPLE, 1).id
+    assert payload["record_id"] == REPO.read_line(SAMPLE, 1).id
 
 
 # 只指认那一条，不带全文：事件是通知，正本在工单的 records 字段里。

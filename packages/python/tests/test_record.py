@@ -3,9 +3,11 @@ import json
 import pytest
 
 from quanttide_work.record.errors import RecordError
-from quanttide_work.record.models import FIELDS, REQUIRED_TEXT, read_line
+from quanttide_work.record.models import FIELDS, REQUIRED_TEXT
+from quanttide_work.record.repos import Repo
 
 ORDINAL = 3
+REPO = Repo()
 
 
 def line(value: dict) -> str:
@@ -41,7 +43,7 @@ def test_field_table_matches_the_record():
 
 # 合法行读出记录，取值逐一相符。
 def test_valid_line_reads_a_record():
-    record = read_line(line(sample()), ORDINAL)
+    record = REPO.read_line(line(sample()), ORDINAL)
     assert record.id == sample()["id"]
     assert record.seq == 1
     assert record.description == "草拟了提纲"
@@ -50,20 +52,20 @@ def test_valid_line_reads_a_record():
 
 # 落形是单行紧凑 JSON，与样本逐字相同；往返不失真。
 def test_to_jsonl_is_one_compact_line():
-    record = read_line(line(sample()), ORDINAL)
+    record = REPO.read_line(line(sample()), ORDINAL)
     got = record.to_jsonl()
     assert "\n" not in got
     assert got == line(sample())
-    assert read_line(got, ORDINAL) == record
+    assert REPO.read_line(got, ORDINAL) == record
 
 
 # 行级读不通：不是合法 JSON、不是映射，各报一句。
 def test_line_level_reasons():
     with pytest.raises(RecordError) as caught:
-        read_line("{oops", ORDINAL)
+        REPO.read_line("{oops", ORDINAL)
     assert str(caught.value) == "第 3 笔不是合法的 JSON 行"
     with pytest.raises(RecordError) as caught:
-        read_line("[1, 2]", ORDINAL)
+        REPO.read_line("[1, 2]", ORDINAL)
     assert str(caught.value) == "第 3 笔不是映射（工作记录是七个字段的账）"
 
 
@@ -72,7 +74,7 @@ def test_line_level_reasons():
 def test_optional_fields_fill_in():
     bare = sample()
     del bare["description"], bare["is_succeeded"]
-    record = read_line(line(bare), ORDINAL)
+    record = REPO.read_line(line(bare), ORDINAL)
     assert record.description == ""
     assert record.is_succeeded is False
 
@@ -82,7 +84,7 @@ def test_optional_fields_fill_in():
 def test_unknown_fields_are_rejected():
     odd = sample() | {"step": "草拟"}
     with pytest.raises(RecordError) as caught:
-        read_line(line(odd), ORDINAL)
+        REPO.read_line(line(odd), ORDINAL)
     assert caught.value.reason == (
         f"有不认识的字段：step（只认 {'、'.join(FIELDS)}）"
     )
@@ -92,7 +94,7 @@ def test_unknown_fields_are_rejected():
 def test_unknown_fields_are_sorted():
     odd = sample() | {"b": 1, "a": 2}
     with pytest.raises(RecordError) as caught:
-        read_line(line(odd), ORDINAL)
+        REPO.read_line(line(odd), ORDINAL)
     assert caught.value.reason.startswith("有不认识的字段：a、b（")
 
 
@@ -102,7 +104,7 @@ def test_missing_required_is_rejected():
         bare = sample()
         del bare[name]
         with pytest.raises(RecordError) as caught:
-            read_line(line(bare), ORDINAL)
+            REPO.read_line(line(bare), ORDINAL)
         assert caught.value.reason == f"少了 {name}"
 
 
@@ -112,18 +114,18 @@ def test_missing_required_is_rejected():
 def test_bad_values_are_rejected():
     for seq in (0, -1, "1", True):
         with pytest.raises(RecordError) as caught:
-            read_line(line(sample() | {"seq": seq}), ORDINAL)
+            REPO.read_line(line(sample() | {"seq": seq}), ORDINAL)
         assert caught.value.reason == "的 seq 缺了，或不是自 1 起的整数"
     for name, bad in (("description", 3), ("is_succeeded", "yes")):
         with pytest.raises(RecordError) as caught:
-            read_line(line(sample() | {name: bad}), ORDINAL)
+            REPO.read_line(line(sample() | {name: bad}), ORDINAL)
         assert caught.value.reason == f"的 {name} 类型不对"
 
 
 # 错误只装第几笔与为什么；文件名由端侧渲染时拼。
 def test_error_carries_ordinal_and_reason_only():
     with pytest.raises(RecordError) as caught:
-        read_line("{oops", 7)
+        REPO.read_line("{oops", 7)
     error = caught.value
     assert (error.ordinal, error.reason) == (7, "不是合法的 JSON 行")
     assert str(error) == "第 7 笔不是合法的 JSON 行"
