@@ -8,7 +8,14 @@
 import json
 
 from quanttide_work.record.errors import RecordError
-from quanttide_work.record.models import FIELDS, REQUIRED_TEXT, WorkRecord
+from quanttide_work.record.models import WorkRecord
+
+# 必选的文本字段：模型里没缺省值且是文本的那些；读出时按声明顺序报缺字段。
+REQUIRED_TEXT = tuple(
+    name
+    for name, field in WorkRecord.model_fields.items()
+    if field.is_required() and field.annotation is str
+)
 
 
 class WorkRecordRepo:
@@ -33,11 +40,12 @@ class WorkRecordRepo:
             got = value.get(key)
             return got.strip() if isinstance(got, str) else ""
 
-        unknown = sorted(key for key in value if key not in FIELDS)
+        unknown = sorted(key for key in value if key not in WorkRecord.model_fields)
         if unknown:
+            known = "、".join(WorkRecord.model_fields)
             raise RecordError(
                 ordinal,
-                f"有不认识的字段：{'、'.join(unknown)}（只认 {'、'.join(FIELDS)}）",
+                f"有不认识的字段：{'、'.join(unknown)}（只认 {known}）",
             )
         for name in REQUIRED_TEXT:
             if not text(name):

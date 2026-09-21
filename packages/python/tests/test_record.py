@@ -3,8 +3,8 @@ import json
 import pytest
 
 from quanttide_work.record.errors import RecordError
-from quanttide_work.record.models import FIELDS, REQUIRED_TEXT
-from quanttide_work.record.repos import WorkRecordRepo
+from quanttide_work.record.models import WorkRecord
+from quanttide_work.record.repos import REQUIRED_TEXT, WorkRecordRepo
 
 ORDINAL = 3
 REPO = WorkRecordRepo()
@@ -28,9 +28,9 @@ def sample() -> dict:
     }
 
 
-# 字段表从模型生成，且仍是规格的七个字段——抄错一个、数错一个就红。
+# 字段表就是模型的字段，且仍是规格的七个——抄错一个、数错一个就红。
 def test_field_table_matches_the_record():
-    assert FIELDS == (
+    assert tuple(WorkRecord.model_fields) == (
         "id",
         "seq",
         "created_at",
@@ -86,7 +86,7 @@ def test_unknown_fields_are_rejected():
     with pytest.raises(RecordError) as caught:
         REPO.read_line(line(odd), ORDINAL)
     assert caught.value.reason == (
-        f"有不认识的字段：step（只认 {'、'.join(FIELDS)}）"
+        f"有不认识的字段：step（只认 {'、'.join(WorkRecord.model_fields)}）"
     )
 
 

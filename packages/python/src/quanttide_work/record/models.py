@@ -30,10 +30,3 @@ class WorkRecord(BaseModel):
     description: str = ""
     # 判定结果；缺省 False——未记录「通过」即视为未通过。
     is_succeeded: bool = Field(default=False, strict=True)
-
-
-# 字段表与模型同源：按声明顺序生成，抄错字段的硬伤在这里长不出来。
-FIELDS = tuple(WorkRecord.model_fields)
-
-# 必选的文本字段：缺失或取值为空白均视为未提供；读出时按这个顺序报缺字段。
-REQUIRED_TEXT = ("id", "created_at", "order_id", "step_id")
