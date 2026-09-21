@@ -1,6 +1,6 @@
 import json
 
-from quanttide_work.record.events import EVENT, recorded
+from quanttide_work.record.events import WorkRecorded
 from quanttide_work.record.models import read_line
 
 SAMPLE = (
@@ -12,23 +12,20 @@ SAMPLE = (
 )
 
 
-def event_line() -> str:
-    record = read_line(SAMPLE, 1)
-    return recorded(
-        record,
+def recorded() -> WorkRecorded:
+    return WorkRecorded.of(
+        read_line(SAMPLE, 1),
         at="2026-02-11T10:00:01Z",
         workspace_id="ws-1",
-        order_id=record.order_id,
         order_name="甲单",
     )
 
 
 # 一行紧凑 JSON：公共三样在前（event / at / workspace_id），聚合字段随后。
-def test_recorded_is_one_jsonl_line():
-    got = event_line()
+def test_work_recorded_is_one_jsonl_line():
+    got = recorded().to_jsonl()
     assert "\n" not in got
     payload = json.loads(got)
-    assert EVENT == "WorkRecorded"
     assert list(payload) == [
         "event",
         "at",
@@ -40,23 +37,27 @@ def test_recorded_is_one_jsonl_line():
         "step_id",
         "record",
     ]
-    assert payload["event"] == EVENT
-    assert payload["at"] == "2026-02-11T10:00:01Z"
-    assert payload["workspace_id"] == "ws-1"
 
 
-# 负载带上该条的凭证、页码与锚点，正文原样带走：下游凭 step_id 直认，零回查。
-def test_recorded_carries_identity_and_full_record():
-    payload = json.loads(event_line())
+# 凭证、页码与锚点只有记录一个住所：事件里的与记录里的一致。
+def test_identity_comes_from_the_record():
+    payload = json.loads(recorded().to_jsonl())
     record = read_line(SAMPLE, 1)
+    assert payload["order_id"] == record.order_id
+    assert payload["order_id"] == payload["record"]["order_id"]
     assert payload["record_id"] == record.id
     assert payload["seq"] == record.seq
     assert payload["step_id"] == record.step_id
-    assert payload["record"] == json.loads(record.to_jsonl())
+
+
+# 记录全文走记录自己的落形，与记录行同源。
+def test_full_record_comes_from_the_record():
+    payload = json.loads(recorded().to_jsonl())
+    assert payload["record"] == json.loads(read_line(SAMPLE, 1).to_jsonl())
 
 
 # 只描述追加的那一条，不含全量流水——重建靠事件序列回放，不靠快照覆盖。
-def test_recorded_carries_only_the_appended_record():
-    payload = json.loads(event_line())
+def test_carries_only_the_appended_record():
+    payload = json.loads(recorded().to_jsonl())
     assert isinstance(payload["record"], dict)
     assert "records" not in payload

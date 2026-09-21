@@ -12,37 +12,39 @@ RecordError(第几笔, 为什么)。行级读不通（不是合法 JSON、不是
 """
 
 import json
-from dataclasses import asdict, dataclass, fields
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from quanttide_work.record.errors import RecordError
 
 
-@dataclass(frozen=True)
-class WorkRecord:
+class WorkRecord(BaseModel):
     """工作记录实体：凭证、页码、发生时刻、工单与步骤锚点、简要描述、判定结果。"""
 
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
     # 凭证号：追加方生成，落笔后永不改变；跨边界引用一律以它为准。
-    id: str
+    id: str = Field(min_length=1)
     # 页码：账本方分配，自 1 起严格递增且连续；排序一律以它为准。
-    seq: int
+    seq: int = Field(ge=1, strict=True)
     # 步骤发生时刻，而非记录录入时刻——流水是证据链，答「何时发生」。
-    created_at: str
+    created_at: str = Field(min_length=1)
     # 所属工单的凭证。
-    order_id: str
+    order_id: str = Field(min_length=1)
     # 所执行步骤的机器锚点，与所引工作流中的步骤同一指向；落笔后不可失配。
-    step_id: str
+    step_id: str = Field(min_length=1)
     # 对已发生事实的简要描述，记录中唯一的自由文本字段；默认为空。
     description: str = ""
     # 判定结果；缺省 False——未记录「通过」即视为未通过。
-    is_succeeded: bool = False
+    is_succeeded: bool = Field(default=False, strict=True)
 
     def to_jsonl(self) -> str:
         """落形为 JSONL 行：单行紧凑 JSON，字段全写，不产生字段表之外的键。"""
-        return json.dumps(asdict(self), ensure_ascii=False, separators=(",", ":"))
+        return self.model_dump_json()
 
 
 # 字段表与模型同源：按声明顺序生成，抄错字段的硬伤在这里长不出来。
-FIELDS = tuple(field.name for field in fields(WorkRecord))
+FIELDS = tuple(WorkRecord.model_fields)
 
 # 必选的文本字段：缺失或取值为空白均视为未提供；读出时按这个顺序报缺字段。
 REQUIRED_TEXT = ("id", "created_at", "order_id", "step_id")
