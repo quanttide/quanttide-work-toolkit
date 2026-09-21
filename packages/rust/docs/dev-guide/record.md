@@ -24,9 +24,14 @@
 - `is_succeeded` 缺省按 `false` 断 → `models::of` 读法；
 - 引用凭 `id`、排序凭 `seq`、下标不进语义 → `repos` 接口形状。
 
-## 与既有件的关系
+## 旧表达全面淘汰
 
-`task/journal.rs` 的 `JournalEvent` 是旧表达，本方案不动它——`record` 落地后两者并存，迁移（`task` 流水换 `WorkRecord`）另立事项再议。CLI 的 `order/record.rs` 已有同款纪律，属平台自己的实现；工具箱落地后是否收回对齐，等下一轮再定，本方案不背这个活。
+`record` 实现的同一步里，`task/journal.rs` 的 `JournalEvent`（`at` / `step` / `detail` / `ok`）退役：`task` 流水换成 `WorkRecord`，`workspace/progress` 的走过判定换成读 `records`，`journal.rs` 撤除——规格里没有的旧说法不保留第二处事实源。
+
+波及面与同步义务：
+
+- 契约向量里踩着 journal 读法的（`done-voting` 等）随淘汰更新；`contract.sh` 要求 Rust 与 Dart 两侧一致，Dart 镜像的 `journal.dart` 同步退役，不留在后续轮次；
+- CLI 的 `order/record.rs` 已是同款新纪律，属平台实现，不在淘汰范围；是否收回工具箱对齐，另行再议。
 
 ## 步骤
 
@@ -34,7 +39,8 @@
 2. `repos.rs`：接口形状（trait 或纯函数组，与库内既有风格取齐）；
 3. `services.rs`：追加服务，四纪律全在这里把守；
 4. `events.rs`：`WorkRecorded` 负载；
-5. `lib.rs` 注册 `pub mod record`，测试与契约向量跟上。
+5. `lib.rs` 注册 `pub mod record`，测试与契约向量跟上；
+6. 淘汰旧表达：`task` 流水换 `WorkRecord`、`progress` 换读法、`journal.rs` 撤除，契约向量两侧同步更新，Dart 镜像同轮退役。
 
 ## 验收判据
 
