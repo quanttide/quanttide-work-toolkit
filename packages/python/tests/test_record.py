@@ -4,10 +4,10 @@ import pytest
 
 from quanttide_work.record.errors import RecordError
 from quanttide_work.record.models import FIELDS, REQUIRED_TEXT
-from quanttide_work.record.repos import Repo
+from quanttide_work.record.repos import WorkRecordRepo
 
 ORDINAL = 3
-REPO = Repo()
+REPO = WorkRecordRepo()
 
 
 def line(value: dict) -> str:

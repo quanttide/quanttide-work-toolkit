@@ -11,7 +11,7 @@ from quanttide_work.record.errors import RecordError
 from quanttide_work.record.models import FIELDS, REQUIRED_TEXT, WorkRecord
 
 
-class Repo:
+class WorkRecordRepo:
     """账本。"""
 
     def read_line(self, line: str, ordinal: int) -> WorkRecord:

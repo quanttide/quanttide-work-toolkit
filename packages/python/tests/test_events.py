@@ -1,9 +1,9 @@
 import json
 
 from quanttide_work.record.events import WorkRecorded
-from quanttide_work.record.repos import Repo
+from quanttide_work.record.repos import WorkRecordRepo
 
-REPO = Repo()
+REPO = WorkRecordRepo()
 
 SAMPLE = (
     '{"id":"0f0e5b1a-9d0c-4c7e-8d1e-2b6a5f4e3d2c","seq":1,'
