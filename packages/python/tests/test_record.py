@@ -51,9 +51,9 @@ def test_valid_line_reads_a_record():
 
 
 # 落形是单行紧凑 JSON，与样本逐字相同；往返不失真。
-def test_to_jsonl_is_one_compact_line():
+def test_dumped_line_is_compact():
     record = REPO.read_line(line(sample()), ORDINAL)
-    got = record.to_jsonl()
+    got = record.model_dump_json()
     assert "\n" not in got
     assert got == line(sample())
     assert REPO.read_line(got, ORDINAL) == record

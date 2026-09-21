@@ -11,7 +11,6 @@ seq 为准。记录不独立落盘，内嵌于工单的 records 字段；只增�
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 class WorkRecord(BaseModel):
     """工作记录实体：凭证、页码、发生时刻、工单与步骤锚点、简要描述、判定结果。"""
 
@@ -31,10 +30,6 @@ class WorkRecord(BaseModel):
     description: str = ""
     # 判定结果；缺省 False——未记录「通过」即视为未通过。
     is_succeeded: bool = Field(default=False, strict=True)
-
-    def to_jsonl(self) -> str:
-        """落形为 JSONL 行：单行紧凑 JSON，字段全写，不产生字段表之外的键。"""
-        return self.model_dump_json()
 
 
 # 字段表与模型同源：按声明顺序生成，抄错字段的硬伤在这里长不出来。
