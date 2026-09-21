@@ -8,7 +8,7 @@
 
 ## 四件套分工
 
-- `models.rs`——账上的一笔：`WorkRecord` 七字段（`id` / `seq` / `created_at` / `order_id` / `step_id` / `description` / `is_succeeded`），`of` 读出、`to_yaml` 落形、`validate` 把语法关（字段表之外拒、必选缺失拒、类型不符拒）。
+- `models.rs`——账上的一笔：`WorkRecord` 七字段（`id` / `seq` / `created_at` / `order_id` / `step_id` / `description` / `is_succeeded`），读出即校验——`of` 认字段、`from_jsonl` 认 JSONL 行，构造与语法校验一次完成（字段表之外拒、必选缺失拒、类型不符拒）；`to_jsonl` 落形为单行 JSON。
 - `repos.rs`——账本长什么样：只增接口形状——追加、全量读（按 `seq` 序）、凭页码取单条、按站名筛读。接口只认 `id` 与 `seq`，不认数组下标。两套实现：`local` 落本机盘，`remote` 落对象存储（主要是 S3）——两套账本，一本纪律，都过 `services` 的对账；S3 没有追加，remote 的记账语义（整本重写或一条一件）由实现内部定，接口形状不变。
 - `services.rs`——记账的手：追加收**草稿**——`Draft` 只装提交者手里的（`order_id` / `step` / `description` / `is_succeeded`；`id` 是幂等键，自带、重放即拒），账本发的号（`seq` / `step_id` / `created_at`）在类型上不在提交者手里。追加时干三件事——分配 `seq`（末条加一）、按 `step` 查填 `step_id`、对账四纪律。
 - `events.rs`——报信：`WorkRecorded` 负载（工单名、工作区 `id`、该条的 `id` / `seq` / `step_id`、记录全文），只描述追加的那一条，不含全量流水。
@@ -17,7 +17,7 @@
 
 规格每条约束都有唯一的代码住址：
 
-- 字段取值之外一律拒 → `models::validate`；
+- 字段取值之外一律拒 → `models` 的读出（`of` / `from_jsonl`）；
 - 同 `id` 两条即拒（复制的账）→ `services` 对账，`repos` 读出全量时复验；
 - `seq` 自 1 起严格递增不跳号（被抽走的账）→ `services` 分配与对账；
 - `created_at` 不得早于末条（倒流的账不可信）→ `services` 对账；
@@ -44,7 +44,7 @@
 
 规格先行：权威关系与串行纪律已入 `work-record.md`，动工前提。
 
-1. `models.rs`：七字段、读法、`validate`；
+1. `models.rs`：七字段、读出即校验（`of` / `from_jsonl`）、`to_jsonl` 落形；
 2. `repos.rs`：接口形状（带版本参数，供条件写）与 `local` 实现——落工单文档（规格原文「不独立落盘，内嵌 `records`」），账本只有一个化身；
 3. `repos` 的 `remote` 实现（S3）：条件写保串行，测试对假 S3（容器或桩），不连真桶；
 4. `services.rs`：追加收 `Draft`，四纪律加并发控制在把守；
