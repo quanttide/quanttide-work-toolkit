@@ -21,17 +21,6 @@ pub(crate) const CRITERION_FIELDS: [&str; 7] = [
     "run",
 ];
 
-/// 一笔工作记录认得的字段。
-pub(crate) const RECORD_FIELDS: [&str; 7] = [
-    "id",
-    "seq",
-    "created_at",
-    "order_id",
-    "step_id",
-    "description",
-    "is_succeeded",
-];
-
 /// 取一个字符串字段，去掉两侧空白；不是字符串就当没写。
 pub(crate) fn text_of(value: &Yaml, key: &str) -> String {
     value
