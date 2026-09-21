@@ -13,51 +13,28 @@ SAMPLE = (
 
 
 def recorded() -> WorkRecorded:
-    return WorkRecorded.of(
-        read_line(SAMPLE, 1),
-        at="2026-02-11T10:00:01Z",
-        workspace_id="ws-1",
-        order_name="甲单",
-    )
+    return WorkRecorded.of(read_line(SAMPLE, 1), created_at="2026-02-11T10:00:01Z")
 
 
-# 一行紧凑 JSON：公共三样在前（event / at / workspace_id），聚合字段随后。
+# 一行紧凑 JSON：名称与时刻在前，其后是这条记录的凭证。
 def test_work_recorded_is_one_jsonl_line():
     got = recorded().to_jsonl()
     assert "\n" not in got
     payload = json.loads(got)
-    assert list(payload) == [
-        "event",
-        "at",
-        "workspace_id",
-        "order_id",
-        "order_name",
-        "record_id",
-        "seq",
-        "step_id",
-        "record",
-    ]
+    assert list(payload) == ["name", "created_at", "record_id"]
 
 
-# 凭证、页码与锚点只有记录一个住所：事件里的与记录里的一致。
+# 记录凭证只有记录一个住所；事件名由类型钉住。
 def test_identity_comes_from_the_record():
     payload = json.loads(recorded().to_jsonl())
-    record = read_line(SAMPLE, 1)
-    assert payload["order_id"] == record.order_id
-    assert payload["order_id"] == payload["record"]["order_id"]
-    assert payload["record_id"] == record.id
-    assert payload["seq"] == record.seq
-    assert payload["step_id"] == record.step_id
+    assert payload["name"] == "WorkRecorded"
+    assert payload["created_at"] == "2026-02-11T10:00:01Z"
+    assert payload["record_id"] == read_line(SAMPLE, 1).id
 
 
-# 记录全文走记录自己的落形，与记录行同源。
-def test_full_record_comes_from_the_record():
+# 只指认那一条，不带全文：事件是通知，正本在工单的 records 字段里。
+def test_carries_only_the_reference():
     payload = json.loads(recorded().to_jsonl())
-    assert payload["record"] == json.loads(read_line(SAMPLE, 1).to_jsonl())
-
-
-# 只描述追加的那一条，不含全量流水——重建靠事件序列回放，不靠快照覆盖。
-def test_carries_only_the_appended_record():
-    payload = json.loads(recorded().to_jsonl())
-    assert isinstance(payload["record"], dict)
+    assert set(payload) == {"name", "created_at", "record_id"}
+    assert "record" not in payload
     assert "records" not in payload

@@ -16,42 +16,16 @@ class WorkRecorded(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     # 事件名——跨语言契约按它认行。
-    event: Literal["WorkRecorded"] = "WorkRecorded"
+    name: Literal["WorkRecorded"] = "WorkRecorded"
     # 什么时候；时钟归端侧，库不出声。
-    at: str
-    # 工作区凭证。
-    workspace_id: str
-    # 工单凭证与工单名。
-    order_id: str
-    order_name: str
-    # 这一条的凭证、页码与锚点；下游凭 step_id 直认，零回查。
+    created_at: str
     record_id: str
-    seq: int
-    step_id: str
-    # 记录全文。
-    record: WorkRecord
 
     @classmethod
-    def of(
-        cls,
-        record: WorkRecord,
-        *,
-        at: str,
-        workspace_id: str,
-        order_name: str,
-    ) -> "WorkRecorded":
-        """从记录与上下文造一条：凭证、页码与锚点从记录取，只有一个住所。"""
-        return cls(
-            at=at,
-            workspace_id=workspace_id,
-            order_id=record.order_id,
-            order_name=order_name,
-            record_id=record.id,
-            seq=record.seq,
-            step_id=record.step_id,
-            record=record,
-        )
+    def of(cls, record: WorkRecord, *, created_at: str) -> "WorkRecorded":
+        """从记录与上下文造一条：记录凭证从记录取，只有一个住所。"""
+        return cls(created_at=created_at, record_id=record.id)
 
     def to_jsonl(self) -> str:
-        """落形为 JSONL 行：单行紧凑 JSON，公共三样在前、聚合字段随后。"""
+        """落形为 JSONL 行：单行紧凑 JSON，名称与时刻在前。"""
         return self.model_dump_json()
