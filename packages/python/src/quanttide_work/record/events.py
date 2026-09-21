@@ -22,7 +22,7 @@ class WorkRecorded(BaseModel):
     record_id: str
 
     @classmethod
-    def of(cls, record: WorkRecord, *, created_at: str) -> "WorkRecorded":
+    def create(cls, record: WorkRecord, *, created_at: str) -> "WorkRecorded":
         """从记录与上下文造一条：记录凭证从记录取，只有一个住所。"""
         return cls(created_at=created_at, record_id=record.id)
 

@@ -13,7 +13,7 @@ SAMPLE = (
 
 
 def recorded() -> WorkRecorded:
-    return WorkRecorded.of(read_line(SAMPLE, 1), created_at="2026-02-11T10:00:01Z")
+    return WorkRecorded.create(read_line(SAMPLE, 1), created_at="2026-02-11T10:00:01Z")
 
 
 # 一行紧凑 JSON：名称与时刻在前，其后是这条记录的凭证。
