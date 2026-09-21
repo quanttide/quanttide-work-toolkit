@@ -6,14 +6,15 @@
 //! 工单的 `records` 字段；只增不改，落笔后原样保留，改结论的唯一方式
 //! 是追加一条新记录。
 //!
-//! 读出即校验：[`WorkRecord::of`] 与 [`WorkRecord::from_jsonl`] 在构造的
-//! 同时执行语法检查（字段表之外、必选缺失、类型不符均报错），读出的一笔
-//! 必是语法合法的——非法记录不存在已构造的形态。落形为 [`WorkRecord::to_jsonl`]
-//! 的单行 JSON。单条记录在整本流水中是否有效——凭证唯一、页码连续、
-//! 时序递增——属账本级约束，由 [`crate::record`] 的账本侧对账执行。
+//! 读出即校验：记录只从 JSONL 行读入——[`WorkRecord::from_jsonl`] 解析
+//! 单行 JSON，语法校验与构造一次完成（字段表之外、必选缺失、类型不符均
+//! 报错），读出的一笔必是语法合法的，非法记录不存在已构造的形态。落形为
+//! [`WorkRecord::to_jsonl`] 的单行 JSON。单条记录在整本流水中是否有效——
+//! 凭证唯一、页码连续、时序递增——属账本级约束，由 [`crate::record`]
+//! 的账本侧对账执行。
 
-use crate::fields::{RECORD_FIELDS, text_of, unknown_fields};
-use serde_yaml::Value as Yaml;
+use crate::fields::RECORD_FIELDS;
+use serde_json::Value as Json;
 
 /// 必选的文本字段：缺失或取值为空白均视为未提供。
 const REQUIRED_TEXT: [&str; 4] = ["id", "created_at", "order_id", "step_id"];
@@ -38,16 +39,22 @@ pub struct WorkRecord {
 }
 
 impl WorkRecord {
-    /// 从记录字段读出：语法校验与构造一次完成。字段表之外、必选缺失、
-    /// 类型不符均报错；`is_succeeded` 缺省为 `false`。
-    pub fn of(value: &Yaml) -> Result<WorkRecord, SyntaxFault> {
-        let map = value.as_mapping().ok_or(SyntaxFault::NotMapping)?;
-        let unknown = unknown_fields(map, &RECORD_FIELDS);
+    /// 从 JSONL 行读出：解析单行 JSON、语法校验、构造一次完成。字段表
+    /// 之外、必选缺失、类型不符均报错；行不是合法 JSON 时报
+    /// [`SyntaxFault::NotJson`]，`is_succeeded` 缺省为 `false`。
+    pub fn from_jsonl(line: &str) -> Result<WorkRecord, SyntaxFault> {
+        let value: Json = serde_json::from_str(line).map_err(|_| SyntaxFault::NotJson)?;
+        let map = value.as_object().ok_or(SyntaxFault::NotMapping)?;
+        let unknown: Vec<String> = map
+            .keys()
+            .filter(|key| !RECORD_FIELDS.contains(&key.as_str()))
+            .cloned()
+            .collect();
         if !unknown.is_empty() {
             return Err(SyntaxFault::UnknownFields(unknown));
         }
         for name in REQUIRED_TEXT {
-            if text_of(value, name).is_empty() {
+            if text_of(&value, name).is_empty() {
                 return Err(SyntaxFault::MissingField(name));
             }
         }
@@ -68,24 +75,17 @@ impl WorkRecord {
             return Err(SyntaxFault::BadType("is_succeeded"));
         }
         Ok(WorkRecord {
-            id: text_of(value, "id"),
+            id: text_of(&value, "id"),
             seq,
-            created_at: text_of(value, "created_at"),
-            order_id: text_of(value, "order_id"),
-            step_id: text_of(value, "step_id"),
-            description: text_of(value, "description"),
+            created_at: text_of(&value, "created_at"),
+            order_id: text_of(&value, "order_id"),
+            step_id: text_of(&value, "step_id"),
+            description: text_of(&value, "description"),
             is_succeeded: value
                 .get("is_succeeded")
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false),
         })
-    }
-
-    /// 从 JSONL 行读出：解析单行 JSON、语法校验、构造一次完成；
-    /// 行不是合法 JSON 时报 [`SyntaxFault::NotJson`]。
-    pub fn from_jsonl(line: &str) -> Result<WorkRecord, SyntaxFault> {
-        let value: Yaml = serde_json::from_str(line).map_err(|_| SyntaxFault::NotJson)?;
-        WorkRecord::of(&value)
     }
 
     /// 落形为 JSONL 行：单行紧凑 JSON，七个字段全写，不产生字段表之外
@@ -102,6 +102,16 @@ impl WorkRecord {
         })
         .to_string()
     }
+}
+
+/// 取一个字符串字段并去掉两侧空白；取值不是字符串时视为未提供。
+fn text_of(value: &Json, key: &str) -> String {
+    value
+        .get(key)
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .trim()
+        .to_string()
 }
 
 /// 单条记录的语法错误种类；位置信息（第 n 笔）由调用方附加。
@@ -144,9 +154,9 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    /// 以 JSON 字面量构造 YAML 值，供 [`WorkRecord::of`] 测试使用。
-    fn yaml(value: serde_json::Value) -> Yaml {
-        serde_yaml::to_value(value).expect("JSON 转换为 YAML 值失败")
+    /// 把 JSON 字面量装成一行，供 [`WorkRecord::from_jsonl`] 测试使用。
+    fn line(value: serde_json::Value) -> String {
+        value.to_string()
     }
 
     /// 合法记录样本：七个字段齐备，`seq` 为 1，判定为通过。
@@ -162,22 +172,22 @@ mod tests {
         })
     }
 
-    /// 合法记录经 `of` 与 `from_jsonl` 均可读出，取值逐一相符；且
-    /// 「`to_jsonl` 落形 → `from_jsonl` 读出」往返后保持不变。
+    /// 合法记录读出成功，取值逐一相符；且「`to_jsonl` 落形 →
+    /// `from_jsonl` 读出」往返后保持不变。
     #[test]
     fn valid_record_round_trips() {
-        let record = WorkRecord::of(&yaml(sample())).expect("合法记录应读出成功");
+        let record = WorkRecord::from_jsonl(&line(sample())).expect("合法记录应读出成功");
         assert_eq!(record.seq, 1);
         assert!(record.is_succeeded);
-        let from_line =
+        let again =
             WorkRecord::from_jsonl(&record.to_jsonl()).expect("落形后的 JSONL 行应是合法输入");
-        assert_eq!(record, from_line, "往返不变性");
+        assert_eq!(record, again, "往返不变性");
     }
 
-    /// `from_jsonl` 拒绝非法 JSON 行（报 `NotJson`），也拒绝非映射的
-    /// 合法 JSON（报 `NotMapping`）——解析与校验在同一次读出内完成。
+    /// 非法 JSON 行报 `NotJson`；合法 JSON 但不是映射（如数组）报
+    /// `NotMapping`——解析与校验在同一次读出内完成。
     #[test]
-    fn from_jsonl_rejects_bad_lines() {
+    fn malformed_lines_are_rejected() {
         assert_eq!(WorkRecord::from_jsonl("{oops"), Err(SyntaxFault::NotJson));
         assert_eq!(
             WorkRecord::from_jsonl("[1, 2]"),
@@ -192,7 +202,7 @@ mod tests {
         let mut bare = sample();
         bare.as_object_mut().unwrap().remove("description");
         bare.as_object_mut().unwrap().remove("is_succeeded");
-        let record = WorkRecord::of(&yaml(bare)).expect("推荐字段省略不应报错");
+        let record = WorkRecord::from_jsonl(&line(bare)).expect("推荐字段省略不应报错");
         assert_eq!(record.description, "");
         assert!(!record.is_succeeded);
     }
@@ -206,7 +216,7 @@ mod tests {
             .unwrap()
             .insert("step".into(), json!("草拟"));
         assert_eq!(
-            WorkRecord::of(&yaml(odd)),
+            WorkRecord::from_jsonl(&line(odd)),
             Err(SyntaxFault::UnknownFields(vec!["step".into()])),
         );
     }
@@ -218,7 +228,7 @@ mod tests {
             let mut bare = sample();
             bare.as_object_mut().unwrap().remove(name);
             assert_eq!(
-                WorkRecord::of(&yaml(bare)),
+                WorkRecord::from_jsonl(&line(bare)),
                 Err(SyntaxFault::MissingField(name)),
                 "缺失 {name} 应报 MissingField"
             );
@@ -233,14 +243,14 @@ mod tests {
         for seq in [json!(0), json!(-1), json!("1")] {
             let mut odd = sample();
             odd.as_object_mut().unwrap().insert("seq".into(), seq);
-            assert_eq!(WorkRecord::of(&yaml(odd)), Err(SyntaxFault::BadSeq));
+            assert_eq!(WorkRecord::from_jsonl(&line(odd)), Err(SyntaxFault::BadSeq));
         }
         let mut odd = sample();
         odd.as_object_mut()
             .unwrap()
             .insert("is_succeeded".into(), json!("yes"));
         assert_eq!(
-            WorkRecord::of(&yaml(odd)),
+            WorkRecord::from_jsonl(&line(odd)),
             Err(SyntaxFault::BadType("is_succeeded"))
         );
         let mut odd = sample();
@@ -248,7 +258,7 @@ mod tests {
             .unwrap()
             .insert("description".into(), json!(3));
         assert_eq!(
-            WorkRecord::of(&yaml(odd)),
+            WorkRecord::from_jsonl(&line(odd)),
             Err(SyntaxFault::BadType("description"))
         );
     }
