@@ -13,17 +13,9 @@ JSON。单条记录在整本流水中是否有效——凭证唯一、页码连�
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from quanttide_work.record.errors import (
-    BadSeq,
-    BadType,
-    Fault,
-    MissingField,
-    NotJson,
-    NotMapping,
-    UnknownFields,
-)
+from quanttide_work.record.errors import fault_of
 
-# 必选的文本字段：缺失或取值为空白均视为未提供；翻毛病时按这个顺序取第一条。
+# 必选的文本字段：缺失或取值为空白均视为未提供；取值时去掉两侧空白。
 REQUIRED_TEXT = ("id", "created_at", "order_id", "step_id")
 
 
@@ -63,40 +55,8 @@ class WorkRecord(BaseModel):
         try:
             return cls.model_validate_json(line)
         except ValidationError as error:
-            raise _fault(error) from error
+            raise fault_of(error) from error
 
     def to_jsonl(self) -> str:
         """落形为 JSONL 行：单行紧凑 JSON，七个字段全写，不产生字段表之外的键。"""
         return self.model_dump_json()
-
-
-def _fault(error: ValidationError) -> Fault:
-    """把校验报错翻成账上的毛病；按读出的检查顺序取第一条。
-
-    映射、多字段、缺必选、坏页码、坏类型之外认不出的毛病原样抛出，不硬翻。
-    """
-    faults = error.errors()
-    kinds = {item["type"] for item in faults}
-
-    def at(loc: tuple[str, ...]) -> bool:
-        return any(item["loc"] == loc for item in faults)
-
-    if "json_invalid" in kinds:
-        return NotJson()
-    if "model_type" in kinds:
-        return NotMapping()
-    extra = tuple(
-        sorted(item["loc"][0] for item in faults if item["type"] == "extra_forbidden")
-    )
-    if extra:
-        return UnknownFields(extra)
-    for name in REQUIRED_TEXT:
-        if at((name,)):
-            return MissingField(name)
-    if at(("seq",)):
-        return BadSeq()
-    if at(("description",)):
-        return BadType("description")
-    if at(("is_succeeded",)):
-        return BadType("is_succeeded")
-    raise error

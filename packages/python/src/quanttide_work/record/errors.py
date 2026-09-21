@@ -1,10 +1,14 @@
 """记录读不通时的错误。
 
-只存第几笔与种类（Fault）；文件名不进错误，由端侧在渲染时给——
-RecordError.message 出 canonical 文案。
+只存第几笔与种类（[`Fault`]）；文件名不进错误，由端侧在渲染时给——
+RecordError.message 出 canonical 文案；校验报错翻成毛病在 fault_of。
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
+from functools import partial
+
+from pydantic import ValidationError
 
 # 一笔工作记录认得的字段：模型校验与报错文案共用这一份。
 RECORD_FIELDS = (
@@ -93,3 +97,40 @@ class RecordError(Exception):
 
     def __str__(self) -> str:
         return f"第 {self.ordinal} 笔{self.fault.text()}"
+
+
+# 与字段无关的报错：按报错类型直接点名。
+FAULT_BY_KIND: dict[str, Callable[[], Fault]] = {
+    "json_invalid": NotJson,
+    "model_type": NotMapping,
+}
+
+# 落在字段上的报错：表内顺序即取舍顺序（必选在前、页码次之、推荐字段在后），
+# 与读出的检查次序一致；必选文本字段缺了或取值不对都算没写。
+FAULT_BY_FIELD: dict[str, Callable[[], Fault]] = {
+    "id": partial(MissingField, "id"),
+    "created_at": partial(MissingField, "created_at"),
+    "order_id": partial(MissingField, "order_id"),
+    "step_id": partial(MissingField, "step_id"),
+    "seq": BadSeq,
+    "description": partial(BadType, "description"),
+    "is_succeeded": partial(BadType, "is_succeeded"),
+}
+
+
+def fault_of(error: ValidationError) -> Fault:
+    """把校验报错翻成账上的毛病；照两张表取第一条，认不出的原样抛出，不硬翻。"""
+    faults = error.errors()
+    kinds = {item["type"] for item in faults}
+    for kind, fault in FAULT_BY_KIND.items():
+        if kind in kinds:
+            return fault()
+    extra = tuple(
+        sorted(item["loc"][0] for item in faults if item["type"] == "extra_forbidden")
+    )
+    if extra:
+        return UnknownFields(extra)
+    for name, fault in FAULT_BY_FIELD.items():
+        if any(item["loc"] == (name,) for item in faults):
+            return fault()
+    raise error
