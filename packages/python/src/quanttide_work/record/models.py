@@ -11,41 +11,47 @@ JSON。单条记录在整本流水中是否有效——凭证唯一、页码连�
 约束，由账本侧对账执行。
 """
 
-import json
-from dataclasses import dataclass
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from quanttide_work.record.errors import (
-    RECORD_FIELDS,
     BadSeq,
     BadType,
+    Fault,
     MissingField,
     NotJson,
     NotMapping,
     UnknownFields,
 )
 
-# 必选的文本字段：缺失或取值为空白均视为未提供。
+# 必选的文本字段：缺失或取值为空白均视为未提供；翻毛病时按这个顺序取第一条。
 REQUIRED_TEXT = ("id", "created_at", "order_id", "step_id")
 
 
-@dataclass(frozen=True)
-class WorkRecord:
+class WorkRecord(BaseModel):
     """工作记录实体：凭证、页码、发生时刻、工单与步骤锚点、简要描述、判定结果。"""
 
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
     # 凭证号：追加方生成，落笔后永不改变；跨边界引用一律以它为准。
-    id: str
+    id: str = Field(min_length=1)
     # 页码：账本方分配，自 1 起严格递增且连续；排序一律以它为准。
-    seq: int
+    seq: int = Field(ge=1, strict=True)
     # 步骤发生时刻，而非记录录入时刻——流水是证据链，答「何时发生」。
-    created_at: str
+    created_at: str = Field(min_length=1)
     # 所属工单的凭证。
-    order_id: str
+    order_id: str = Field(min_length=1)
     # 所执行步骤的机器锚点，与所引工作流中的步骤同一指向；落笔后不可失配。
-    step_id: str
+    step_id: str = Field(min_length=1)
     # 对已发生事实的简要描述，记录中唯一的自由文本字段；默认为空。
     description: str = ""
     # 判定结果；缺省 False——未记录「通过」即视为未通过。
-    is_succeeded: bool = False
+    is_succeeded: bool = Field(default=False, strict=True)
+
+    @field_validator(*REQUIRED_TEXT, "description", mode="before")
+    @classmethod
+    def _strip(cls, got: object) -> object:
+        """取文本字段时去掉两侧空白；不是字符串的原样交给校验，报类型不符。"""
+        return got.strip() if isinstance(got, str) else got
 
     @classmethod
     def from_jsonl(cls, line: str) -> "WorkRecord":
@@ -55,52 +61,42 @@ class WorkRecord:
         NotJson；is_succeeded 缺省为 False。
         """
         try:
-            value = json.loads(line)
-        except json.JSONDecodeError as error:
-            raise NotJson() from error
-        if not isinstance(value, dict):
-            raise NotMapping()
-
-        def text(key: str) -> str:
-            # 取文本字段：去掉两侧空白，取值不是字符串时视为未提供。
-            got = value.get(key)
-            return got.strip() if isinstance(got, str) else ""
-
-        unknown = tuple(key for key in value if key not in RECORD_FIELDS)
-        if unknown:
-            raise UnknownFields(unknown)
-        for name in REQUIRED_TEXT:
-            if not text(name):
-                raise MissingField(name)
-        seq = value.get("seq")
-        if not isinstance(seq, int) or isinstance(seq, bool) or seq < 1:
-            raise BadSeq()
-        if "description" in value and not isinstance(value["description"], str):
-            raise BadType("description")
-        if "is_succeeded" in value and not isinstance(value["is_succeeded"], bool):
-            raise BadType("is_succeeded")
-        return cls(
-            id=text("id"),
-            seq=seq,
-            created_at=text("created_at"),
-            order_id=text("order_id"),
-            step_id=text("step_id"),
-            description=text("description"),
-            is_succeeded=value.get("is_succeeded", False),
-        )
+            return cls.model_validate_json(line)
+        except ValidationError as error:
+            raise _fault(error) from error
 
     def to_jsonl(self) -> str:
         """落形为 JSONL 行：单行紧凑 JSON，七个字段全写，不产生字段表之外的键。"""
-        return json.dumps(
-            {
-                "id": self.id,
-                "seq": self.seq,
-                "created_at": self.created_at,
-                "order_id": self.order_id,
-                "step_id": self.step_id,
-                "description": self.description,
-                "is_succeeded": self.is_succeeded,
-            },
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
+        return self.model_dump_json()
+
+
+def _fault(error: ValidationError) -> Fault:
+    """把校验报错翻成账上的毛病；按读出的检查顺序取第一条。
+
+    映射、多字段、缺必选、坏页码、坏类型之外认不出的毛病原样抛出，不硬翻。
+    """
+    faults = error.errors()
+    kinds = {item["type"] for item in faults}
+
+    def at(loc: tuple[str, ...]) -> bool:
+        return any(item["loc"] == loc for item in faults)
+
+    if "json_invalid" in kinds:
+        return NotJson()
+    if "model_type" in kinds:
+        return NotMapping()
+    extra = tuple(
+        sorted(item["loc"][0] for item in faults if item["type"] == "extra_forbidden")
+    )
+    if extra:
+        return UnknownFields(extra)
+    for name in REQUIRED_TEXT:
+        if at((name,)):
+            return MissingField(name)
+    if at(("seq",)):
+        return BadSeq()
+    if at(("description",)):
+        return BadType("description")
+    if at(("is_succeeded",)):
+        return BadType("is_succeeded")
+    raise error
