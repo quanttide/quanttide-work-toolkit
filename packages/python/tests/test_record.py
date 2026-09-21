@@ -4,7 +4,7 @@ import pytest
 
 from quanttide_work.record.errors import RecordError
 from quanttide_work.record.models import WorkRecord
-from quanttide_work.record.repos import REQUIRED_TEXT, WorkRecordRepo
+from quanttide_work.record.repos import WorkRecordRepo
 
 ORDINAL = 3
 REPO = WorkRecordRepo()
@@ -100,7 +100,7 @@ def test_unknown_fields_are_sorted():
 
 # 四个必选文本字段逐一缺失时，均报「少了 <字段>」。
 def test_missing_required_is_rejected():
-    for name in REQUIRED_TEXT:
+    for name in ("id", "created_at", "order_id", "step_id"):
         bare = sample()
         del bare[name]
         with pytest.raises(RecordError) as caught:

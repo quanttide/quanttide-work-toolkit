@@ -11,6 +11,7 @@ seq 为准。记录不独立落盘，内嵌于工单的 records 字段；只增�
 
 from pydantic import BaseModel, ConfigDict, Field
 
+
 class WorkRecord(BaseModel):
     """工作记录实体：凭证、页码、发生时刻、工单与步骤锚点、简要描述、判定结果。"""
 
@@ -30,3 +31,10 @@ class WorkRecord(BaseModel):
     description: str = ""
     # 判定结果；缺省 False——未记录「通过」即视为未通过。
     is_succeeded: bool = Field(default=False, strict=True)
+
+    @classmethod
+    def required_fields(cls) -> tuple[str, ...]:
+        """必选字段：没缺省值的那些，按声明顺序；读数方按字段类型分头核。"""
+        return tuple(
+            name for name, field in cls.model_fields.items() if field.is_required()
+        )

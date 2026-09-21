@@ -10,14 +10,6 @@ import json
 from quanttide_work.record.errors import RecordError
 from quanttide_work.record.models import WorkRecord
 
-# 必选的文本字段：模型里没缺省值且是文本的那些；读出时按声明顺序报缺字段。
-REQUIRED_TEXT = tuple(
-    name
-    for name, field in WorkRecord.model_fields.items()
-    if field.is_required() and field.annotation is str
-)
-
-
 class WorkRecordRepo:
     """账本。"""
 
@@ -47,7 +39,9 @@ class WorkRecordRepo:
                 ordinal,
                 f"有不认识的字段：{'、'.join(unknown)}（只认 {known}）",
             )
-        for name in REQUIRED_TEXT:
+        for name in WorkRecord.required_fields():
+            if WorkRecord.model_fields[name].annotation is not str:
+                continue
             if not text(name):
                 raise RecordError(ordinal, f"少了 {name}")
         seq = value.get("seq")
