@@ -26,6 +26,7 @@ pub mod error;
 pub mod executor;
 pub mod outcome;
 pub mod paths;
+pub mod record;
 pub mod task;
 pub mod workflow;
 pub mod workspace;
