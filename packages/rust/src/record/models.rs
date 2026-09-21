@@ -46,6 +46,15 @@ impl WorkRecord {
     pub fn from_jsonl(line: &str) -> Result<WorkRecord, Fault> {
         let value: Json = serde_json::from_str(line).map_err(|_| Fault::NotJson)?;
         let map = value.as_object().ok_or(Fault::NotMapping)?;
+        // 取文本字段：去掉两侧空白，取值不是字符串时视为未提供。
+        let text = |key: &str| {
+            value
+                .get(key)
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .trim()
+                .to_string()
+        };
         let unknown: Vec<String> = map
             .keys()
             .filter(|key| !RECORD_FIELDS.contains(&key.as_str()))
@@ -55,7 +64,7 @@ impl WorkRecord {
             return Err(Fault::UnknownFields(unknown));
         }
         for name in REQUIRED_TEXT {
-            if text_of(&value, name).is_empty() {
+            if text(name).is_empty() {
                 return Err(Fault::MissingField(name));
             }
         }
@@ -76,12 +85,12 @@ impl WorkRecord {
             return Err(Fault::BadType("is_succeeded"));
         }
         Ok(WorkRecord {
-            id: text_of(&value, "id"),
+            id: text("id"),
             seq,
-            created_at: text_of(&value, "created_at"),
-            order_id: text_of(&value, "order_id"),
-            step_id: text_of(&value, "step_id"),
-            description: text_of(&value, "description"),
+            created_at: text("created_at"),
+            order_id: text("order_id"),
+            step_id: text("step_id"),
+            description: text("description"),
             is_succeeded: value
                 .get("is_succeeded")
                 .and_then(|v| v.as_bool())
@@ -103,16 +112,6 @@ impl WorkRecord {
         })
         .to_string()
     }
-}
-
-/// 取一个字符串字段并去掉两侧空白；取值不是字符串时视为未提供。
-fn text_of(value: &Json, key: &str) -> String {
-    value
-        .get(key)
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .trim()
-        .to_string()
 }
 
 #[cfg(test)]
