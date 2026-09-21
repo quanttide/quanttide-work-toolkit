@@ -25,7 +25,3 @@ class WorkRecorded(BaseModel):
     def create(cls, record: WorkRecord, *, created_at: str) -> "WorkRecorded":
         """从记录与上下文造一条：记录凭证从记录取，只有一个住所。"""
         return cls(created_at=created_at, record_id=record.id)
-
-    def to_jsonl(self) -> str:
-        """落形为 JSONL 行：单行紧凑 JSON，名称与时刻在前。"""
-        return self.model_dump_json()

@@ -18,7 +18,7 @@ def recorded() -> WorkRecorded:
 
 # 一行紧凑 JSON：名称与时刻在前，其后是这条记录的凭证。
 def test_work_recorded_is_one_jsonl_line():
-    got = recorded().to_jsonl()
+    got = recorded().model_dump_json()
     assert "\n" not in got
     payload = json.loads(got)
     assert list(payload) == ["name", "created_at", "record_id"]
@@ -26,7 +26,7 @@ def test_work_recorded_is_one_jsonl_line():
 
 # 记录凭证只有记录一个住所；事件名由类型钉住。
 def test_identity_comes_from_the_record():
-    payload = json.loads(recorded().to_jsonl())
+    payload = json.loads(recorded().model_dump_json())
     assert payload["name"] == "WorkRecorded"
     assert payload["created_at"] == "2026-02-11T10:00:01Z"
     assert payload["record_id"] == read_line(SAMPLE, 1).id
@@ -34,7 +34,7 @@ def test_identity_comes_from_the_record():
 
 # 只指认那一条，不带全文：事件是通知，正本在工单的 records 字段里。
 def test_carries_only_the_reference():
-    payload = json.loads(recorded().to_jsonl())
+    payload = json.loads(recorded().model_dump_json())
     assert set(payload) == {"name", "created_at", "record_id"}
     assert "record" not in payload
     assert "records" not in payload
