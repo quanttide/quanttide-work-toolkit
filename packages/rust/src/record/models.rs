@@ -1,38 +1,39 @@
-//! 工作记录聚合 / 模型：账上的一笔。
+//! 工作记录聚合 / 模型：工单流水中的单条记录。
 //!
-//! 工作记录不独立落盘，内嵌在工单的 `records` 字段里，随读工单文档取用。
-//! `of` / `to_yaml` 只搬运不判断；[`validate`] 把语法关——字段表之外拒、
-//! 必选缺失拒、类型不符拒。「一笔在一本账里合不合法」（凭证不重、页码不跳、
-//! 时刻不倒流）是账本级纪律，归 [`crate::record`] 的账本侧。
+//! 工作记录不独立落盘，内嵌于工单的 `records` 字段，随工单文档一并读写。
+//! `of` / `to_yaml` 只做字段转换，不含校验逻辑；[`validate`] 执行语法校验——
+//! 字段表之外拒收、必选缺失拒收、类型不符拒收。「单条记录在整本流水中是否
+//! 有效」（凭证唯一、页码连续、时序递增）属账本级约束，由 [`crate::record`]
+//! 的账本侧对账执行。
 //! 出处：`docs/specification/process/work-record.md`·约束。
 
 use crate::fields::{RECORD_FIELDS, text_of, unknown_fields};
 use serde_yaml::{Mapping, Value as Yaml};
 
-/// 必选的文本字段：缺了或空串都算没写。
+/// 必选的文本字段：缺失或取值为空白均视为未提供。
 const REQUIRED_TEXT: [&str; 4] = ["id", "created_at", "order_id", "step_id"];
 
-/// 账上的一笔：什么时候、哪一站、一句话、过没过，外加两样锚点。
+/// 工作记录实体：凭证、页码、发生时刻、工单与步骤锚点、简要描述、判定结果。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WorkRecord {
-    /// 凭证号：追加时定，落笔后永不改变；引用一律认它。
+    /// 凭证号：追加方生成，落笔后永不改变；跨边界引用一律以它为准。
     pub id: String,
-    /// 页码：账本方分配，自 1 起严格递增不跳号；排序一律认它。
+    /// 页码：账本方分配，自 1 起严格递增且连续；排序一律以它为准。
     pub seq: u64,
-    /// 什么时候发生——取步骤发生的时刻，不取落笔时刻。
+    /// 步骤发生时刻，而非记录录入时刻——流水是证据链，答「何时发生」。
     pub created_at: String,
     /// 所属工单的凭证。
     pub order_id: String,
-    /// 这一站的机器锚点，与所引工作流里的步骤同指；落笔后永不失配。
+    /// 所执行步骤的机器锚点，与所引工作流中的步骤同一指向；落笔后不可失配。
     pub step_id: String,
-    /// 一句话证词，记录里唯一的自由文本；默认为空。
+    /// 对已发生事实的简要描述，记录中唯一的自由文本字段；默认为空。
     pub description: String,
-    /// 过没过；缺省 `false`——没记「过」就当作没过。
+    /// 判定结果；缺省 `false`——未记录「通过」即视为未通过。
     pub is_succeeded: bool,
 }
 
 impl WorkRecord {
-    /// 从账上的字段读出（不校验）；`is_succeeded` 缺省 `false`。
+    /// 从记录字段读出（不执行校验）；`is_succeeded` 缺省为 `false`。
     pub fn of(value: &Yaml) -> WorkRecord {
         WorkRecord {
             id: text_of(value, "id"),
@@ -48,7 +49,7 @@ impl WorkRecord {
         }
     }
 
-    /// 落回账上的形状：七个字段全写，不带账本外的东西。
+    /// 序列化为记录字段形态：完整输出七个字段，不产生字段表之外的键。
     pub fn to_yaml(&self) -> Yaml {
         let mut map = Mapping::new();
         map.insert(Yaml::String("id".into()), Yaml::String(self.id.clone()));
@@ -77,23 +78,23 @@ impl WorkRecord {
     }
 }
 
-/// 一笔的写法错在哪；「第 n 笔」的话头由调用方给。
+/// 单条记录的语法错误种类；位置信息（第 n 笔）由调用方附加。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SyntaxFault {
-    /// 这一笔不是映射。
+    /// 记录不是映射结构。
     NotMapping,
-    /// 有不认识的字段。
+    /// 包含字段表之外的字段。
     UnknownFields(Vec<String>),
-    /// 缺了必选字段（或空串）。
+    /// 缺少必选字段，或取值为空白。
     MissingField(&'static str),
-    /// `seq` 缺了，或不是自 1 起的整数。
+    /// `seq` 缺失，或不是自 1 起的整数。
     BadSeq,
-    /// 字段写了，但类型不对。
+    /// 字段已声明，但取值类型不符。
     BadType(&'static str),
 }
 
 impl SyntaxFault {
-    /// canonical 文案的尾巴。
+    /// canonical 错误文案；不含位置前缀，由调用方拼接。
     pub fn text(&self) -> String {
         match self {
             SyntaxFault::NotMapping => "不是映射（工作记录是七个字段的账）".to_string(),
@@ -109,8 +110,8 @@ impl SyntaxFault {
     }
 }
 
-/// 语法校验：不是映射、不认识的字段、必选缺失、类型不符，当场报错。
-/// 一笔写得对不算账对——账本级纪律在账本侧对账时把守。
+/// 执行单条记录的语法校验：非映射、字段表之外、必选缺失、类型不符均报错。
+/// 单条语法正确不代表整本流水有效——凭证唯一、页码连续、时序递增由账本侧对账执行。
 pub fn validate(value: &Yaml) -> Result<(), SyntaxFault> {
     let map = value.as_mapping().ok_or(SyntaxFault::NotMapping)?;
     let unknown = unknown_fields(map, &RECORD_FIELDS);
@@ -146,10 +147,12 @@ mod tests {
     use super::*;
     use serde_json::json;
 
+    /// 以 JSON 字面量构造 YAML 值，便于书写测试样本。
     fn yaml(value: serde_json::Value) -> Yaml {
-        serde_yaml::to_value(value).expect("JSON 装成 YAML 值")
+        serde_yaml::to_value(value).expect("JSON 转换为 YAML 值失败")
     }
 
+    /// 合法记录样本：七个字段齐备，`seq` 为 1，判定为通过。
     fn sample() -> serde_json::Value {
         json!({
             "id": "0f0e5b1a-9d0c-4c7e-8d1e-2b6a5f4e3d2c",
@@ -162,29 +165,34 @@ mod tests {
         })
     }
 
+    /// 合法记录通过语法校验，且「落形 → 再读出」往返后取值保持不变
+    /// （`to_yaml` 的输出仍是合法输入，七字段逐一相等）。
     #[test]
     fn valid_record_round_trips() {
         let value = yaml(sample());
-        validate(&value).expect("合法一笔");
+        validate(&value).expect("合法记录应通过校验");
         let record = WorkRecord::of(&value);
         assert_eq!(record.seq, 1);
         assert!(record.is_succeeded);
-        let again = WorkRecord::of(&record.to_yaml());
-        assert_eq!(record, again, "落形再读出，一笔不变");
+        assert_eq!(record, WorkRecord::of(&record.to_yaml()), "往返不变性");
     }
 
+    /// 推荐字段可省略：`description` 缺省为空串，`is_succeeded` 缺省为
+    /// `false`（规格约束：未记录「通过」即视为未通过）。
     #[test]
     fn optional_fields_fill_in() {
         let mut bare = sample();
         bare.as_object_mut().unwrap().remove("description");
         bare.as_object_mut().unwrap().remove("is_succeeded");
         let value = yaml(bare);
-        validate(&value).expect("推荐字段可省");
+        validate(&value).expect("推荐字段省略不应报错");
         let record = WorkRecord::of(&value);
         assert_eq!(record.description, "");
-        assert!(!record.is_succeeded, "没记「过」就当作没过");
+        assert!(!record.is_succeeded);
     }
 
+    /// 字段表之外的字段被拒收。以 `step` 为反例：站名不落账，
+    /// 记录仅以 `step_id`（机器锚点）指认步骤。
     #[test]
     fn unknown_fields_are_rejected() {
         let mut odd = sample();
@@ -194,10 +202,10 @@ mod tests {
         assert_eq!(
             validate(&yaml(odd)),
             Err(SyntaxFault::UnknownFields(vec!["step".into()])),
-            "站名不落账，落 step_id"
         );
     }
 
+    /// 四个必选文本字段逐一缺失时，均报 `MissingField` 并指名缺失字段。
     #[test]
     fn missing_required_is_rejected() {
         for name in REQUIRED_TEXT {
@@ -206,11 +214,14 @@ mod tests {
             assert_eq!(
                 validate(&yaml(bare)),
                 Err(SyntaxFault::MissingField(name)),
-                "缺 {name} 当场报"
+                "缺失 {name} 应报 MissingField"
             );
         }
     }
 
+    /// 类型不符逐项拒收：`seq` 为零、负数或字符串均属 `BadSeq`
+    /// （页码须为自 1 起的整数）；`is_succeeded` 非布尔、`description`
+    /// 非字符串均属 `BadType`。
     #[test]
     fn bad_values_are_rejected() {
         for seq in [json!(0), json!(-1), json!("1")] {
@@ -236,6 +247,7 @@ mod tests {
         );
     }
 
+    /// 非映射输入（如列表）报 `NotMapping`。
     #[test]
     fn not_a_mapping_is_rejected() {
         assert_eq!(
