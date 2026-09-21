@@ -2,21 +2,14 @@ import json
 
 import pytest
 
-from quanttide_work.record.errors import (
-    RECORD_FIELDS,
-    BadSeq,
-    BadType,
-    MissingField,
-    NotJson,
-    NotMapping,
-    RecordError,
-    UnknownFields,
-)
-from quanttide_work.record.models import REQUIRED_TEXT, WorkRecord
+from quanttide_work.record.errors import RecordError
+from quanttide_work.record.models import FIELDS, REQUIRED_TEXT, read_line
+
+ORDINAL = 3
 
 
 def line(value: dict) -> str:
-    """把 JSON 字面量装成一行紧凑 JSON，供 WorkRecord.from_jsonl 测试使用。"""
+    """把 JSON 字面量装成一行紧凑 JSON。"""
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
@@ -33,30 +26,45 @@ def sample() -> dict:
     }
 
 
-# 合法记录读出成功，取值逐一相符；且「to_jsonl 落形 → from_jsonl 读出」
-# 往返后保持不变。
-def test_valid_record_round_trips():
-    record = WorkRecord.from_jsonl(line(sample()))
+# 字段表从模型生成，且仍是规格的七个字段——抄错一个、数错一个就红。
+def test_field_table_matches_the_record():
+    assert FIELDS == (
+        "id",
+        "seq",
+        "created_at",
+        "order_id",
+        "step_id",
+        "description",
+        "is_succeeded",
+    )
+
+
+# 合法行读出记录，取值逐一相符。
+def test_valid_line_reads_a_record():
+    record = read_line(line(sample()), ORDINAL)
+    assert record.id == sample()["id"]
     assert record.seq == 1
+    assert record.description == "草拟了提纲"
     assert record.is_succeeded is True
-    assert WorkRecord.from_jsonl(record.to_jsonl()) == record
 
 
-# 落形是单行紧凑 JSON，字段顺序与字段表一致。
+# 落形是单行紧凑 JSON，与样本逐字相同；往返不失真。
 def test_to_jsonl_is_one_compact_line():
-    record = WorkRecord.from_jsonl(line(sample()))
+    record = read_line(line(sample()), ORDINAL)
     got = record.to_jsonl()
     assert "\n" not in got
-    assert list(json.loads(got)) == list(RECORD_FIELDS)
     assert got == line(sample())
+    assert read_line(got, ORDINAL) == record
 
 
-# 非法 JSON 行抛 NotJson；合法 JSON 但不是映射（如数组）抛 NotMapping。
-def test_malformed_lines_are_rejected():
-    with pytest.raises(NotJson):
-        WorkRecord.from_jsonl("{oops")
-    with pytest.raises(NotMapping):
-        WorkRecord.from_jsonl("[1, 2]")
+# 行级读不通：不是合法 JSON、不是映射，各报一句。
+def test_line_level_reasons():
+    with pytest.raises(RecordError) as caught:
+        read_line("{oops", ORDINAL)
+    assert str(caught.value) == "第 3 笔不是合法的 JSON 行"
+    with pytest.raises(RecordError) as caught:
+        read_line("[1, 2]", ORDINAL)
+    assert str(caught.value) == "第 3 笔不是映射（工作记录是七个字段的账）"
 
 
 # 推荐字段可省略：description 缺省为空串，is_succeeded 缺省为 False
@@ -64,59 +72,59 @@ def test_malformed_lines_are_rejected():
 def test_optional_fields_fill_in():
     bare = sample()
     del bare["description"], bare["is_succeeded"]
-    record = WorkRecord.from_jsonl(line(bare))
+    record = read_line(line(bare), ORDINAL)
     assert record.description == ""
     assert record.is_succeeded is False
 
 
-# 字段表之外的字段被拒收。以 step 为反例：站名不落账，
-# 记录仅以 step_id（机器锚点）指认步骤。
+# 字段表之外的字段被拒收，报错里列名并带上字段表。以 step 为反例：
+# 站名不落账，记录仅以 step_id（机器锚点）指认步骤。
 def test_unknown_fields_are_rejected():
     odd = sample() | {"step": "草拟"}
-    with pytest.raises(UnknownFields) as caught:
-        WorkRecord.from_jsonl(line(odd))
-    assert caught.value == UnknownFields(("step",))
+    with pytest.raises(RecordError) as caught:
+        read_line(line(odd), ORDINAL)
+    assert caught.value.reason == (
+        f"有不认识的字段：step（只认 {'、'.join(FIELDS)}）"
+    )
 
 
-# 四个必选文本字段逐一缺失时，均抛 MissingField 并指名缺失字段。
+# 多个不认识的字段按名字排序，报错不随输入顺序摇摆。
+def test_unknown_fields_are_sorted():
+    odd = sample() | {"b": 1, "a": 2}
+    with pytest.raises(RecordError) as caught:
+        read_line(line(odd), ORDINAL)
+    assert caught.value.reason.startswith("有不认识的字段：a、b（")
+
+
+# 四个必选文本字段逐一缺失时，均报「少了 <字段>」。
 def test_missing_required_is_rejected():
     for name in REQUIRED_TEXT:
         bare = sample()
         del bare[name]
-        with pytest.raises(MissingField) as caught:
-            WorkRecord.from_jsonl(line(bare))
-        assert caught.value.name == name
+        with pytest.raises(RecordError) as caught:
+            read_line(line(bare), ORDINAL)
+        assert caught.value.reason == f"少了 {name}"
 
 
-# 类型不符逐项拒收：seq 为零、负数、字符串或布尔均属 BadSeq
-# （页码须为自 1 起的整数）；is_succeeded 非布尔、description 非字符串
-# 均属 BadType。
+# 类型不符逐项拒收：seq 为零、负数、字符串或布尔均属坏页码
+# （页码须为自 1 起的整数）；description 非字符串、is_succeeded 非布尔
+# 均属类型不符。
 def test_bad_values_are_rejected():
     for seq in (0, -1, "1", True):
-        with pytest.raises(BadSeq):
-            WorkRecord.from_jsonl(line(sample() | {"seq": seq}))
-    with pytest.raises(BadType) as caught:
-        WorkRecord.from_jsonl(line(sample() | {"is_succeeded": "yes"}))
-    assert caught.value.name == "is_succeeded"
-    with pytest.raises(BadType) as caught:
-        WorkRecord.from_jsonl(line(sample() | {"description": 3}))
-    assert caught.value.name == "description"
+        with pytest.raises(RecordError) as caught:
+            read_line(line(sample() | {"seq": seq}), ORDINAL)
+        assert caught.value.reason == "的 seq 缺了，或不是自 1 起的整数"
+    for name, bad in (("description", 3), ("is_succeeded", "yes")):
+        with pytest.raises(RecordError) as caught:
+            read_line(line(sample() | {name: bad}), ORDINAL)
+        assert caught.value.reason == f"的 {name} 类型不对"
 
 
-# 渲染时文件在前、第几笔居中、毛病在后；不带文件时只出后两段。
-def test_error_message_prefixes_the_file_and_keeps_the_ordinal():
-    error = RecordError(3, BadSeq())
-    assert (
-        error.message("records.jsonl")
-        == "records.jsonl 第 3 笔的 seq 缺了，或不是自 1 起的整数"
-    )
-    assert str(error) == "第 3 笔的 seq 缺了，或不是自 1 起的整数"
-
-
-# 不认识的字段逐一列名，并带上字段表，便于对照改账。
-def test_error_lists_unknown_fields_with_the_table():
-    error = RecordError(1, UnknownFields(("step",)))
-    assert error.message("records.jsonl") == (
-        "records.jsonl 第 1 笔有不认识的字段：step"
-        "（只认 id、seq、created_at、order_id、step_id、description、is_succeeded）"
-    )
+# 错误只装第几笔与为什么；文件名由端侧渲染时拼。
+def test_error_carries_ordinal_and_reason_only():
+    with pytest.raises(RecordError) as caught:
+        read_line("{oops", 7)
+    error = caught.value
+    assert (error.ordinal, error.reason) == (7, "不是合法的 JSON 行")
+    assert str(error) == "第 7 笔不是合法的 JSON 行"
+    assert f"records.jsonl {error}" == "records.jsonl 第 7 笔不是合法的 JSON 行"
