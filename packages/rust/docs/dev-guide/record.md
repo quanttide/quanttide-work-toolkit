@@ -9,7 +9,7 @@
 ## 四件套分工
 
 - `models.rs`——账上的一笔：`WorkRecord` 八字段（`id` / `seq` / `created_at` / `order_id` / `step` / `step_id` / `description` / `is_succeeded`），`of` 读出、`to_yaml` 落形、`validate` 把语法关（字段表之外拒、必选缺失拒、类型不符拒）。
-- `repos.rs`——账本长什么样：流水的只增接口形状——追加、全量读（按 `seq` 序）、凭页码取单条、按站名筛读。接口只认 `id` 与 `seq`，不认数组下标；落盘归平台，这里只立形状。
+- `repos.rs`——账本长什么样：只增接口形状——追加、全量读（按 `seq` 序）、凭页码取单条、按站名筛读。接口只认 `id` 与 `seq`，不认数组下标。两套实现：`local` 落本机盘，`remote` 落对象存储（主要是 S3）——两套账本，一本纪律，都过 `services` 的对账；S3 没有追加，remote 的记账语义（整本重写或一条一件）由实现内部定，接口形状不变。
 - `services.rs`——记账的手：追加时账本方干的三件事——分配 `seq`（末条加一）、按 `step` 查填 `step_id`、对账四纪律。函数签名不收 `seq` 与 `step_id`：账本发的号，类型上就不让提交者带，而不是收了再扔。
 - `events.rs`——报信：`WorkRecorded` 负载（工单名、工作区 `id`、该条的 `id` / `seq` / `step_id`、记录全文），只描述追加的那一条，不含全量流水。
 
@@ -36,11 +36,12 @@
 ## 步骤
 
 1. `models.rs`：八字段、读法、`validate`；
-2. `repos.rs`：接口形状（trait 或纯函数组，与库内既有风格取齐）；
-3. `services.rs`：追加服务，四纪律全在这里把守；
-4. `events.rs`：`WorkRecorded` 负载；
-5. `lib.rs` 注册 `pub mod record`，测试与契约向量跟上；
-6. 淘汰旧表达：`task` 流水换 `WorkRecord`、`progress` 换读法、`journal.rs` 撤除，契约向量两侧同步更新，Dart 镜像同轮退役。
+2. `repos.rs`：接口形状与 `local` 实现（本机盘）；
+3. `repos` 的 `remote` 实现（S3）：测试对假 S3（容器或桩），不连真桶；
+4. `services.rs`：追加服务，四纪律全在这里把守；
+5. `events.rs`：`WorkRecorded` 负载；
+6. `lib.rs` 注册 `pub mod record`，测试与契约向量跟上；
+7. 淘汰旧表达：`task` 流水换 `WorkRecord`、`progress` 换读法、`journal.rs` 撤除，契约向量两侧同步更新，Dart 镜像同轮退役。
 
 ## 验收判据
 
