@@ -1,6 +1,6 @@
 # TODO：把 Rust 库收到契约下
 
-逐条列出要改的每一个细节。依据是 [STATUS.md](STATUS.md)；路线与收益见 [ROADMAP.md](ROADMAP.md)。
+逐条列出要改的每一个细节。依据是 [STATUS.md](STATUS.md)；路线与收益见 [ROADMAP.md](docs/dev-guide/roadmap.md)。
 
 **每段做完的通用判据**（缺一不算完）：
 

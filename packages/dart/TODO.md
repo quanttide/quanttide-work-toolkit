@@ -1,6 +1,6 @@
 # TODO：把 Dart 库收到契约下
 
-逐条列出要改的每一个细节。依据是 [STATUS.md](STATUS.md)；路线与收益见 [ROADMAP.md](ROADMAP.md)。
+逐条列出要改的每一个细节。依据是 [STATUS.md](STATUS.md)；路线与收益见 [ROADMAP.md](docs/dev-guide/roadmap.md)。
 
 **红线：与 Rust 侧同批。** 两侧是镜像，Dart 独自先改完 = 镜像破裂 = 「照着另一侧抄」失效。每一段做完，必须与 Rust 侧同名同职责地一起绿。
 
