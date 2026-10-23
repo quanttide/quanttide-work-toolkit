@@ -60,7 +60,7 @@
 
 ### Changed
 
-- 结果与它的编解码收进工具箱（原先两侧各写一份）：话怎么拼、路径怎么显示、`ok` 怎么定退出码，仍留各自的平台
+- 结果与它的编解码收进标准库（原先两侧各写一份）：话怎么拼、路径怎么显示、`ok` 怎么定退出码，仍留各自的平台
 - 契约向量加回 `outcome-json`（第 10 份）：四样的字段名与「`data` 有才写」两侧一致
 
 ## [0.1.0-beta.2] - 2026-09-12
@@ -70,8 +70,8 @@
 - 改成按领域模型分文件，一个模型一个文件：`workflow`（工作流聚合：工作流 + 步骤 + 定义的语法与不变量 + 定义核对）、`task`（任务聚合：流水 + 闸门 + 落点 + 运行上下文 + 走过 / 下一步 / 状态行）、`criterion`（判据）、`executor`（执行者）
 - 定义的语法（字段表、读字段、`DefinitionError`）并进 `workflow`；`Finding` 收进 `workflow`，不单列
 - `check` → `Workflow::check`；`tasklog::done / next_step / state_line` → `Task::done_steps / next_step / state_line`；`Criterion::from_yaml` → `criterion_of`；`validate` 不变
-- 移出工具箱、回各自的平台：提示词（`prompts`）、定义核对的拼句与退出码（`describe` / `all_ok`）、信封（`envelope`）
-- 契约向量去掉 `envelope-json`：信封不再是工具箱的东西
+- 移出标准库、回各自的平台：提示词（`prompts`）、定义核对的拼句与退出码（`describe` / `all_ok`）、信封（`envelope`）
+- 契约向量去掉 `envelope-json`：信封不再是标准库的东西
 
 ### Added
 
@@ -93,7 +93,7 @@
 
 ### Changed
 
-- 定义这一类模型（工作流定义、步骤、判据、流水、给 AI 的两段话）改吃 YAML 值——工作流定义本来就是 YAML，不该在工具箱里被挤成 JSON；信封仍是 JSON（那是给窗口与命令行的输出格式）
+- 定义这一类模型（工作流定义、步骤、判据、流水、给 AI 的两段话）改吃 YAML 值——工作流定义本来就是 YAML，不该在标准库里被挤成 JSON；信封仍是 JSON（那是给窗口与命令行的输出格式）
 
 ### Note
 

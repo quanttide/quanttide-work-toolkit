@@ -1,6 +1,6 @@
 # quanttide-work
 
-知识工作工具箱（TypeScript 包）——知识工作领域的共享能力。
+知识工作标准库（TypeScript 包）——知识工作领域的共享能力。
 
 ## 安装
 

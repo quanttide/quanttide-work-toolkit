@@ -31,7 +31,7 @@ cd ../.. && sh scripts/contract.sh      # 12 份向量，Rust 与 Dart 两侧必
 
 **2.2** 尾部三件不属工作流的东西归位：
 
-- `looks_like_section`（节名）→ 与「报告两节」同源的模型处（工具箱里管节名的 `section-names` 向量在跑，落点要在同一处）
+- `looks_like_section`（节名）→ 与「报告两节」同源的模型处（标准库里管节名的 `section-names` 向量在跑，落点要在同一处）
 - `expand_placeholders`（占位展开）→ 与落点/占位同源处（`artifact-location` / `expand-placeholders` 两份向量管的事）
 - `Finding`（定义核对的结果）→ 归定义核对（`workflow --check` 的模型侧）
 
@@ -56,7 +56,7 @@ cd ../.. && sh scripts/contract.sh      # 12 份向量，Rust 与 Dart 两侧必
 
 **5.2** `packages/rust/AGENTS.md` 的「项目结构」块改成实际结构（现在只写 `src/lib.rs`）
 
-**5.3** Dart 侧同样立约定（或在工具箱 `AGENTS.md` 里写一份两侧共用的）
+**5.3** Dart 侧同样立约定（或在标准库 `AGENTS.md` 里写一份两侧共用的）
 
 - 判据：结构块与新目录一致；约定文件里每条都能在新结构里指出落点
 

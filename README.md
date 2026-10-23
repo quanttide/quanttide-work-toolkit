@@ -1,6 +1,6 @@
 # quanttide-work-toolkit
 
-量潮知识工作工具箱 — 知识工作领域的共享库与工具集（独立仓库，挂载于 quanttide-work/packages）。
+量潮知识工作标准库 — 知识工作领域的共享库与标准库（独立仓库，挂载于 quanttide-work/packages）。
 
 ## 概述
 
@@ -23,7 +23,7 @@
 ```
 quanttide-work-toolkit/
 ├── .github/workflows/    # 各语言发布工作流（release-{语言}.yml）
-├── docs/user-guide/      # 给平台开发者：怎么把工具箱接进自己的端（按模型分篇）
+├── docs/user-guide/      # 给平台开发者：怎么把标准库接进自己的端（按模型分篇）
 ├── packages/
 │   ├── python/           # Python 包（quanttide-work）
 │   ├── rust/             # Rust 库（quanttide-work）
@@ -42,7 +42,7 @@ quanttide-work-toolkit/
 
 | 文档 | 给谁看 |
 |---|---|
-| [`docs/user-guide/`](docs/user-guide/index.md) | **平台开发者**：怎么把工具箱接进自己的端——各语言的接法统一在一篇里讲 |
+| [`docs/user-guide/`](docs/user-guide/index.md) | **平台开发者**：怎么把标准库接进自己的端——各语言的接法统一在一篇里讲 |
 
 ## 发布自动化
 

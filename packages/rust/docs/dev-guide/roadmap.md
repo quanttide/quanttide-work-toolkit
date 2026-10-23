@@ -10,7 +10,7 @@ Rust 库是**所有端侧要对齐的正本**（cli 与 studio 都引它），�
 - **`workflow.rs` 516 行**、`task.rs` 292 行：一个装下「Step + Workflow + 校验 + 定义核对 + 节名 + 占位展开」，另一个装下「任务 + 流水 + 运行上下文」
 - **尾部三件不属工作流的东西**（`Finding` 定义核对结果、`looks_like_section` 节名、`expand_placeholders` 占位展开）寄在 `workflow.rs` 里
 
-而且它与 Dart 侧是**镜像**（同名同职责）——这是工具箱最有价值的纪律，也是本次重构的硬约束：**只拆一侧，镜像就破了**。
+而且它与 Dart 侧是**镜像**（同名同职责）——这是标准库最有价值的纪律，也是本次重构的硬约束：**只拆一侧，镜像就破了**。
 
 ## 改进的收益（五条，每条都能核）
 
@@ -113,7 +113,7 @@ cd ../.. && sh scripts/contract.sh
 
 **一处与原文的偏差（已改齐）**：约定文件落在 `src/CONVENTIONS.md`（与 cli 同路子），TODO 原先写的是包根
 
-**后续（issue #2）**：按规范三轴补上「场所」——新增 `workspace/`（模型 + 定义核对 + 落点 + 流水判定），`RunContext` 退出工具箱（位置不进模型，目录基准当参数传）。详见 `CHANGELOG.md`「Unreleased」与 [issue #2](https://github.com/quanttide/quanttide-work-toolkit/issues/2)。
+**后续（issue #2）**：按规范三轴补上「场所」——新增 `workspace/`（模型 + 定义核对 + 落点 + 流水判定），`RunContext` 退出标准库（位置不进模型，目录基准当参数传）。详见 `CHANGELOG.md`「Unreleased」与 [issue #2](https://github.com/quanttide/quanttide-work-toolkit/issues/2)。
 
 **再后续（piece 轴）**：补上「产物」——新增 `artifact/` 聚合（产物 = 名字 + 规格，不把报告 / 日志这类具体种类写进模型），落点改由 `Workspace::place(任务, 产物)` 按名字算。规范出处 `piece/artifact.md`。
 
@@ -121,7 +121,7 @@ cd ../.. && sh scripts/contract.sh
 
 1. **三个空壳语言怎么办**（收益第五条）：摘掉发布线，还是补齐实现？
 2. **`packages/rust/AGENTS.md` 的结构块**过时（只写 `src/lib.rs`），段五顺手改
-3. **工具箱是否也要「服务 / 适配」两类**：本库只装"不因平台而变的核心逻辑"，没有 IO，**不需要那两类**——所以它的契约是裁剪版：**一个模型一个目录 + 单文件 ≤250 + 一处一写 + 说法不进库**。这条要写进约定，免得以后有人拿端侧的规矩来量它
+3. **标准库是否也要「服务 / 适配」两类**：本库只装"不因平台而变的核心逻辑"，没有 IO，**不需要那两类**——所以它的契约是裁剪版：**一个模型一个目录 + 单文件 ≤250 + 一处一写 + 说法不进库**。这条要写进约定，免得以后有人拿端侧的规矩来量它
 4. **校验态类型化（`Raw` / `Validated`）**：让「未校验」与「已校验」在类型上分开。Dart 没有 Rust 那样的零成本 phantom，做了要么只有 Rust 做（镜像破裂），要么 Dart 用两层类包装——除非出现「拿未校验值当已校验用」的真实事故，先不做（[issue #1](https://github.com/quanttide/quanttide-work-toolkit/issues/1)）
 5. **`exists` 回调扩展成能核内容**：`check` 的 `exists: Fn(&str) -> bool` 只能答「在不在」。「判据怎么核」该先由规范定，不宜先扩接口再补规范（同上 issue）
 6. **`RuleItem` 换成保留类型的结构**：现在是 `kind` + 位置 `args`，端侧要按顺序重新解释。等真需要更多语义时再动，避免提前抽象（同上 issue）

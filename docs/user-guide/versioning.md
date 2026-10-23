@@ -4,7 +4,7 @@
 
 ## 三条纪律
 
-1. **两侧同号**——工具箱的 Rust 与 Dart 包发**同一个版本号**；**向量一致时才发**
+1. **两侧同号**——标准库的 Rust 与 Dart 包发**同一个版本号**；**向量一致时才发**
 2. **端侧跟同一号**——不要一端引 `beta.4`、一端引 `beta.5`，对表会翻车
 3. **先拿基线再动手**——动端侧之前跑一次 `contract.sh`；它红了，先查是不是引的版本不对
 
@@ -18,7 +18,7 @@ sh scripts/contract.sh      # 13 份向量，Rust 与 Dart 各跑一遍，结论
 
 这条已挂进两侧的发布工作流（`release-rust.yml` / `release-dart.yml`）：**向量不过，不许发**。
 
-端侧的尺子是另一把：同一处工作区、同一条命令，两端各跑一次，比 `ok` / `columns` / `rows` / `data`——那把尺子在**领域仓 quanttide-work** 里（本工具箱是它的子模块）：`apps/qtcloud-work/src/studio/scripts/parity.sh`。改动端侧时用它验收，别只看自己那一侧。
+端侧的尺子是另一把：同一处工作区、同一条命令，两端各跑一次，比 `ok` / `columns` / `rows` / `data`——那把尺子在**领域仓 quanttide-work** 里（本标准库是它的子模块）：`apps/qtcloud-work/src/studio/scripts/parity.sh`。改动端侧时用它验收，别只看自己那一侧。
 
 ## 现在的版本状态
 

@@ -1,8 +1,8 @@
 # criterion · 判据
 
-判据是规则引擎那几种**机械核对**。工具箱管它的取值与读法，**不管它跑不跑得通**。
+判据是规则引擎那几种**机械核对**。标准库管它的取值与读法，**不管它跑不跑得通**。
 
-## 工具箱管什么
+## 标准库管什么
 
 **判据在 YAML 里就四种写法**（机械核对那类都写 `executor: rule`）：
 
@@ -31,10 +31,10 @@ import 'package:quanttide_work/quanttide_work.dart';   // criterionOf / readCrit
 
 ## 端侧接哪一步
 
-**第四步「自己跑」**——工具箱翻单，端侧跑腿：
+**第四步「自己跑」**——标准库翻单，端侧跑腿：
 
 ```rust
-let items = items_of(&step.rules());     // 工具箱：翻成「要跑什么」
+let items = items_of(&step.rules());     // 标准库：翻成「要跑什么」
 // 端侧：真的去查文件、起进程，把结果装进 Outcome
 ```
 
@@ -46,6 +46,6 @@ final items = itemsOf(step.rules);
 
 ## 端侧不做什么
 
-- **不重写判据的取值**——四种 kind 长什么样、字段怎么填，正本在工具箱
-- **不自己认判据**——YAML 值怎么翻成判据（`read_criterion` / `readCriterion`）用工具箱的，报错文字也照它的
+- **不重写判据的取值**——四种 kind 长什么样、字段怎么填，正本在标准库
+- **不自己认判据**——YAML 值怎么翻成判据（`read_criterion` / `readCriterion`）用标准库的，报错文字也照它的
 - **不自己写执行者的字符串**——`rule` / `agent` / `human` 用 [executor.md](executor.md) 里的常量

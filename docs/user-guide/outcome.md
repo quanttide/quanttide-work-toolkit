@@ -2,7 +2,7 @@
 
 结果是一个**信封**：一次动作算完，交出来的就是它。命令行与工作台共用同一个形状——`--json` 吐的、界面读的，都是这一份。
 
-## 工具箱管什么
+## 标准库管什么
 
 信封装**四样**：通不通、给人看的话、给界面画表的表格、给窗口与脚本的那一栏。
 
@@ -44,7 +44,7 @@ final result = Outcome.fromStdout(stdout);    // 命令行吐的 JSON 直接装�
 
 ## 值语义（两端一致）
 
-`with_first` / `with_data`（Dart `withFirst` / `withData`）都**拿新值**，不改原来那份：原信封保持不动，端侧组装信封、工具箱不管落盘。两端同一套值语义，不再有「一边原地改、一边拿新值」的差异。`to_json`（Dart `toJson`）出信封；`to_output_json`（Dart `toOutputJson`）出「要写出去的那一份」——托了原文给原文，没托给信封。两端各有 `from_stdout` / `fromStdout` 把命令行吐的 JSON 装回来。
+`with_first` / `with_data`（Dart `withFirst` / `withData`）都**拿新值**，不改原来那份：原信封保持不动，端侧组装信封、标准库不管落盘。两端同一套值语义，不再有「一边原地改、一边拿新值」的差异。`to_json`（Dart `toJson`）出信封；`to_output_json`（Dart `toOutputJson`）出「要写出去的那一份」——托了原文给原文，没托给信封。两端各有 `from_stdout` / `fromStdout` 把命令行吐的 JSON 装回来。
 
 ## 端侧不做什么
 

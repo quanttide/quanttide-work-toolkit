@@ -121,12 +121,12 @@ cd ../.. && sh scripts/contract.sh
 - **段六 6.1 版本对齐——已对齐到 `0.1.0-beta.6`**：两侧清单与版本常量改齐（取两侧的下一号，规则是「向量一致时两侧发同一个号」），`scripts/contract.sh` 加了一条「两侧清单版本一致」的判据，错号即红。**包还没发布**——按发布纪律等创始人放行
 - 段六 6.2 已做：`sh scripts/contract.sh` 已挂进两条发布工作流的门禁（两侧一起跑）
 
-**后续（issue #2）**：按规范三轴补上「场所」——新增 `workspace/`（模型 + 定义核对 + 落点 + 流水判定，用扩展承接分件），`RunContext` 退出工具箱（位置不进模型，目录基准当参数传；桶文件不再导出 `RunContext`）。详见 `CHANGELOG.md`「Unreleased」与 [issue #2](https://github.com/quanttide/quanttide-work-toolkit/issues/2)。
+**后续（issue #2）**：按规范三轴补上「场所」——新增 `workspace/`（模型 + 定义核对 + 落点 + 流水判定，用扩展承接分件），`RunContext` 退出标准库（位置不进模型，目录基准当参数传；桶文件不再导出 `RunContext`）。详见 `CHANGELOG.md`「Unreleased」与 [issue #2](https://github.com/quanttide/quanttide-work-toolkit/issues/2)。
 
 ## 边界外（越界但相关，需要你拍板）
 
 1. **三个空壳语言怎么办**（收益第六条）：摘掉发布线，还是补齐实现
-2. **工具箱的契约是裁剪版**：它只装"不因平台而变的核心逻辑"，没有 IO，**不需要端侧那套「服务 / 适配」分类**；它的规矩是「一个模型一个目录 + 一个文件一件事 + 一处一写 + 说法不进库」——这条要写进约定，免得有人拿端侧的整套规矩来量它
+2. **标准库的契约是裁剪版**：它只装"不因平台而变的核心逻辑"，没有 IO，**不需要端侧那套「服务 / 适配」分类**；它的规矩是「一个模型一个目录 + 一个文件一件事 + 一处一写 + 说法不进库」——这条要写进约定，免得有人拿端侧的整套规矩来量它
 3. **两份 ROADMAP 最好一起执行**：单侧先做完，收益（照抄）反而是负的——所以建议同一轮把 Rust 与 Dart 一次推完
 4. **校验态类型化（`Raw` / `Validated`）**：让「未校验」与「已校验」在类型上分开。Dart 没有 Rust 那样的零成本 phantom，做了要么只有 Rust 做（镜像破裂），要么 Dart 用两层类包装——除非出现「拿未校验值当已校验用」的真实事故，先不做（[issue #1](https://github.com/quanttide/quanttide-work-toolkit/issues/1)）
 5. **`exists` 回调扩展成能核内容**：`check` 的 `exists` 只能答「在不在」。「判据怎么核」该先由规范定，不宜先扩接口再补规范（同上 issue）

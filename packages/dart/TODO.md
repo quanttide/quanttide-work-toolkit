@@ -55,7 +55,7 @@ cd ../.. && sh scripts/contract.sh      # 12 份向量，Dart 与 Rust 两侧必
 
 **5.1** 补 `packages/dart/AGENTS.md`——**现在没有**（Rust 包有）。内容对齐 Rust 那份：项目结构、事实源（领域模型以 `quanttide-work/docs/specification` 为准，本库只做表达）、提交约定、测试命令
 
-**5.2** 立约定（`packages/dart/CONVENTIONS.md`，或与 Rust 共用一份写在工具箱 `AGENTS.md`）：一个模型一个目录、**一个文件只讲一件事**（行数 ≤250 只作辅助信号，两语言不等价）、一件事只写一处、说法与文案不进库
+**5.2** 立约定（`packages/dart/CONVENTIONS.md`，或与 Rust 共用一份写在标准库 `AGENTS.md`）：一个模型一个目录、**一个文件只讲一件事**（行数 ≤250 只作辅助信号，两语言不等价）、一件事只写一处、说法与文案不进库
 
 - 判据：结构块与新目录一致；约定每条都能在新结构里指出落点
 
